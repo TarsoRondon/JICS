@@ -245,22 +245,40 @@
                     <form onsubmit="addUser(event)" style="display: grid; gap: 15px; max-width: 500px;">
                         <div class="form-group">
                             <label>Nome Completo</label>
-                            <input type="text" id="newUserName" required />
+                            <input type="text" id="newNome" required />
                         </div>
                         <div class="form-group">
                             <label>Matrícula</label>
-                            <input type="text" id="newUserMatricula" maxlength="13" required />
+                            <input type="text" id="newMatricula" maxlength="13" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Campus</label>
+                            <select id="newCampus" required>
+                                <option value="">Selecione...</option>
+                                <option value="PVH_CALAMA">PVH_CALAMA</option>
+                                <option value="PVH_ZN">PVH_ZN</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>Curso</label>
-                            <select id="newUserCurso" required>
+                            <select id="newCurso" required>
                                 <option value="">Selecione...</option>
-                                <option value="ELETROTÉCNICA">Eletrotécnica</option>
-                                <option value="INFORMÁTICA">Informática</option>
-                                <option value="QUÍMICA">Química</option>
-                                <option value="EDIFICAÇÕES">Edificações</option>
+                                <option value="Técnico em Eletrotécnica Integrado ao Ensino Médio">Eletrotécnica</option>
+                                <option value="Técnico em Informática Integrado ao Ensino Médio">Informática</option>
+                                <option value="Técnico em Química Integrado ao Ensino Médio">Química</option>
+                                <option value="Técnico em Edificações Integrado ao Ensino Médio">Edificações</option>
                             </select>
                         </div>
+
+
+                        <div class="form-group">
+                            <label>Turma</label>
+                            <input type="text" id="newTurma" placeholder="Turma" required>
+                        </div>
+                        <input type="date" id="newNascimento" required>
+                        <input type="email" id="newEmail" placeholder="Email pessoal" required>
+                        <input type="password" id="newSenha" placeholder="Senha inicial" required>
+
                         <button type="submit" class="btn-submit">Adicionar Usuário</button>
                     </form>
                 </div>
@@ -411,8 +429,21 @@
         </div>
     </div>
 
+    <!-- Editar (somente ADMIN) -->
+    <div id="editar" class="page-content hidden">
+        <div class="main-content">
+            <h2 class="section-title">Área de Edição</h2>
+            <p class="section-subtitle">
+                Esta área é exclusiva para administradores.
+            </p>
+
+            <!-- Por enquanto vazio -->
+        </div>
+    </div>
+
 
     <script src="js/jsdosistema.js"></script>
+
 </body>
 
 </html>

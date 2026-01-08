@@ -91,12 +91,15 @@ function handleLogin(event) {
 
     fetch('/login', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuario, senha })
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Resposta inválida do servidor');
+            }
+            return res.json();
+        })
         .then(data => {
             if (!data.sucesso) {
                 alert('Matrícula ou senha inválida!');
@@ -110,8 +113,9 @@ function handleLogin(event) {
                 showPage('admin');
             }
         })
-        .catch(() => {
-            alert('Erro ao conectar com o servidor');
+        .catch(err => {
+            console.error('Erro no login:', err);
+            alert('Erro inesperado no login. Tente novamente.');
         });
 }
 
@@ -119,11 +123,26 @@ function handleLogin(event) {
 function showHomePage() {
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('homePage').classList.remove('hidden');
+
     renderModalities();
     renderNews();
     renderScheduleTable();
+
+    const navbar = document.querySelector('.navbar-nav');
+
+    // 🔹 Remove itens antigos (evita duplicar se relogar)
+    navbar.querySelectorAll('.admin-only').forEach(el => el.remove());
+
+    // 🔐 Itens exclusivos do ADMIN
     if (currentUser.role === 'ADMIN') {
-        document.querySelector('.navbar-nav').innerHTML += '<li><a class="nav-link" onclick="showPage(\'admin\')">Admin</a></li>';
+        navbar.innerHTML += `
+            <li class="admin-only">
+                <a class="nav-link" onclick="showPage('editar')">Editar</a>
+            </li>
+            <li class="admin-only">
+                <a class="nav-link" onclick="showPage('admin')">Admin</a>
+            </li>
+        `;
     }
 }
 
@@ -135,11 +154,21 @@ function logout() {
 }
 
 function showPage(page) {
-    document.querySelectorAll('.page-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.page-content').forEach(el =>
+        el.classList.add('hidden')
+    );
     document.getElementById(page).classList.remove('hidden');
 
-    document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-    event.target.classList.add('active');
+    // Remove active de todos
+    document.querySelectorAll('.nav-link').forEach(el =>
+        el.classList.remove('active')
+    );
+
+    // Ativa o link correspondente
+    const linkAtivo = document.querySelector(`.nav-link[onclick*="${page}"]`);
+    if (linkAtivo) {
+        linkAtivo.classList.add('active');
+    }
 
     if (page === 'perfil') {
         carregarPerfil();
@@ -371,102 +400,124 @@ function showModalDetails(modalidadeName) {
             }
         }
 
-        function subscribeToTraining(modalidadeName) {
-            if (!currentUser) {
-                alert('Faça login primeiro!');
-                return;
-            }
-            inscriptions.push({
-                nome: currentUser.nome,
-                matricula: currentUser.matricula,
-                modalidade: modalidadeName,
-                tipo: 'Treino',
-                data: new Date().toLocaleDateString('pt-BR')
-            });
-            alert(`Inscrição realizada em ${modalidadeName}!`);
-            closeModal('modalTreinos');
-            updateInscriptionsTable();
+function subscribeToTraining(modalidadeName) {
+    if (!currentUser) {
+        alert('Faça login primeiro!');
+        return;
+    }
+    inscriptions.push({
+        nome: currentUser.nome,
+        matricula: currentUser.matricula,
+        modalidade: modalidadeName,
+        tipo: 'Treino',
+        data: new Date().toLocaleDateString('pt-BR')
+    });
+    alert(`Inscrição realizada em ${modalidadeName}!`);
+    closeModal('modalTreinos');
+    updateInscriptionsTable();
+}
+
+function subscribeToJICS(modalidadeName) {
+    if (!currentUser) {
+        alert('Faça login primeiro!');
+        return;
+    }
+    inscriptions.push({
+        nome: currentUser.nome,
+        matricula: currentUser.matricula,
+        modalidade: modalidadeName,
+        tipo: 'JICS 2026',
+        data: new Date().toLocaleDateString('pt-BR')
+    });
+    alert(`Inscrição realizada no JICS para ${modalidadeName}!`);
+    closeModal('modalJICS');
+    updateInscriptionsTable();
+}
+
+function confirmInscription() {
+    if (currentUser && currentInscription) {
+        subscribeToTraining(currentInscription.nome);
+    }
+}
+
+function updateInscriptionsTable() {
+    const tbody = document.getElementById('tabelaInscricoes');
+    if (!tbody) return;
+
+    const rows = inscriptions.map(i => `
+        <tr>
+            <td>${i.nome}</td>
+            <td>${i.matricula}</td>
+            <td>${i.modalidade}</td>
+            <td>${i.tipo}</td>
+            <td>${i.data}</td>
+        </tr>
+    `).join('');
+    tbody.innerHTML = rows;
+}
+
+function switchAdminTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    event.target.classList.add('active');
+}
+
+function addUser(event) {
+    event.preventDefault();
+
+    const aluno = {
+        matricula: document.getElementById('newMatricula').value,
+        nome: document.getElementById('newNome').value,
+        campus: document.getElementById('newCampus').value,
+        descricao_curso: document.getElementById('newCurso').value,
+        turma: document.getElementById('newTurma').value,
+        data_nascimento: document.getElementById('newNascimento').value,
+        email_pessoal: document.getElementById('newEmail').value,
+        senha: document.getElementById('newSenha').value
+    };
+
+    fetch('/admin/add-aluno', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(aluno)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.sucesso) {
+            alert(data.mensagem || 'Erro ao cadastrar aluno');
+            return;
         }
 
-        function subscribeToJICS(modalidadeName) {
-            if (!currentUser) {
-                alert('Faça login primeiro!');
-                return;
-            }
-            inscriptions.push({
-                nome: currentUser.nome,
-                matricula: currentUser.matricula,
-                modalidade: modalidadeName,
-                tipo: 'JICS 2026',
-                data: new Date().toLocaleDateString('pt-BR')
-            });
-            alert(`Inscrição realizada no JICS para ${modalidadeName}!`);
-            closeModal('modalJICS');
-            updateInscriptionsTable();
-        }
+        alert('✅ Aluno cadastrado com sucesso!');
+        event.target.reset();
+    })
+    .catch(() => {
+        alert('Erro ao conectar com o servidor');
+    });
+}
 
-        function confirmInscription() {
-            if (currentUser && currentInscription) {
-                subscribeToTraining(currentInscription.nome);
-            }
-        }
+function addInfo(event) {
+    event.preventDefault();
+    const type = document.getElementById('infoType').value;
+    const titulo = document.getElementById('infoTitulo').value;
+    const descricao = document.getElementById('infoDescricao').value;
 
-        function updateInscriptionsTable() {
-            const tbody = document.getElementById('tabelaInscricoes');
-            if (!tbody) return;
+    if (type === 'noticia') {
+        noticias.push({ id: noticias.length + 1, titulo: titulo, descricao: descricao });
+        renderNews();
+    }
+    alert('Informação adicionada com sucesso!');
+    event.target.reset();
+}
 
-            const rows = inscriptions.map(i => `
-                <tr>
-                    <td>${i.nome}</td>
-                    <td>${i.matricula}</td>
-                    <td>${i.modalidade}</td>
-                    <td>${i.tipo}</td>
-                    <td>${i.data}</td>
-                </tr>
-            `).join('');
-            tbody.innerHTML = rows;
-        }
+function showNotifications() {
+    alert('Você tem 3 notificações:\n1. Novos horários de treino\n2. Inscrições abertas\n3. Próximo evento em 2 semanas');
+}
 
-        function switchAdminTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('active'));
-            document.getElementById(tab).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        function addUser(event) {
-            event.preventDefault();
-            const name = document.getElementById('newUserName').value;
-            const matricula = document.getElementById('newUserMatricula').value;
-            const curso = document.getElementById('newUserCurso').value;
-
-            const newStudent = { nome: allStname, matricula: matricula, curso: curso, turma: '1º' };
-            udents.push(newStudent);
-            alert('Usuário adicionado com sucesso!');
-            event.target.reset();
-        }
-
-        function addInfo(event) {
-            event.preventDefault();
-            const type = document.getElementById('infoType').value;
-            const titulo = document.getElementById('infoTitulo').value;
-            const descricao = document.getElementById('infoDescricao').value;
-
-            if (type === 'noticia') {
-                noticias.push({ id: noticias.length + 1, titulo: titulo, descricao: descricao });
-                renderNews();
-            }
-            alert('Informação adicionada com sucesso!');
-            event.target.reset();
-        }
-
-        function showNotifications() {
-            alert('Você tem 3 notificações:\n1. Novos horários de treino\n2. Inscrições abertas\n3. Próximo evento em 2 semanas');
-        }
-
-        // Initialize
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.classList.remove('show');
-            }
-        }
+// Initialize
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('show');
+    }
+}
