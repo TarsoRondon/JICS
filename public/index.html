@@ -221,7 +221,8 @@
                 <div class="admin-tabs">
                     <button class="admin-tab active" onclick="switchAdminTab('inscricoes')">Inscrições</button>
                     <button class="admin-tab" onclick="switchAdminTab('usuarios')">Usuários</button>
-                    <button class="admin-tab" onclick="switchAdminTab('informacoes')">Informações</button>
+                    <button class="admin-tab" onclick="switchAdminTab('noticias2')">Notícias</button>
+                    <button class="admin-tab" onclick="switchAdminTab('modalidade')">Modalidade</button>
                 </div>
 
                 <div id="inscricoes" class="tab-content active">
@@ -283,17 +284,9 @@
                     </form>
                 </div>
 
-                <div id="informacoes" class="tab-content">
-                    <h3>Adicionar Nova Modalidade ou Notícia</h3>
-                    <form onsubmit="addInfo(event)" style="display: grid; gap: 15px; max-width: 500px;">
-                        <div class="form-group">
-                            <label>Tipo</label>
-                            <select id="infoType" required>
-                                <option value="">Selecione...</option>
-                                <option value="modalidade">Modalidade</option>
-                                <option value="noticia">Notícia</option>
-                            </select>
-                        </div>
+                <div id="noticias2" class="tab-content">
+                    <h3>Adicionar Nova Notícia</h3>
+                    <form onsubmit="addNoticia(event)" style="display: grid; gap: 15px; max-width: 500px;">
                         <div class="form-group">
                             <label>Título</label>
                             <input type="text" id="infoTitulo" required />
@@ -302,6 +295,59 @@
                             <label>Descrição</label>
                             <textarea id="infoDescricao" required></textarea>
                         </div>
+                        <button type="submit" class="btn-submit">Adicionar</button>
+                    </form>
+                </div>
+
+                <div id="modalidade" class="tab-content">
+                    <h3>Adicionar Nova Modalidade</h3>
+
+                    <form onsubmit="addModalidade(event)" style="display: grid; gap: 15px; max-width: 500px;">
+                        <div class="form-group">
+                            <label>Título</label>
+                            <input type="text" id="modalidadeTitulo" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Ícone da Modalidade</label>
+                            <select id="modalidadeIcone" required>
+                                <option value="">Selecione...</option>
+                                <option value="⚽">⚽ Futebol</option>
+                                <option value="🏀">🏀 Basquete</option>
+                                <option value="🏐">🏐 Vôlei</option>
+                                <option value="🏃">🏃 Atletismo</option>
+                                <option value="🥋">🥋 Judô</option>
+                                <option value="🏊">🏊 Natação</option>
+                                <option value="🏓">🏓 Tênis de mesa</option>
+                                <option value="🏋️">🏋️ Musculação</option>
+                            </select>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label>Descrição</label>
+                            <textarea id="modalidadeDescricao" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Professor(a)</label>
+                            <select id="modalidadeProfessor" required>
+                                <option value="">Selecione...</option>
+                                <option value="Juarez">Prof Juarez</option>
+                                <option value="Marília">Prof Marília</option>
+                                <option value="Aline">Prof Aline</option>
+                                <option value="Livre">Livre</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Horário</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="time" id="horaInicio" required>
+                                <span>às</span>
+                                <input type="time" id="horaFim" required>
+                            </div>
+                        </div>
+
                         <button type="submit" class="btn-submit">Adicionar</button>
                     </form>
                 </div>
@@ -364,8 +410,6 @@
             </div>
         </div>
     </div>
-    <input type="radio" name="emailEscolhido" value="academico" checked>
-    <input type="radio" name="emailEscolhido" value="pessoal">
 
 
     <!-- Modal Alterar Senha -->

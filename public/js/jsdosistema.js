@@ -1,73 +1,51 @@
 let senhaPendente = null;
-const modalidades = [{
-    id: 1,
-    nome: "Atletismo",
-    professor: "Prof. Juarez",
-    dias: "Segunda e Sexta",
-    horario: "18h30 às 21h",
-    icon: "🏃",
-    descricao: "Corridas, saltos e lançamentos em pista.",
-    video: "https://www.youtube.com/embed/..."
-}, {
-    id: 2,
-    nome: "Basquete",
-    professor: "Prof. Juarez",
-    dias: "Terça e Quinta",
-    horario: "18h30 às 21h",
-    icon: "🏀",
-    descricao: "Esporte coletivo jogado em quadra."
-}, {
-    id: 3,
-    nome: "Futsal",
-    professor: "A definir",
-    dias: "Segunda e Quarta",
-    horario: "18h30 às 21h",
-    icon: "⚽",
-    descricao: "Futebol adaptado para ambientes fechados."
-}, {
-    id: 4,
-    nome: "Voleibol",
-    professor: "Prof. Juarez",
-    dias: "Quarta e Sexta",
-    horario: "18h30 às 21h",
-    icon: "🏐",
-    descricao: "Esporte coletivo com bola e rede."
-}, {
-    id: 5,
-    nome: "Handball",
-    professor: "Profa. Alyne",
-    dias: "Terça e Quinta",
-    horario: "18h30 às 21h",
-    icon: "🤾",
-    descricao: "Jogo rápido com bola e gol."
-}, {
-    id: 6,
-    nome: "Tênis de Mesa",
-    professor: "Treinamento Livre",
-    dias: "Segundas e Quartas",
-    horario: "18h30 às 21h",
-    icon: "🏓",
-    descricao: "Esporte de raquete em miniatura."
-}, {
-    id: 7,
-    nome: "Xadrez",
-    professor: "Treinamento Livre",
-    dias: "Quartas e Sextas",
-    horario: "18h30 às 21h",
-    icon: "♟️",
-    descricao: "Jogo estratégico milenar."
-}, ];
+let modalidades = [];
+let noticias = [];
+
 
 function carregarNoticias() {
     fetch('/noticias')
         .then(res => res.json())
         .then(dados => {
+            noticias = dados;
             renderNews(dados);
-            atualizarDashboard(dados);
+            atualizarDashboard();
         })
         .catch(() => {
             console.error('Erro ao carregar notícias');
         });
+}
+
+function carregarModalidades() {
+    fetch('/modalidades')
+        .then(res => res.json())
+        .then(dados => {
+            modalidades = dados.map(m => ({
+                id: m.id,
+                nome: m.titulo,
+                professor: m.professor,
+                dias: m.dias || 'A definir',
+                horario: formatarHorario(m.hora_inicio, m.hora_fim),
+                icon: m.icone,
+                descricao: m.descricao
+            }));
+
+            renderModalities();
+            renderScheduleTable();
+            atualizarDashboard();
+        })
+        .catch(() => {
+            console.error('Erro ao carregar modalidades');
+        });
+}
+
+function formatarHorario(inicio, fim) {
+    if (!inicio || !fim) return '—';
+
+    const hi = inicio.slice(0, 5).replace(':', 'h');
+    const hf = fim.slice(0, 5).replace(':', 'h');
+
+    return `${hi} às ${hf}`;
 }
 
 let currentUser = null;
@@ -75,7 +53,6 @@ let inscriptions = [];
 let currentInscription = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    carregarNoticias();
     const usuarioSalvo = localStorage.getItem('usuarioLogado');
 
     if (usuarioSalvo) {
@@ -88,12 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const paginaSalva = localStorage.getItem('paginaAtual') || 'dashboard';
 
-        // 🔐 bloqueia páginas indevidas
-        if (paginaSalva === 'admin' && currentUser.role !== 'ADMIN') {
-            showPage('dashboard');
+        if (paginaSalva === 'dashboard') {
+            abrirDashboard(); // ✅ CARREGA TUDO NO MOMENTO CERTO
+        } else if (paginaSalva === 'admin' && currentUser.role !== 'ADMIN') {
+            abrirDashboard(); // 🔐 bloqueio
         } else {
             showPage(paginaSalva);
         }
+
     } else {
         document.getElementById('loginPage').classList.remove('hidden');
         document.getElementById('homePage').classList.add('hidden');
@@ -114,42 +93,47 @@ function handleLogin(event) {
     const senha = document.getElementById('senha').value;
 
     fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, senha })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (!data.sucesso) {
-            alert('Matrícula ou senha inválida!');
-            return;
-        }
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario, senha })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.sucesso) {
+                alert('Matrícula ou senha inválida!');
+                return;
+            }
 
-        // 🔥 ESTADO LIMPO
-        currentUser = data.user;
-        inscriptions = [];
-        currentInscription = null;
+            // 🔥 ESTADO LIMPO
+            currentUser = data.user;
+            inscriptions = [];
+            currentInscription = null;
 
-        // 🔥 RESET DE NAVEGAÇÃO
-        localStorage.setItem('usuarioLogado', JSON.stringify(data.user));
-        localStorage.setItem('paginaAtual', 'dashboard'); // ← ESSENCIAL
+            // 🔥 RESET DE NAVEGAÇÃO
+            localStorage.setItem('usuarioLogado', JSON.stringify(data.user));
+            localStorage.setItem('paginaAtual', 'dashboard'); // ← ESSENCIAL
 
-        showHomePage();
-        showPage('dashboard'); // ← força ponto inicial correto
-    })
-    .catch(() => {
-        alert('Erro inesperado no login');
-    });
+            showHomePage();
+            abrirDashboard(); // ← força ponto inicial correto
+        })
+        .catch(() => {
+            alert('Erro inesperado no login');
+        });
 }
+
+function abrirDashboard() {
+    showPage('dashboard');
+
+    carregarNoticias();
+    carregarModalidades();
+    carregarInscricoesAdmin(); // se quiser refletir inscritos
+}
+
 
 
 function showHomePage() {
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('homePage').classList.remove('hidden');
-
-    renderModalities();
-    renderNews();
-    renderScheduleTable();
 
     const navbar = document.querySelector('.navbar-nav');
 
@@ -519,7 +503,7 @@ function subscribeToTraining(modalidadeName) {
     alert(`Inscrição realizada em ${modalidadeName}!`);
     closeModal('modalTreinos');
     updateInscriptionsTable();
-    atualizarDashboard([]);
+    atualizarDashboard();
 }
 
 function subscribeToJICS(modalidadeName) {
@@ -537,7 +521,42 @@ function subscribeToJICS(modalidadeName) {
     alert(`Inscrição realizada no JICS para ${modalidadeName}!`);
     closeModal('modalJICS');
     updateInscriptionsTable();
-    atualizarDashboard([]);
+    atualizarDashboard();
+}
+
+function addModalidade(event) {
+    event.preventDefault();
+
+    const titulo = document.getElementById('modalidadeTitulo').value;
+    const descricao = document.getElementById('modalidadeDescricao').value;
+    const professor = document.getElementById('modalidadeProfessor').value;
+    const horaInicio = document.getElementById('horaInicio').value;
+    const horaFim = document.getElementById('horaFim').value;
+    const icone = document.getElementById('modalidadeIcone').value;
+
+    fetch('/admin/modalidades', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            titulo,
+            descricao,
+            professor,
+            hora_inicio: horaInicio,
+            hora_fim: horaFim,
+            icone
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.sucesso) {
+            alert('Erro ao cadastrar modalidade');
+            return;
+        }
+
+        alert('🏅 Modalidade cadastrada com sucesso!');
+        event.target.reset();
+        carregarModalidades();
+    });
 }
 
 function confirmInscription() {
@@ -604,14 +623,10 @@ function addUser(event) {
     });
 }
 
-function addInfo(event) {
+function addNoticia(event) {
     event.preventDefault();
-
-    const type = document.getElementById('infoType').value;
     const titulo = document.getElementById('infoTitulo').value;
     const descricao = document.getElementById('infoDescricao').value;
-
-    if (type !== 'noticia') return;
 
     fetch('/admin/noticias', {
         method: 'POST',
@@ -651,17 +666,11 @@ function carregarInscricoesAdmin() {
 }
 
 
-function atualizarDashboard(noticias) {
-    // 🔹 Total de modalidades
+function atualizarDashboard() {
     const totalModalidades = modalidades.length;
-
-    // 🔹 Total de notícias
-    const totalNoticias = noticias ? noticias.length : 0;
-
-    // 🔹 Total de inscritos (geral)
+    const totalNoticias = noticias.length;
     const totalInscritos = inscriptions.length;
 
-    // Atualiza UI
     document.getElementById('totalModalidades').textContent = totalModalidades;
     document.getElementById('totalNoticias').textContent = totalNoticias;
     document.getElementById('totalInscritos').textContent = totalInscritos;

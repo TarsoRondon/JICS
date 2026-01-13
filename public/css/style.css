@@ -26,6 +26,24 @@ body {
 }
 
 
+/*teste*/
+
+.video-container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 30px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+}
+
+.video-container video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+
 /* ===== LOGIN PAGE ===== */
 
 .login-container {
@@ -522,7 +540,7 @@ body {
     background: white;
     padding: 40px;
     border-radius: 12px;
-    max-width: 600px;
+    width: 800px;
     max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);

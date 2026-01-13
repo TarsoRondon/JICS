@@ -65,7 +65,7 @@ app.post('/buscar-aluno', async(req, res) => {
     }
 });
 
-app.post('/alterar-senha', async (req, res) => {
+app.post('/alterar-senha', async(req, res) => {
     const { matricula, senhaAtual, novaSenha } = req.body;
 
     try {
@@ -75,8 +75,7 @@ app.post('/alterar-senha', async (req, res) => {
         const [confere] = await conexao.query(
             `SELECT matricula FROM alunos
              WHERE matricula = ?
-               AND senha = SHA2(?, 256)`,
-            [matricula, senhaAtual]
+               AND senha = SHA2(?, 256)`, [matricula, senhaAtual]
         );
 
         if (confere.length === 0) {
@@ -91,8 +90,7 @@ app.post('/alterar-senha', async (req, res) => {
         const [mesma] = await conexao.query(
             `SELECT matricula FROM alunos
              WHERE matricula = ?
-               AND senha = SHA2(?, 256)`,
-            [matricula, novaSenha]
+               AND senha = SHA2(?, 256)`, [matricula, novaSenha]
         );
 
         if (mesma.length > 0) {
@@ -107,8 +105,7 @@ app.post('/alterar-senha', async (req, res) => {
         await conexao.query(
             `UPDATE alunos
              SET senha = SHA2(?, 256)
-             WHERE matricula = ?`,
-            [novaSenha, matricula]
+             WHERE matricula = ?`, [novaSenha, matricula]
         );
 
         await conexao.end();
@@ -201,7 +198,7 @@ app.post('/admin/add-aluno', async(req, res) => {
     }
 });
 
-app.get('/admin/inscricoes', async (req, res) => {
+app.get('/admin/inscricoes', async(req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query(`
@@ -216,7 +213,7 @@ app.get('/admin/inscricoes', async (req, res) => {
     }
 });
 
-app.post('/admin/noticias', async (req, res) => {
+app.post('/admin/noticias', async(req, res) => {
     const { titulo, descricao } = req.body;
 
     if (!titulo || !descricao) {
@@ -227,8 +224,7 @@ app.post('/admin/noticias', async (req, res) => {
         const conexao = await conectar();
 
         await conexao.query(
-            'INSERT INTO noticias (titulo, descricao) VALUES (?, ?)',
-            [titulo, descricao]
+            'INSERT INTO noticias (titulo, descricao) VALUES (?, ?)', [titulo, descricao]
         );
 
         await conexao.end();
@@ -240,7 +236,7 @@ app.post('/admin/noticias', async (req, res) => {
     }
 });
 
-app.get('/noticias', async (req, res) => {
+app.get('/noticias', async(req, res) => {
     try {
         const conexao = await conectar();
 
@@ -248,6 +244,45 @@ app.get('/noticias', async (req, res) => {
             'SELECT * FROM noticias ORDER BY data_publicacao DESC'
         );
 
+        await conexao.end();
+
+        res.json(rows);
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json([]);
+    }
+});
+
+
+app.post('/admin/modalidades', async(req, res) => {
+    const { titulo, descricao, professor, hora_inicio, hora_fim, icone } = req.body;
+
+    if (!titulo || !descricao || !professor || !hora_inicio || !hora_fim || !icone) {
+        return res.json({ sucesso: false });
+    }
+
+    try {
+        const conexao = await conectar();
+        await conexao.query(
+            `INSERT INTO modalidades 
+             (titulo, descricao, professor, hora_inicio, hora_fim, icone)
+             VALUES (?, ?, ?, ?, ?, ?)`, [titulo, descricao, professor, hora_inicio, hora_fim, icone]
+        );
+        await conexao.end();
+
+        res.json({ sucesso: true });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ sucesso: false });
+    }
+});
+
+app.get('/modalidades', async(req, res) => {
+    try {
+        const conexao = await conectar();
+        const [rows] = await conexao.query(
+            'SELECT * FROM modalidades ORDER BY titulo'
+        );
         await conexao.end();
 
         res.json(rows);
