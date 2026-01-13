@@ -12,7 +12,7 @@ app.post('/login', async(req, res) => {
         const conexao = await conectar();
 
         const [rows] = await conexao.query(
-            'SELECT matricula, nome, campus, turma, email_academico, email_pessoal, descricao_curso, data_nascimento, telefone FROM alunos WHERE matricula = ? AND senha = ?', [usuario, senha]
+            'SELECT matricula, nome, campus, turma, email_academico, email_pessoal, descricao_curso, data_nascimento, telefone FROM alunos WHERE matricula = ? AND senha = SHA2(?, 256)', [usuario, senha]
         );
 
         await conexao.end();
@@ -65,24 +65,21 @@ app.post('/buscar-aluno', async(req, res) => {
     }
 });
 
-app.post('/alterar-senha', async(req, res) => {
+app.post('/alterar-senha', async (req, res) => {
     const { matricula, senhaAtual, novaSenha } = req.body;
 
     try {
         const conexao = await conectar();
 
-        // Buscar senha atual
-        const [rows] = await conexao.query(
-            'SELECT senha FROM alunos WHERE matricula = ?', [matricula]
+        // 1️⃣ Verifica se a senha atual está correta
+        const [confere] = await conexao.query(
+            `SELECT matricula FROM alunos
+             WHERE matricula = ?
+               AND senha = SHA2(?, 256)`,
+            [matricula, senhaAtual]
         );
 
-        if (rows.length === 0) {
-            await conexao.end();
-            return res.json({ sucesso: false, tipo: 'erro' });
-        }
-
-        // Verifica se a senha atual confere
-        if (rows[0].senha !== senhaAtual) {
+        if (confere.length === 0) {
             await conexao.end();
             return res.json({
                 sucesso: false,
@@ -90,8 +87,15 @@ app.post('/alterar-senha', async(req, res) => {
             });
         }
 
-        // Verifica se nova senha é igual à antiga
-        if (rows[0].senha === novaSenha) {
+        // 2️⃣ Evita senha igual à anterior
+        const [mesma] = await conexao.query(
+            `SELECT matricula FROM alunos
+             WHERE matricula = ?
+               AND senha = SHA2(?, 256)`,
+            [matricula, novaSenha]
+        );
+
+        if (mesma.length > 0) {
             await conexao.end();
             return res.json({
                 sucesso: false,
@@ -99,18 +103,20 @@ app.post('/alterar-senha', async(req, res) => {
             });
         }
 
-        // Atualiza senha
+        // 3️⃣ Atualiza a senha
         await conexao.query(
-            'UPDATE alunos SET senha = ? WHERE matricula = ?', [novaSenha, matricula]
+            `UPDATE alunos
+             SET senha = SHA2(?, 256)
+             WHERE matricula = ?`,
+            [novaSenha, matricula]
         );
 
         await conexao.end();
-
         res.json({ sucesso: true });
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ sucesso: false, tipo: 'erro' });
+        res.status(500).json({ sucesso: false });
     }
 });
 
@@ -162,7 +168,7 @@ app.post('/admin/add-aluno', async(req, res) => {
         await conexao.query(`
             INSERT INTO alunos
             (matricula, nome, campus, descricao_curso, codigo_curso, turma, data_nascimento, email_pessoal, senha)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, SHA2(?, 256))
         `, [
             matricula,
             nome,
@@ -175,6 +181,16 @@ app.post('/admin/add-aluno', async(req, res) => {
             senha
         ]);
 
+        await conexao.query(`
+            INSERT INTO inscricoes (matricula, nome, modalidade, tipo)
+            VALUES (?, ?, ?, ?)
+        `, [
+            matricula,
+            nome,
+            null,
+            'Cadastro pelo ADMIN'
+        ]);
+
         await conexao.end();
 
         res.json({ sucesso: true });
@@ -185,6 +201,61 @@ app.post('/admin/add-aluno', async(req, res) => {
     }
 });
 
+app.get('/admin/inscricoes', async (req, res) => {
+    try {
+        const conexao = await conectar();
+        const [rows] = await conexao.query(`
+            SELECT matricula, nome, modalidade, tipo, data_inscricao
+            FROM inscricoes
+            ORDER BY data_inscricao DESC
+        `);
+        await conexao.end();
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json([]);
+    }
+});
+
+app.post('/admin/noticias', async (req, res) => {
+    const { titulo, descricao } = req.body;
+
+    if (!titulo || !descricao) {
+        return res.status(400).json({ sucesso: false });
+    }
+
+    try {
+        const conexao = await conectar();
+
+        await conexao.query(
+            'INSERT INTO noticias (titulo, descricao) VALUES (?, ?)',
+            [titulo, descricao]
+        );
+
+        await conexao.end();
+
+        res.json({ sucesso: true });
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({ sucesso: false });
+    }
+});
+
+app.get('/noticias', async (req, res) => {
+    try {
+        const conexao = await conectar();
+
+        const [rows] = await conexao.query(
+            'SELECT * FROM noticias ORDER BY data_publicacao DESC'
+        );
+
+        await conexao.end();
+
+        res.json(rows);
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json([]);
+    }
+});
 
 
 

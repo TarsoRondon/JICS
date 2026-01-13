@@ -58,23 +58,47 @@ const modalidades = [{
     descricao: "Jogo estratégico milenar."
 }, ];
 
-const noticias = [{
-    id: 1,
-    titulo: "JICS 2026 - Inscrições Abertas!",
-    descricao: "Inscrições abertas para todos os alunos do IFRO. Participe dos Jogos Internos do Campus!"
-}, {
-    id: 2,
-    titulo: "Treinos Iniciados com Sucesso",
-    descricao: "Todos os treinos iniciaram com grande participação dos alunos interessados."
-}, {
-    id: 3,
-    titulo: "Novo Professor de Handball",
-    descricao: "Bem-vindo Profa. Alyne! Ela será responsável pelos treinos de Handball."
-}, ];
+function carregarNoticias() {
+    fetch('/noticias')
+        .then(res => res.json())
+        .then(dados => {
+            renderNews(dados);
+            atualizarDashboard(dados);
+        })
+        .catch(() => {
+            console.error('Erro ao carregar notícias');
+        });
+}
 
 let currentUser = null;
 let inscriptions = [];
 let currentInscription = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    carregarNoticias();
+    const usuarioSalvo = localStorage.getItem('usuarioLogado');
+
+    if (usuarioSalvo) {
+        currentUser = JSON.parse(usuarioSalvo); // 🔥 ESSENCIAL
+
+        document.getElementById('loginPage').classList.add('hidden');
+        document.getElementById('homePage').classList.remove('hidden');
+
+        showHomePage();
+
+        const paginaSalva = localStorage.getItem('paginaAtual') || 'dashboard';
+
+        // 🔐 bloqueia páginas indevidas
+        if (paginaSalva === 'admin' && currentUser.role !== 'ADMIN') {
+            showPage('dashboard');
+        } else {
+            showPage(paginaSalva);
+        }
+    } else {
+        document.getElementById('loginPage').classList.remove('hidden');
+        document.getElementById('homePage').classList.add('hidden');
+    }
+});
 
 // ===== FUNCTIONS =====
 
@@ -90,33 +114,32 @@ function handleLogin(event) {
     const senha = document.getElementById('senha').value;
 
     fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ usuario, senha })
-        })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error('Resposta inválida do servidor');
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (!data.sucesso) {
-                alert('Matrícula ou senha inválida!');
-                return;
-            }
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, senha })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.sucesso) {
+            alert('Matrícula ou senha inválida!');
+            return;
+        }
 
-            currentUser = data.user;
-            showHomePage();
+        // 🔥 ESTADO LIMPO
+        currentUser = data.user;
+        inscriptions = [];
+        currentInscription = null;
 
-            if (currentUser.role === 'ADMIN') {
-                showPage('admin');
-            }
-        })
-        .catch(err => {
-            console.error('Erro no login:', err);
-            alert('Erro inesperado no login. Tente novamente.');
-        });
+        // 🔥 RESET DE NAVEGAÇÃO
+        localStorage.setItem('usuarioLogado', JSON.stringify(data.user));
+        localStorage.setItem('paginaAtual', 'dashboard'); // ← ESSENCIAL
+
+        showHomePage();
+        showPage('dashboard'); // ← força ponto inicial correto
+    })
+    .catch(() => {
+        alert('Erro inesperado no login');
+    });
 }
 
 
@@ -137,41 +160,82 @@ function showHomePage() {
     if (currentUser.role === 'ADMIN') {
         navbar.innerHTML += `
             <li class="admin-only">
-                <a class="nav-link" onclick="showPage('editar')">Editar</a>
-            </li>
-            <li class="admin-only">
-                <a class="nav-link" onclick="showPage('admin')">Admin</a>
+                <a class="nav-link" onclick="showPage('admin')">Editar</a>
             </li>
         `;
     }
 }
 
 function logout() {
+    // Limpa estado global
     currentUser = null;
-    document.getElementById('loginPage').classList.remove('hidden');
+    inscriptions = [];
+    currentInscription = null;
+
+    // Limpa persistência
+    localStorage.removeItem('usuarioLogado');
+    localStorage.removeItem('paginaAtual');
+
+    // Limpa UI sensível
+    document.querySelectorAll('.admin-only').forEach(el => el.remove());
+
+    // Limpa perfil visualmente
+    limparPerfil();
+
+    // Volta para login
     document.getElementById('homePage').classList.add('hidden');
-    document.getElementById('loginForm').reset();
+    document.getElementById('loginPage').classList.remove('hidden');
+}
+
+function limparPerfil() {
+    const campos = [
+        'perfilNome',
+        'perfilMatricula',
+        'perfilCurso',
+        'perfilTurma',
+        'perfilCampus',
+        'perfilNascimento',
+        'perfilTelefone',
+        'perfilEmailAcademico',
+        'perfilEmailPessoal'
+    ];
+
+    campos.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+    });
 }
 
 function showPage(page) {
+    if (!currentUser) return; // 🔐 segurança
+
     document.querySelectorAll('.page-content').forEach(el =>
         el.classList.add('hidden')
     );
+
     document.getElementById(page).classList.remove('hidden');
 
-    // Remove active de todos
     document.querySelectorAll('.nav-link').forEach(el =>
         el.classList.remove('active')
     );
 
-    // Ativa o link correspondente
     const linkAtivo = document.querySelector(`.nav-link[onclick*="${page}"]`);
-    if (linkAtivo) {
-        linkAtivo.classList.add('active');
+    if (linkAtivo) linkAtivo.classList.add('active');
+
+    localStorage.setItem('paginaAtual', page);
+
+    // 🔥 ORDEM GARANTIDA
+    if (page === 'perfil') {
+        limparPerfil();
+        carregarPerfil();
     }
 
-    if (page === 'perfil') {
-        carregarPerfil();
+    if (page === 'admin') {
+        carregarInscricoesAdmin();
+    }
+
+    if (page === 'noticias') {
+        carregarNoticias();
     }
 }
 
@@ -223,24 +287,62 @@ function renderModalities() {
             `).join('');
 }
 
-function renderNews() {
+function renderNews(noticias) {
     const grid = document.getElementById('noticiasGrid');
     const allGrid = document.getElementById('allNoticiasGrid');
 
-    const html = noticias.map(n => `
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-icon">📰</div>
-                        <div class="card-title">${n.titulo}</div>
-                    </div>
-                    <div class="card-body">
-                        <p>${n.descricao}</p>
-                    </div>
-                </div>
-            `).join('');
+    if (!noticias || noticias.length === 0) {
+        if (allGrid) allGrid.innerHTML = '<p>Nenhuma notícia publicada.</p>';
+        if (grid) grid.innerHTML = '';
+        return;
+    }
 
-    grid.innerHTML = html;
-    allGrid.innerHTML = html;
+    const noticiasOrdenadas = [...noticias].sort(
+        (a, b) => new Date(b.data_publicacao) - new Date(a.data_publicacao)
+    );
+
+    // 📰 HTML completo (todas as notícias)
+    const htmlAll = noticiasOrdenadas.map(n => `
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon">📰</div>
+                <div class="card-title">${n.titulo}</div>
+            </div>
+            <div class="card-body">
+                <p>${n.descricao}</p>
+                <small>
+                    ${new Date(n.data_publicacao).toLocaleString('pt-BR', {
+                        dateStyle: 'short',
+                        timeStyle: 'short'
+                    }).replace(',', ' às')}
+                </small>
+            </div>
+        </div>
+    `).join('');
+
+    // 🧩 Dashboard → só as 3 mais recentes
+    const htmlDashboard = noticiasOrdenadas
+        .slice(0, 3)
+        .map(n => `
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📰</div>
+                    <div class="card-title">${n.titulo}</div>
+                </div>
+                <div class="card-body">
+                    <p>${n.descricao}</p>
+                    <small>
+                        ${new Date(n.data_publicacao).toLocaleString('pt-BR', {
+                            dateStyle: 'short',
+                            timeStyle: 'short'
+                        }).replace(',', ' às')}
+                    </small>
+                </div>
+            </div>
+        `).join('');
+
+    if (allGrid) allGrid.innerHTML = htmlAll;
+    if (grid) grid.innerHTML = htmlDashboard;
 }
 
 function renderScheduleTable() {
@@ -258,6 +360,8 @@ function renderScheduleTable() {
 
 function carregarPerfil() {
     if (!currentUser) return;
+
+    limparPerfil();
 
     document.getElementById('perfilNome').textContent = currentUser.nome;
     document.getElementById('perfilMatricula').textContent = currentUser.matricula;
@@ -415,6 +519,7 @@ function subscribeToTraining(modalidadeName) {
     alert(`Inscrição realizada em ${modalidadeName}!`);
     closeModal('modalTreinos');
     updateInscriptionsTable();
+    atualizarDashboard([]);
 }
 
 function subscribeToJICS(modalidadeName) {
@@ -432,6 +537,7 @@ function subscribeToJICS(modalidadeName) {
     alert(`Inscrição realizada no JICS para ${modalidadeName}!`);
     closeModal('modalJICS');
     updateInscriptionsTable();
+    atualizarDashboard([]);
 }
 
 function confirmInscription() {
@@ -491,6 +597,7 @@ function addUser(event) {
 
         alert('✅ Aluno cadastrado com sucesso!');
         event.target.reset();
+        carregarInscricoesAdmin()
     })
     .catch(() => {
         alert('Erro ao conectar com o servidor');
@@ -499,21 +606,67 @@ function addUser(event) {
 
 function addInfo(event) {
     event.preventDefault();
+
     const type = document.getElementById('infoType').value;
     const titulo = document.getElementById('infoTitulo').value;
     const descricao = document.getElementById('infoDescricao').value;
 
-    if (type === 'noticia') {
-        noticias.push({ id: noticias.length + 1, titulo: titulo, descricao: descricao });
-        renderNews();
-    }
-    alert('Informação adicionada com sucesso!');
-    event.target.reset();
+    if (type !== 'noticia') return;
+
+    fetch('/admin/noticias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titulo, descricao })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.sucesso) {
+            alert('Erro ao publicar notícia');
+            return;
+        }
+
+        alert('📰 Notícia publicada com sucesso!');
+        event.target.reset();
+        carregarNoticias(); // 🔥 atualiza para todos
+    });
 }
 
 function showNotifications() {
     alert('Você tem 3 notificações:\n1. Novos horários de treino\n2. Inscrições abertas\n3. Próximo evento em 2 semanas');
 }
+
+function carregarInscricoesAdmin() {
+    fetch('/admin/inscricoes')
+        .then(res => res.json())
+        .then(dados => {
+            inscriptions = dados.map(i => ({
+                nome: i.nome,
+                matricula: i.matricula,
+                modalidade: i.modalidade || '—',
+                tipo: i.tipo,
+                data: new Date(i.data_inscricao).toLocaleDateString('pt-BR')
+            }));
+            updateInscriptionsTable();
+        });
+}
+
+
+function atualizarDashboard(noticias) {
+    // 🔹 Total de modalidades
+    const totalModalidades = modalidades.length;
+
+    // 🔹 Total de notícias
+    const totalNoticias = noticias ? noticias.length : 0;
+
+    // 🔹 Total de inscritos (geral)
+    const totalInscritos = inscriptions.length;
+
+    // Atualiza UI
+    document.getElementById('totalModalidades').textContent = totalModalidades;
+    document.getElementById('totalNoticias').textContent = totalNoticias;
+    document.getElementById('totalInscritos').textContent = totalInscritos;
+}
+
 
 // Initialize
 window.onclick = function(event) {

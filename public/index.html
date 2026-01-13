@@ -81,15 +81,15 @@
                 <p class="hero-subtitle">Instituto Federal de Ciência, Educação e Tecnologia de Rondônia - Campus Porto Velho Calama</p>
                 <div class="hero-stats">
                     <div class="stat-box">
-                        <div class="stat-number">42</div>
+                        <div class="stat-number" id="totalInscritos">0</div>
                         <div class="stat-label">Inscritos</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-number">7</div>
+                        <div class="stat-number" id="totalModalidades">0</div>
                         <div class="stat-label">Modalidades</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-number">8</div>
+                        <div class="stat-number" id="totalNoticias">0</div>
                         <div class="stat-label">Notícias</div>
                     </div>
                 </div>
@@ -241,7 +241,7 @@
                 </div>
 
                 <div id="usuarios" class="tab-content">
-                    <h3>Registrar Novo Usuário</h3>
+                    <h3 style="margin-bottom: 10px;">Registrar Novo Usuário</h3>
                     <form onsubmit="addUser(event)" style="display: grid; gap: 15px; max-width: 500px;">
                         <div class="form-group">
                             <label>Nome Completo</label>
@@ -275,9 +275,9 @@
                             <label>Turma</label>
                             <input type="text" id="newTurma" placeholder="Turma" required>
                         </div>
-                        <input type="date" id="newNascimento" required>
-                        <input type="email" id="newEmail" placeholder="Email pessoal" required>
-                        <input type="password" id="newSenha" placeholder="Senha inicial" required>
+                        <div class="form-group"><input type="date" id="newNascimento" required></div>
+                        <div class="form-group"><input type="email" id="newEmail" placeholder="Email pessoal" required></div>
+                        <div class="form-group"><input type="password" id="newSenha" placeholder="Senha inicial" required></div>
 
                         <button type="submit" class="btn-submit">Adicionar Usuário</button>
                     </form>
