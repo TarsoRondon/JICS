@@ -59,7 +59,7 @@
                 <div class="navbar-brand">🏆 IFRO Esportes</div>
                 <ul class="navbar-nav">
                     <li><a class="nav-link active" onclick="showPage('dashboard')">Início</a></li>
-                    <li><a class="nav-link" onclick="showPage('modalidades')">Modalidades</a></li>
+                    <li><a class="nav-link" onclick="showPage('modalidades')">Inscrições</a></li>
                     <li><a class="nav-link" onclick="showPage('horarios')">Horários</a></li>
                     <li><a class="nav-link" onclick="showPage('noticias')">Notícias</a></li>
                     <li><a class="nav-link" onclick="showPage('perfil')">Perfil</a></li>
@@ -99,10 +99,10 @@
                 <h2 class="section-title">Próximas Ações</h2>
 
                 <div class="action-buttons">
-                    <button class="btn-action primary" onclick="openModal('treinos')">
-                        📋 Inscreva-se aos Treinos
+                    <button class="btn-action primary" onclick="showPage('horarios')"> <!--TIRAMOS O openModal('jics')-->
+                        📋 Participe dos Treinos
                     </button>
-                    <button class="btn-action" onclick="openModal('jics')">
+                    <button class="btn-action" onclick="showPage('modalidades')"> <!--TIRAMOS O openModal('jics')-->
                         🏅 Participe do JIC's 2026
                     </button>
                 </div>
@@ -340,6 +340,20 @@
                         </div>
 
                         <div class="form-group">
+                            <label>Dias de Treino</label>
+
+                            <div class="dias-semana">
+                                <label><input type="checkbox" value="Segunda"> Segunda</label>
+                                <label><input type="checkbox" value="Terça"> Terça</label>
+                                <label><input type="checkbox" value="Quarta"> Quarta</label>
+                                <label><input type="checkbox" value="Quinta"> Quinta</label>
+                                <label><input type="checkbox" value="Sexta"> Sexta</label>
+                            </div>
+
+                            <small>Selecione até 2 dias</small>
+                        </div>
+
+                        <div class="form-group">
                             <label>Horário</label>
                             <div style="display: flex; gap: 10px;">
                                 <input type="time" id="horaInicio" required>
@@ -469,6 +483,45 @@
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeModalConfirmar()">Cancelar</button>
                 <button class="btn-danger" onclick="confirmarTrocaSenha()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!--editar noticias-->
+
+    <div id="modalEditarNoticia" class="modal">
+        <div class="modal-content">
+            <h2>✏️ Editar Notícia</h2>
+
+            <input type="hidden" id="editNoticiaId">
+
+            <label>Título</label>
+            <input type="text" id="editTitulo">
+
+            <label>Descrição</label>
+            <textarea id="editDescricao" rows="5"></textarea>
+
+            <div class="modal-actions">
+                <button onclick="salvarEdicaoNoticia()">💾 Salvar</button>
+                <button class="btn-cancel" onclick="fecharModalEditar()">❌ Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalDetalhes" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes</h2>
+                <button class="close-btn" onclick="fecharModal()">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- conteúdo -->
+            </div>
+
+            <div class="modal-actions">
+                <button onclick="fecharModal()">Fechar</button>
+                <button class="btn-primary">Confirmar Inscrição</button>
             </div>
         </div>
     </div>

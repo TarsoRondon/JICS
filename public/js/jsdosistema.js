@@ -1,6 +1,7 @@
 let senhaPendente = null;
 let modalidades = [];
 let noticias = [];
+let diasModalidades = JSON.parse(localStorage.getItem('diasModalidades')) || {};
 
 
 function carregarNoticias() {
@@ -24,7 +25,7 @@ function carregarModalidades() {
                 id: m.id,
                 nome: m.titulo,
                 professor: m.professor,
-                dias: m.dias || 'A definir',
+                dias: diasModalidades[m.titulo] || 'A definir',
                 horario: formatarHorario(m.hora_inicio, m.hora_fim),
                 icon: m.icone,
                 descricao: m.descricao
@@ -221,6 +222,10 @@ function showPage(page) {
     if (page === 'noticias') {
         carregarNoticias();
     }
+
+    if (page === 'modalidades' || page === 'horarios') {
+        carregarModalidades(); // ← 🔥 ESSENCIAL
+    }
 }
 
 function renderModalities() {
@@ -272,8 +277,8 @@ function renderModalities() {
 }
 
 function renderNews(noticias) {
-    const grid = document.getElementById('noticiasGrid');
-    const allGrid = document.getElementById('allNoticiasGrid');
+    const grid = document.getElementById('noticiasGrid'); // dashboard
+    const allGrid = document.getElementById('allNoticiasGrid'); // página de notícias
 
     if (!noticias || noticias.length === 0) {
         if (allGrid) allGrid.innerHTML = '<p>Nenhuma notícia publicada.</p>';
@@ -285,26 +290,60 @@ function renderNews(noticias) {
         (a, b) => new Date(b.data_publicacao) - new Date(a.data_publicacao)
     );
 
-    // 📰 HTML completo (todas as notícias)
+    // =========================
+    // 📰 TODAS AS NOTÍCIAS
+    // =========================
     const htmlAll = noticiasOrdenadas.map(n => `
         <div class="card">
             <div class="card-header">
                 <div class="card-icon">📰</div>
                 <div class="card-title">${n.titulo}</div>
             </div>
+
             <div class="card-body">
                 <p>${n.descricao}</p>
+
                 <small>
                     ${new Date(n.data_publicacao).toLocaleString('pt-BR', {
                         dateStyle: 'short',
                         timeStyle: 'short'
                     }).replace(',', ' às')}
                 </small>
+
+                ${
+                    n.data_edicao
+                        ? `
+                            <br>
+                            <small class="edited">
+                                ✏️ Editado em:
+                                ${new Date(n.data_edicao).toLocaleString('pt-BR', {
+                                    dateStyle: 'short',
+                                    timeStyle: 'short'
+                                }).replace(',', ' às')}
+                            </small>
+                        `
+                        : ''
+                }
+
+                <div class="card-actions">
+                    <button onclick="verNoticia(${n.id})" class="botao-noticias"> Ver</button>
+
+                    ${
+                        currentUser.role === 'ADMIN'
+                            ? `
+                                <button onclick="editarNoticia(${n.id})" class="botao-noticias"> Editar</button>
+                                <button onclick="excluirNoticia(${n.id})" class="botao-noticias"> Excluir</button>
+                              `
+                            : ''
+                    }
+                </div>
             </div>
         </div>
     `).join('');
 
-    // 🧩 Dashboard → só as 3 mais recentes
+    // =========================
+    // 🧩 DASHBOARD (3 ÚLTIMAS)
+    // =========================
     const htmlDashboard = noticiasOrdenadas
         .slice(0, 3)
         .map(n => `
@@ -313,14 +352,44 @@ function renderNews(noticias) {
                     <div class="card-icon">📰</div>
                     <div class="card-title">${n.titulo}</div>
                 </div>
+
                 <div class="card-body">
                     <p>${n.descricao}</p>
+
                     <small>
                         ${new Date(n.data_publicacao).toLocaleString('pt-BR', {
                             dateStyle: 'short',
                             timeStyle: 'short'
                         }).replace(',', ' às')}
                     </small>
+
+                    ${
+                        n.data_edicao
+                            ? `
+                                <br>
+                                <small class="edited">
+                                    ✏️ Editado em:
+                                    ${new Date(n.data_edicao).toLocaleString('pt-BR', {
+                                        dateStyle: 'short',
+                                        timeStyle: 'short'
+                                    }).replace(',', ' às')}
+                                </small>
+                            `
+                            : ''
+                    }
+
+                    <div class="card-actions">
+                        <button onclick="verNoticia(${n.id})"> Ver</button>
+
+                        ${
+                            currentUser.role === 'ADMIN'
+                                ? `
+                                    <button onclick="editarNoticia(${n.id})"> Editar</button>
+                                    <button onclick="excluirNoticia(${n.id})"> Excluir</button>
+                                  `
+                                : ''
+                        }
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -328,6 +397,7 @@ function renderNews(noticias) {
     if (allGrid) allGrid.innerHTML = htmlAll;
     if (grid) grid.innerHTML = htmlDashboard;
 }
+
 
 function renderScheduleTable() {
     const tbody = document.getElementById('tabelaHorarios');
@@ -456,7 +526,7 @@ function closeModalConfirmar() {
     senhaPendente = null;
 }
 
-function openModal(type) {
+function openModal(type) { //ESSA FUNÇÃO NÃO ESTÁ MAIS SENDO USADA
     if (type === 'treinos') {
         document.getElementById('modalTreinos').classList.add('show');
     } else if (type === 'jics') {
@@ -534,6 +604,18 @@ function addModalidade(event) {
     const horaFim = document.getElementById('horaFim').value;
     const icone = document.getElementById('modalidadeIcone').value;
 
+    // 🔹 Dias selecionados
+    const diasSelecionados = Array.from(
+        document.querySelectorAll('.dias-semana input:checked')
+    ).map(el => el.value);
+
+    if (diasSelecionados.length === 0 || diasSelecionados.length > 2) {
+        alert('Selecione até 2 dias de treino.');
+        return;
+    }
+
+    const dias = diasSelecionados.join(' e '); // "Segunda e Quinta"
+
     fetch('/admin/modalidades', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -543,7 +625,8 @@ function addModalidade(event) {
             professor,
             hora_inicio: horaInicio,
             hora_fim: horaFim,
-            icone
+            icone,
+            dias // 🔥 enviado só pro front
         })
     })
     .then(res => res.json())
@@ -552,11 +635,26 @@ function addModalidade(event) {
             alert('Erro ao cadastrar modalidade');
             return;
         }
+        diasModalidades[titulo] = dias;
+        localStorage.setItem('diasModalidades', JSON.stringify(diasModalidades));
+   
+        modalidades.push({
+            id: Date.now(), // id temporário
+            nome: titulo,
+            professor,
+            dias, // 👈 AGORA EXISTE
+            horario: formatarHorario(horaInicio, horaFim),
+            icon: icone,
+            descricao
+        });
 
         alert('🏅 Modalidade cadastrada com sucesso!');
         event.target.reset();
-        carregarModalidades();
-    });
+
+        renderModalities();
+        renderScheduleTable();
+        atualizarDashboard();
+    }); 
 }
 
 function confirmInscription() {
@@ -674,6 +772,95 @@ function atualizarDashboard() {
     document.getElementById('totalModalidades').textContent = totalModalidades;
     document.getElementById('totalNoticias').textContent = totalNoticias;
     document.getElementById('totalInscritos').textContent = totalInscritos;
+}
+
+//função de noticias 
+
+function verNoticia(id) {
+    const noticia = noticias.find(n => n.id === id);
+    if (!noticia) return;
+
+    alert(
+        `📰 ${noticia.titulo}\n\n${noticia.descricao}\n\nPublicado em: ${
+            new Date(noticia.data_publicacao).toLocaleString('pt-BR')
+        }`
+    );
+}
+
+function editarNoticia(id) {
+    if (currentUser.role !== 'ADMIN') return;
+
+    const noticia = noticias.find(n => n.id === id);
+    if (!noticia) return;
+
+    document.getElementById('editNoticiaId').value = noticia.id;
+    document.getElementById('editTitulo').value = noticia.titulo;
+    document.getElementById('editDescricao').value = noticia.descricao;
+
+    document.getElementById('modalEditarNoticia').classList.add('show');
+}
+function fecharModalEditar() {
+    document.getElementById('modalEditarNoticia').classList.remove('show');
+}
+function salvarEdicaoNoticia() {
+    const id = document.getElementById('editNoticiaId').value;
+    const titulo = document.getElementById('editTitulo').value.trim();
+    const descricao = document.getElementById('editDescricao').value.trim();
+
+    if (!titulo || !descricao) {
+        alert('Preencha todos os campos.');
+        return;
+    }
+
+    fetch(`/noticias/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ titulo, descricao })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+    })
+    .then(noticiaAtualizada => {
+        // Atualiza no array local
+        const index = noticias.findIndex(n => n.id == id);
+        if (index !== -1) {
+            noticias[index] = noticiaAtualizada;
+        }
+
+        renderNews(noticias);
+        fecharModalEditar();
+        carregarNoticias();
+    })
+    .catch(() => alert('Erro ao salvar edição'));
+}
+
+
+function excluirNoticia(id) {
+    if (currentUser.role !== 'ADMIN') return;
+
+    const confirmacao = confirm('Tem certeza que deseja excluir esta notícia?');
+    if (!confirmacao) return;
+
+    fetch(`/noticias/${id}`, {
+        method: 'DELETE'
+    })
+    .then(res => {
+        if (!res.ok) throw new Error();
+        noticias = noticias.filter(n => n.id != id);
+        renderNews(noticias);
+    })
+    .catch(() => alert('Erro ao excluir notícia'));
+}
+
+function abrirModal() {
+    document.getElementById('modalDetalhes').classList.remove('hidden');
+}
+
+function fecharModal() {
+    document.getElementById('modalDetalhes').classList.add('hidden');
 }
 
 

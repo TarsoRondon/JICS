@@ -663,6 +663,60 @@ tbody tr:hover {
 }
 
 
+/*Botão notícia*/
+
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-content h2 {
+    margin-bottom: 15px;
+}
+
+.modal-content label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+}
+
+.modal-content input,
+.modal-content textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.edited {
+    color: #666;
+    font-style: italic;
+}
+
+.dias-semana {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.dias-semana label {
+    cursor: pointer;
+}
+
+.botao-noticias {
+    /*Mexer na estilização de notícias*/
+}
+
+
 /* Admin Panel */
 
 .admin-tabs {

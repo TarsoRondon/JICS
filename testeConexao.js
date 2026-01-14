@@ -4,8 +4,8 @@ export async function conectar() {
     const conexao = await mysql.createConnection({
         host: 'localhost',
         port: 3308,
-        user: 'appuser',
-        password: '123456',
+        user: 'root',
+        password: '251030',
         database: 'banco_dados'
     });
 

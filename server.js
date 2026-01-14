@@ -292,8 +292,52 @@ app.get('/modalidades', async(req, res) => {
     }
 });
 
+/* editar noticia*/
+app.put('/noticias/:id', async(req, res) => {
+    const { titulo, descricao } = req.body;
+    const { id } = req.params;
 
+    try {
+        const conexao = await conectar();
 
+        await conexao.query(
+            `UPDATE noticias 
+             SET titulo = ?, 
+                 descricao = ?, 
+                 data_edicao = NOW()
+             WHERE id = ?`, [titulo, descricao, id]
+        );
+
+        const [rows] = await conexao.query(
+            'SELECT * FROM noticias WHERE id = ?', [id]
+        );
+
+        await conexao.end();
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+app.delete('/noticias/:id', async(req, res) => {
+    const { id } = req.params;
+
+    try {
+        const conexao = await conectar();
+
+        await conexao.query(
+            'DELETE FROM noticias WHERE id = ?', [id]
+        );
+
+        await conexao.end();
+
+        res.json({ sucesso: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(err);
+    }
+});
+///////////////
 app.listen(3000, () => {
     console.log('🚀 Servidor rodando em http://localhost:3000');
 });
