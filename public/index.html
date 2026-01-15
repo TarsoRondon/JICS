@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IFRO Esportes - JICS</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="assets/ifro.png">
 </head>
 
 <body>
@@ -56,7 +57,7 @@
     <div id="homePage" class="home-container hidden">
         <nav class="navbar">
             <div class="navbar-left">
-                <div class="navbar-brand">🏆 IFRO Esportes</div>
+                <div class="navbar-brand">IFRO ESPORTES</div>
                 <ul class="navbar-nav">
                     <li><a class="nav-link active" onclick="showPage('dashboard')">Início</a></li>
                     <li><a class="nav-link" onclick="showPage('modalidades')">Inscrições</a></li>
@@ -226,13 +227,15 @@
                 </div>
 
                 <div id="inscricoes" class="tab-content active">
-                    <h3>Gerenciar Inscrições</h3>
+                    <h3 class="titulo-painel">Gerenciar Inscrições</h3>
                     <table>
                         <thead>
                             <tr>
                                 <th>Nome</th>
                                 <th>Matrícula</th>
+                                <th>Turma</th>
                                 <th>Modalidade</th>
+                                <th>Sexo</th>
                                 <th>Tipo</th>
                                 <th>Data</th>
                             </tr>
@@ -242,7 +245,7 @@
                 </div>
 
                 <div id="usuarios" class="tab-content">
-                    <h3 style="margin-bottom: 10px;">Registrar Novo Usuário</h3>
+                    <h3 class="titulo-painel">Registrar Novo Usuário</h3>
                     <form onsubmit="addUser(event)" style="display: grid; gap: 15px; max-width: 500px;">
                         <div class="form-group">
                             <label>Nome Completo</label>
@@ -285,7 +288,7 @@
                 </div>
 
                 <div id="noticias2" class="tab-content">
-                    <h3>Adicionar Nova Notícia</h3>
+                    <h3 class="titulo-painel">Adicionar Nova Notícia</h3>
                     <form onsubmit="addNoticia(event)" style="display: grid; gap: 15px; max-width: 500px;">
                         <div class="form-group">
                             <label>Título</label>
@@ -300,7 +303,7 @@
                 </div>
 
                 <div id="modalidade" class="tab-content">
-                    <h3>Adicionar Nova Modalidade</h3>
+                    <h3 class="titulo-painel">Adicionar Nova Modalidade</h3>
 
                     <form onsubmit="addModalidade(event)" style="display: grid; gap: 15px; max-width: 500px;">
                         <div class="form-group">
@@ -452,7 +455,7 @@
     <div id="toastSucesso" class="toast hidden">
         <div class="toast-content">
             <strong>✅ Sucesso!</strong>
-            <p>Senha alterada com sucesso.</p>
+            <p id="toastSecessoMsg"></p>
             <div class="toast-timer"></div>
         </div>
     </div>
@@ -538,9 +541,46 @@
         </div>
     </div>
 
+    !
+    <!--botão ver-->
+    <div id="modalVerNoticia" class="modal-overlay">
+        <div class="modal-box modal-ver">
+            <h3 id="verTitulo">📢 Título da notícia</h3>
+
+            <p class="ver-descricao" id="verDescricao"></p>
+
+            <div class="ver-datas">
+                <small id="verPublicacao"></small><br>
+                <small id="verEdicao"></small>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn-cancelar" onclick="fecharModalVer()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!--modal de excluir noticia-->
+    <div id="modalExcluir" class="modal-overlay">
+        <div class="modal-box">
+            <h3> Excluir notícia</h3>
+            <p>Tem certeza que deseja excluir esta notícia?<br>
+                <strong>Essa ação não pode ser desfeita.</strong>
+            </p>
+
+            <div class="modal-buttons">
+                <button class="btn-cancelar" onclick="fecharModalExcluir()">Cancelar</button>
+                <button class="btn-excluir" onclick="confirmarExclusao()">Excluir</button>
+            </div>
+        </div>
+    </div>
+
 
     <script src="js/jsdosistema.js"></script>
 
 </body>
+
+</html>
 
 </html>

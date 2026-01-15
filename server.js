@@ -331,10 +331,10 @@ app.delete('/noticias/:id', async(req, res) => {
 
         await conexao.end();
 
-        res.json({ sucesso: true });
+        res.status(200).json({ sucesso: true });
     } catch (err) {
         console.error(err);
-        res.status(500).json(err);
+        res.status(500).json({ sucesso: false });
     }
 });
 ///////////////

@@ -500,8 +500,9 @@ function confirmarTrocaSenha() {
 }
 
 
-function showToastSucesso() {
+function showToastSucesso(mensagem) {
     const toast = document.getElementById('toastSucesso');
+    document.getElementById('toastSecessoMsg').textContent = mensagem;
 
     toast.classList.remove('hidden');
 
@@ -671,7 +672,9 @@ function updateInscriptionsTable() {
         <tr>
             <td>${i.nome}</td>
             <td>${i.matricula}</td>
+            <td>${i.turma}</td>
             <td>${i.modalidade}</td>
+            <td>${i.sexo}</td>
             <td>${i.tipo}</td>
             <td>${i.data}</td>
         </tr>
@@ -708,16 +711,16 @@ function addUser(event) {
     .then(res => res.json())
     .then(data => {
         if (!data.sucesso) {
-            alert(data.mensagem || 'Erro ao cadastrar aluno');
+            showToastErro(data.mensagem || 'Erro ao cadastrar aluno');
             return;
         }
 
-        alert('✅ Aluno cadastrado com sucesso!');
+        showToastSucesso('✅ Aluno cadastrado com sucesso!');
         event.target.reset();
         carregarInscricoesAdmin()
     })
     .catch(() => {
-        alert('Erro ao conectar com o servidor');
+        showToastErro('Erro ao conectar com o servidor');
     });
 }
 
@@ -780,12 +783,34 @@ function verNoticia(id) {
     const noticia = noticias.find(n => n.id === id);
     if (!noticia) return;
 
-    alert(
-        `📰 ${noticia.titulo}\n\n${noticia.descricao}\n\nPublicado em: ${
-            new Date(noticia.data_publicacao).toLocaleString('pt-BR')
-        }`
-    );
+    document.getElementById('verTitulo').textContent = noticia.titulo;
+    document.getElementById('verDescricao').textContent = noticia.descricao;
+
+    document.getElementById('verPublicacao').textContent =
+        '📅 Publicado em: ' +
+        new Date(noticia.data_publicacao).toLocaleString('pt-BR', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+        }).replace(',', ' às');
+
+    if (noticia.data_edicao) {
+        document.getElementById('verEdicao').textContent =
+            '✏️ Editado em: ' +
+            new Date(noticia.data_edicao).toLocaleString('pt-BR', {
+                dateStyle: 'short',
+                timeStyle: 'short'
+            }).replace(',', ' às');
+    } else {
+        document.getElementById('verEdicao').textContent = '';
+    }
+
+    document.getElementById('modalVerNoticia').classList.add('show');
 }
+
+function fecharModalVer() {
+    document.getElementById('modalVerNoticia').classList.remove('show');
+}
+
 
 function editarNoticia(id) {
     if (currentUser.role !== 'ADMIN') return;
@@ -832,36 +857,46 @@ function salvarEdicaoNoticia() {
 
         renderNews(noticias);
         fecharModalEditar();
+        showToastSucesso("Alteração feita com Sucesso");
         carregarNoticias();
     })
-    .catch(() => alert('Erro ao salvar edição'));
+    .catch(() => {
+        showToastErro('Erro ao salvar edição');
+    });
 }
 
+
+let noticiaParaExcluir = null;
 
 function excluirNoticia(id) {
     if (currentUser.role !== 'ADMIN') return;
 
-    const confirmacao = confirm('Tem certeza que deseja excluir esta notícia?');
-    if (!confirmacao) return;
+    noticiaParaExcluir = id;
+    document.getElementById('modalExcluir').classList.add('show');
+}
 
-    fetch(`/noticias/${id}`, {
+function fecharModalExcluir() {
+    noticiaParaExcluir = null;
+    document.getElementById('modalExcluir').classList.remove('show');
+}
+
+function confirmarExclusao() {
+    fetch(`/noticias/${noticiaParaExcluir}`, {
         method: 'DELETE'
     })
     .then(res => {
         if (!res.ok) throw new Error();
-        noticias = noticias.filter(n => n.id != id);
+
+        noticias = noticias.filter(n => n.id !== noticiaParaExcluir);
         renderNews(noticias);
+        fecharModalExcluir();
     })
-    .catch(() => alert('Erro ao excluir notícia'));
+    .catch(() => {
+        alert('Erro ao excluir notícia');
+        fecharModalExcluir();
+    });
 }
 
-function abrirModal() {
-    document.getElementById('modalDetalhes').classList.remove('hidden');
-}
-
-function fecharModal() {
-    document.getElementById('modalDetalhes').classList.add('hidden');
-}
 
 
 // Initialize
