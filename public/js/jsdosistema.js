@@ -2,6 +2,18 @@ let senhaPendente = null;
 let modalidades = [];
 let noticias = [];
 let diasModalidades = JSON.parse(localStorage.getItem('diasModalidades')) || {};
+const ICONES_MODALIDADES = {
+    'Futebol': '⚽',
+    'Basquete': '🏀',
+    'Vôlei': '🏐',
+    'Atletismo': '🏃',
+    'Judô': '🥋',
+    'Natação': '🏊',
+    'Tênis de mesa': '🏓',
+    'Musculação': '🏋️'
+};
+let iconesModalidades = JSON.parse(localStorage.getItem('iconesModalidades')) || {};
+let matriculaTimeout = null;
 
 
 function carregarNoticias() {
@@ -27,7 +39,7 @@ function carregarModalidades() {
                 professor: m.professor,
                 dias: diasModalidades[m.titulo] || 'A definir',
                 horario: formatarHorario(m.hora_inicio, m.hora_fim),
-                icon: m.icone,
+                icon: iconesModalidades[m.titulo] || ICONES_MODALIDADES[m.titulo] || '🏅',
                 descricao: m.descricao
             }));
 
@@ -235,7 +247,7 @@ function renderModalities() {
     const jicsOptions = document.getElementById('jicsOptions');
 
     const html = modalidades.map(m => `
-                <div class="card" onclick="showModalDetails('${m.nome}')">
+                <div class="card" onclick="showModalDetails('${m.id}')">
                     <div class="card-header">
                         <div class="card-icon">${m.icon}</div>
                         <div class="card-title">${m.nome}</div>
@@ -264,7 +276,7 @@ function renderModalities() {
             `).join('');
 
     jicsOptions.innerHTML = modalidades.map(m => `
-                <div class="card" onclick="subscribeToJICS('${m.nome}')">
+                <div class="card" onclick="showModalDetails('${m.id}')">
                     <div class="card-header">
                         <div class="card-icon">${m.icon}</div>
                         <div class="card-title">${m.nome}</div>
@@ -539,60 +551,74 @@ function closeModal(id) {
     document.getElementById(id).classList.remove('show');
 }
 
-function showModalDetails(modalidadeName) {
-    const mod = modalidades.find(m => m.nome === modalidadeName);
-    if (mod) {
-        currentInscription = mod;
-        document.getElementById('detailTitle').textContent = mod.nome;
-        document.getElementById('detailContent').innerHTML = `
-                    <strong>Professor:</strong>
-                    <p>${mod.professor}</p>
-                    <strong>Dias de Treino:</strong>
-                    <p>${mod.dias}</p>
-                    <strong>Horário:</strong>
-                    <p>${mod.horario}</p>
-                    <strong>Aprenda a Jogar:</strong>
-                    <p>${mod.descricao}</p>
-                    ${mod.video ? `<iframe width="100%" height="315" src="${mod.video}" style="margin-top: 10px;"></iframe>` : ''}
-                `;
-                document.getElementById('detailModal').classList.add('show');
-            }
-        }
-
-function subscribeToTraining(modalidadeName) {
-    if (!currentUser) {
-        alert('Faça login primeiro!');
+function showModalDetails(modalidadeId) {
+    const mod = modalidades.find(m => String(m.id) === String(modalidadeId));
+    if (!mod) {
+        alert('Modalidade não encontrada');
         return;
     }
-    inscriptions.push({
-        nome: currentUser.nome,
-        matricula: currentUser.matricula,
-        modalidade: modalidadeName,
-        tipo: 'Treino',
-        data: new Date().toLocaleDateString('pt-BR')
-    });
-    alert(`Inscrição realizada em ${modalidadeName}!`);
-    closeModal('modalTreinos');
-    updateInscriptionsTable();
-    atualizarDashboard();
+
+    currentInscription = mod;
+
+    document.getElementById('detailTitle').textContent = mod.nome;
+    document.getElementById('detailContent').innerHTML = `
+        <strong>Professor:</strong>
+        <p>${mod.professor}</p>
+        <strong>Dias:</strong>
+        <p>${mod.dias}</p>
+        <strong>Horário:</strong>
+        <p>${mod.horario}</p>
+        <strong>Descrição:</strong>
+        <p>${mod.descricao}</p>
+    `;
+
+    document.getElementById('detailModal').classList.add('show');
 }
 
-function subscribeToJICS(modalidadeName) {
+function subscribeToJICS(modalidadeId) {
     if (!currentUser) {
         alert('Faça login primeiro!');
         return;
     }
-    inscriptions.push({
-        nome: currentUser.nome,
-        matricula: currentUser.matricula,
-        modalidade: modalidadeName,
-        tipo: 'JICS 2026',
-        data: new Date().toLocaleDateString('pt-BR')
+
+    fetch('/inscricoes/jics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            aluno_id: currentUser.id,
+            modalidade_id: modalidadeId
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.sucesso) {
+            alert(data.mensagem);
+            return;
+        }
+
+        showToastSucesso('✅ Inscrição realizada com sucesso!');
+        closeModal('modalJICS');
+
+        // recarrega do banco
+        carregarInscricoesAdmin();
+    })
+    .catch(() => {
+        alert('Erro ao realizar inscrição');
     });
-    alert(`Inscrição realizada no JICS para ${modalidadeName}!`);
-    closeModal('modalJICS');
-    updateInscriptionsTable();
-    atualizarDashboard();
+}
+
+function confirmInscription() {
+    if (!currentUser) {
+        alert('Faça login para se inscrever.');
+        return;
+    }
+
+    if (!currentInscription) {
+        alert('Nenhuma modalidade selecionada.');
+        return;
+    }
+
+    subscribeToJICS(currentInscription.id);
 }
 
 function addModalidade(event) {
@@ -603,7 +629,11 @@ function addModalidade(event) {
     const professor = document.getElementById('modalidadeProfessor').value;
     const horaInicio = document.getElementById('horaInicio').value;
     const horaFim = document.getElementById('horaFim').value;
-    const icone = document.getElementById('modalidadeIcone').value;
+    const iconeSelecionado = document.getElementById('modalidadeIcone').value;
+
+    
+    iconesModalidades[titulo] = iconeSelecionado;
+    localStorage.setItem('iconesModalidades', JSON.stringify(iconesModalidades));
 
     // 🔹 Dias selecionados
     const diasSelecionados = Array.from(
@@ -626,7 +656,6 @@ function addModalidade(event) {
             professor,
             hora_inicio: horaInicio,
             hora_fim: horaFim,
-            icone,
             dias // 🔥 enviado só pro front
         })
     })
@@ -645,7 +674,7 @@ function addModalidade(event) {
             professor,
             dias, // 👈 AGORA EXISTE
             horario: formatarHorario(horaInicio, horaFim),
-            icon: icone,
+            icon: iconeSelecionado,
             descricao
         });
 
@@ -658,17 +687,24 @@ function addModalidade(event) {
     }); 
 }
 
-function confirmInscription() {
-    if (currentUser && currentInscription) {
-        subscribeToTraining(currentInscription.nome);
-    }
+function carregarInscricoesAdmin() {
+    fetch('/inscricoes/jics')
+        .then(res => res.json())
+        .then(data => {
+            inscriptions = data;
+            updateInscriptionsTable();
+            atualizarDashboard();
+        })
+        .catch(() => {
+            console.error('Erro ao carregar inscrições');
+        });
 }
 
 function updateInscriptionsTable() {
     const tbody = document.getElementById('tabelaInscricoes');
     if (!tbody) return;
 
-    const rows = inscriptions.map(i => `
+    tbody.innerHTML = inscriptions.map(i => `
         <tr>
             <td>${i.nome}</td>
             <td>${i.matricula}</td>
@@ -679,7 +715,6 @@ function updateInscriptionsTable() {
             <td>${i.data}</td>
         </tr>
     `).join('');
-    tbody.innerHTML = rows;
 }
 
 function switchAdminTab(tab) {
@@ -692,8 +727,24 @@ function switchAdminTab(tab) {
 function addUser(event) {
     event.preventDefault();
 
+    const matriculaInput = document.getElementById('newMatricula');
+
+    // 🚫 BLOQUEIA SE MATRÍCULA JÁ EXISTE
+    if (matriculaInput.classList.contains('input-erro')) {
+        showToastErro('Corrija a matrícula antes de cadastrar');
+        matriculaInput.focus();
+        return;
+    }
+
+    // 🚫 BLOQUEIA SE AINDA NÃO FOI VALIDADA (opcional, mas recomendado)
+    if (!matriculaInput.classList.contains('input-ok')) {
+        showToastErro('A matrícula deve conter 13 caracteres');
+        matriculaInput.focus();
+        return;
+    }
+
     const aluno = {
-        matricula: document.getElementById('newMatricula').value,
+        matricula: matriculaInput.value,
         nome: document.getElementById('newNome').value,
         campus: document.getElementById('newCampus').value,
         descricao_curso: document.getElementById('newCurso').value,
@@ -717,11 +768,68 @@ function addUser(event) {
 
         showToastSucesso('✅ Aluno cadastrado com sucesso!');
         event.target.reset();
-        carregarInscricoesAdmin()
+        resetCustomSelects()
     })
     .catch(() => {
         showToastErro('Erro ao conectar com o servidor');
     });
+}
+
+function verificarMatriculaAutomatica(matricula) {
+    const input = document.getElementById('newMatricula');
+    const status = document.getElementById('matriculaStatus');
+
+    fetch(`/admin/verificar-matricula/${matricula}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.existe) {
+                input.classList.add('input-erro');
+                input.classList.remove('input-ok');
+
+                status.textContent = '⚠️ Esta matrícula já possui cadastro';
+                status.className = 'mensagem-erro';
+                status.style.display = 'block';
+            } else {
+                input.classList.add('input-ok');
+                input.classList.remove('input-erro');
+
+                status.textContent = '';
+                status.style.display = 'none';
+            }
+        })
+        .catch(() => {
+            resetMatriculaStatus();
+        });
+}
+
+function resetMatriculaStatus() {
+    const input = document.getElementById('newMatricula');
+    const status = document.getElementById('matriculaStatus');
+
+    input.classList.remove('input-erro', 'input-ok');
+    status.textContent = '';
+    status.style.display = 'none';
+}
+
+function onMatriculaInput() {
+    const input = document.getElementById('newMatricula');
+    const valor = input.value.replace(/\D/g, ''); // só números
+
+    input.value = valor; // impede letras
+
+    resetMatriculaStatus();
+
+    // Ainda não tem 13 dígitos → não consulta
+    if (valor.length !== 13) {
+        return;
+    }
+
+    // Debounce: espera o usuário parar de digitar
+    clearTimeout(matriculaTimeout);
+
+    matriculaTimeout = setTimeout(() => {
+        verificarMatriculaAutomatica(valor);
+    }, 500); // 500ms é o ideal
 }
 
 function addNoticia(event) {
@@ -749,21 +857,6 @@ function addNoticia(event) {
 
 function showNotifications() {
     alert('Você tem 3 notificações:\n1. Novos horários de treino\n2. Inscrições abertas\n3. Próximo evento em 2 semanas');
-}
-
-function carregarInscricoesAdmin() {
-    fetch('/admin/inscricoes')
-        .then(res => res.json())
-        .then(dados => {
-            inscriptions = dados.map(i => ({
-                nome: i.nome,
-                matricula: i.matricula,
-                modalidade: i.modalidade || '—',
-                tipo: i.tipo,
-                data: new Date(i.data_inscricao).toLocaleDateString('pt-BR')
-            }));
-            updateInscriptionsTable();
-        });
 }
 
 
@@ -896,6 +989,58 @@ function confirmarExclusao() {
         fecharModalExcluir();
     });
 }
+
+//SELECT DE TURMA
+document.querySelectorAll('.custom-select').forEach(select => {
+    const selected = select.querySelector('.custom-selected');
+    const label = selected.querySelector('.label');
+    const options = select.querySelectorAll('.custom-option');
+    const inputId = select.dataset.input || select.dataset.target;
+
+    selected.addEventListener('click', e => {
+        e.stopPropagation();
+
+        document.querySelectorAll('.custom-select').forEach(s => {
+            if (s !== select) s.classList.remove('open');
+        });
+
+        select.classList.toggle('open');
+    });
+
+    options.forEach(option => {
+        option.addEventListener('click', () => {
+            label.textContent = option.textContent;
+            document.getElementById(inputId).value = option.dataset.value;
+
+            select.classList.remove('open');
+            select.classList.add('filled');
+        });
+    });
+});
+
+// fecha ao clicar fora
+document.addEventListener('click', () => {
+    document.querySelectorAll('.custom-select')
+        .forEach(s => s.classList.remove('open'));
+});
+
+function resetCustomSelects() {
+    document.querySelectorAll('.custom-select').forEach(select => {
+        const label = select.querySelector('.custom-selected .label');
+
+        if (label) {
+            label.textContent = 'Selecione...';
+        }
+
+        select.classList.remove('open');
+        select.classList.remove('filled');
+    });
+
+    document.querySelectorAll('input[type="hidden"]').forEach(input => {
+        input.value = '';
+    });
+}
+//FIM DO SELECT DE TURMA
 
 
 

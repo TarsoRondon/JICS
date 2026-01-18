@@ -12,7 +12,7 @@ app.post('/login', async(req, res) => {
         const conexao = await conectar();
 
         const [rows] = await conexao.query(
-            'SELECT matricula, nome, campus, turma, email_academico, email_pessoal, descricao_curso, data_nascimento, telefone FROM alunos WHERE matricula = ? AND senha = SHA2(?, 256)', [usuario, senha]
+            'SELECT id, matricula, nome, campus, turma, email_academico, email_pessoal, descricao_curso, data_nascimento, telefone FROM alunos WHERE matricula = ? AND senha = SHA2(?, 256)', [usuario, senha]
         );
 
         await conexao.end();
@@ -178,18 +178,7 @@ app.post('/admin/add-aluno', async(req, res) => {
             senha
         ]);
 
-        await conexao.query(`
-            INSERT INTO inscricoes (matricula, nome, modalidade, tipo)
-            VALUES (?, ?, ?, ?)
-        `, [
-            matricula,
-            nome,
-            null,
-            'Cadastro pelo ADMIN'
-        ]);
-
         await conexao.end();
-
         res.json({ sucesso: true });
 
     } catch (erro) {
@@ -198,18 +187,30 @@ app.post('/admin/add-aluno', async(req, res) => {
     }
 });
 
-app.get('/admin/inscricoes', async(req, res) => {
+app.get('/admin/verificar-matricula/:matricula', async (req, res) => {
+    const { matricula } = req.params;
+
+    if (!matricula) {
+        return res.json({ existe: false });
+    }
+
     try {
         const conexao = await conectar();
-        const [rows] = await conexao.query(`
-            SELECT matricula, nome, modalidade, tipo, data_inscricao
-            FROM inscricoes
-            ORDER BY data_inscricao DESC
-        `);
+
+        const [rows] = await conexao.query(
+            'SELECT matricula FROM alunos WHERE matricula = ?',
+            [matricula]
+        );
+
         await conexao.end();
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json([]);
+
+        res.json({
+            existe: rows.length > 0
+        });
+
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({ erro: true });
     }
 });
 
@@ -255,9 +256,9 @@ app.get('/noticias', async(req, res) => {
 
 
 app.post('/admin/modalidades', async(req, res) => {
-    const { titulo, descricao, professor, hora_inicio, hora_fim, icone } = req.body;
+    const { titulo, descricao, professor, hora_inicio, hora_fim} = req.body;
 
-    if (!titulo || !descricao || !professor || !hora_inicio || !hora_fim || !icone) {
+    if (!titulo || !descricao || !professor || !hora_inicio || !hora_fim) {
         return res.json({ sucesso: false });
     }
 
@@ -265,8 +266,8 @@ app.post('/admin/modalidades', async(req, res) => {
         const conexao = await conectar();
         await conexao.query(
             `INSERT INTO modalidades 
-             (titulo, descricao, professor, hora_inicio, hora_fim, icone)
-             VALUES (?, ?, ?, ?, ?, ?)`, [titulo, descricao, professor, hora_inicio, hora_fim, icone]
+             (titulo, descricao, professor, hora_inicio, hora_fim)
+             VALUES (?, ?, ?, ?, ?)`, [titulo, descricao, professor, hora_inicio, hora_fim]
         );
         await conexao.end();
 
@@ -337,6 +338,79 @@ app.delete('/noticias/:id', async(req, res) => {
         res.status(500).json({ sucesso: false });
     }
 });
+
+app.post('/inscricoes/jics', async (req, res) => {
+    const { aluno_id, modalidade_id } = req.body;
+
+    if (!aluno_id || !modalidade_id) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: 'Dados inválidos'
+        });
+    }
+
+    try {
+        const conexao = await conectar();
+
+        // evita inscrição duplicada
+        const [existe] = await conexao.query(`
+            SELECT id FROM inscricoes
+            WHERE aluno_id = ? AND modalidade_id = ?
+        `, [aluno_id, modalidade_id]);
+
+        if (existe.length > 0) {
+            await conexao.end();
+            return res.json({
+                sucesso: false,
+                mensagem: 'Aluno já inscrito nessa modalidade'
+            });
+        }
+
+        await conexao.query(`
+            INSERT INTO inscricoes (aluno_id, modalidade_id, tipo)
+            VALUES (?, ?, 'JICS')
+        `, [aluno_id, modalidade_id]);
+
+        await conexao.end();
+
+        res.json({ sucesso: true });
+
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({ sucesso: false });
+    }
+});
+
+// GET /inscricoes/jics
+app.get('/inscricoes/jics', async (req, res) => {
+    try {
+        const conexao = await conectar();
+
+        const [rows] = await conexao.query(`
+            SELECT 
+                a.nome,
+                a.matricula,
+                a.turma,
+                a.sexo,
+                i.tipo,
+                m.titulo AS modalidade,
+                DATE_FORMAT(i.data_inscricao, '%d/%m/%Y %H:%i') AS data
+            FROM inscricoes i
+            JOIN alunos a ON a.id = i.aluno_id
+            JOIN modalidades m ON m.id = i.modalidade_id
+            ORDER BY i.data_inscricao DESC
+        `);
+
+        await conexao.end();
+        res.json(rows);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json([]);
+    }
+});
+
+
 ///////////////
 app.listen(3000, () => {
     console.log('🚀 Servidor rodando em http://localhost:3000');

@@ -900,6 +900,87 @@ tbody tr:hover {
     margin-bottom: 20px;
 }
 
+.input-erro {
+    border: 2px solid #e53935 !important;
+}
+
+.input-ok {
+    border: 2px solid #43a047 !important;
+}
+
+.mensagem-erro {
+    color: #e53935;
+}
+
+.mensagem-ok {
+    color: #43a047;
+}
+
+/*ESTIZAÇÃO DOS SELECTS DO ADMIN*/
+.custom-select {
+    margin-top: 10px;
+    position: relative;
+    width: 100%;
+}
+
+.custom-selected {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.custom-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    display: none;
+    z-index: 999;
+}
+
+.custom-option {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.custom-option:hover {
+    background: #f0f0f0;
+}
+
+.custom-select.open .custom-options {
+    display: block;
+}
+
+.custom-selected span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.seta {
+    font-size: 14px;
+    color: #666;
+    transition: transform 0.2s ease;
+}
+
+/* gira a seta quando abrir */
+.custom-select.open .seta {
+    transform: rotate(180deg);
+}
+/*FIM DA ESTILIZAÇÃO DOS SELECTS*/
+
 
 /* Form Styles */
 
@@ -908,6 +989,7 @@ tbody tr:hover {
 .form-group select {
     width: 100%;
     padding: 10px;
+    margin-top: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
@@ -919,6 +1001,36 @@ tbody tr:hover {
     min-height: 100px;
 }
 
+.dias-semana {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    padding: 20px 0;
+    border: 1px solid #ddd;
+}
+
+.btn-icon {
+    padding: 10px;
+    color: var(--teal);
+    border: 1px solid #ddd;
+    background-color: white;
+    border-radius: 6px;
+}
+
+.form-group .horario{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-group label {
+    font-weight: 600;
+}
+
+.dias-semana label {
+    font-weight: normal;
+}
 .btn-submit {
     background: var(--cyan);
     color: var(--teal);
