@@ -38,7 +38,7 @@
                         <label class="form-label">Senha:</label>
                         <div class="password-container">
                             <input type="password" id="senha" class="form-input" required />
-                            <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                            <button type="button" class="password-toggle" onclick="togglePassword()"></button>
                         </div>
                     </div>
 
@@ -66,19 +66,107 @@
                     <li><a class="nav-link" onclick="showPage('perfil')">Perfil</a></li>
                 </ul>
             </div>
-            <div class="navbar-right">
-                <div class="notification-badge">
-                    <span class="notification-icon" onclick="showNotifications()">🔔</span>
-                    <span class="badge-count" id="notificationCount">3</span>
+
+
+            <div class="user-menu" id="userMenu">
+                <div class="user-trigger" id="userTrigger">
+                    <div class="user-info-navbar">
+                        <span id="userNameNavbar"></span>
+
+                    </div>
+
+                    <div class="user-avatar">
+                        <img id="userPhoto" src="assets/avatar-default.png" />
+                    </div>
                 </div>
-                <button class="btn-logout" onclick="logout()">Sair</button>
+
+
+                <div id="userDropdown" class="user-dropdown hidden">
+                    <div class="user-header">
+                        <div id="userTrigger">
+                            <img id="userAvatar" src="assets/avatar-default.png" alt="Avatar">
+                            <span id="userName">Nome do Usuário</span>
+                        </div>
+
+
+
+                    </div>
+
+                    <!-- MENU -->
+                    <ul class="menu">
+                        <li class="menu-btn" onclick="showPage('perfil')">
+                            <span class="menu-left">Perfil</span>
+                        </li>
+
+                        <li class="menu-btn menu-item" onclick="toggleSubmenu('modalidadesSubmenu', this)">
+                            <span class="menu-left">Modalidades</span>
+                            <span class="arrow">▾</span>
+                        </li>
+
+                        <ul id="modalidadesSubmenu" class="submenu-list hidden">
+                            <li class="submenu-btn">Minhas Modalidades</li>
+                            <li class="submenu-btn" onclick="showPage('modalidades')">Inscrições </li>
+                        </ul>
+
+                        <li class="menu-btn menu-item" onclick="toggleSubmenu('notificacoesSub', this)">
+                            <span class="menu-left">Notícias</span>
+                            <span class="arrow">▾</span>
+                        </li>
+
+                        <ul id="notificacoesSub" class="submenu-list hidden">
+                            <li class="submenu-btn">Últimas</li>
+                            <li class="submenu-btn">Todas</li>
+                        </ul>
+
+                        <li class="menu-btn menu-item" onclick="toggleSubmenu('configPanel', this)">
+                            <span class="menu-left">Configurações</span>
+                            <span class="arrow">▾</span>
+                        </li>
+
+                        <ul id="configPanel" class="submenu-list hidden">
+                            <li class="submenu-btn upload-row">
+                                <label class="upload-btn">
+                        <span>Alterar foto</span>
+                        <input type="file" accept="image/*" hidden onchange="alterarFoto(event)">
+                    </label>
+                            </li>
+                        </ul>
+
+                        <li class="menu-btn logout" onclick="logout()">
+                            <span class="menu-left">Sair</span>
+                        </li>
+                    </ul>
+                </div>
+
             </div>
+
+
         </nav>
 
+        <!--FOTO DE PERFIL-->
+        <div id="modalPreviewFoto" class="modal nicer-modal hidden">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h2>📷 Pré-visualizar foto</h2>
+                    <button class="close-btn" onclick="fecharPreviewFoto()">✕</button>
+                </div>
+
+                <div class="modal-body" style="text-align:center">
+                    <img id="previewFoto" class="preview-avatar">
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="fecharPreviewFoto()">Cancelar</button>
+                    <button class="btn-primary" onclick="salvarFoto()">Salvar</button>
+                </div>
+            </div>
+        </div>
+
+        <!--------------------------------------------------------------->
         <!-- Dashboard -->
         <div id="dashboard" class="page-content">
             <div class="hero">
-                <h1>Bem-vindo(a) aos JICS!</h1>
+                <h1>Bem-vindo(a) ao IFRO ESPORTES!</h1>
                 <p class="hero-subtitle">Instituto Federal de Ciência, Educação e Tecnologia de Rondônia - Campus Porto Velho Calama</p>
                 <div class="hero-stats">
                     <div class="stat-box">
@@ -254,7 +342,7 @@
                         <div class="form-group">
                             <label>Matrícula</label>
                             <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="text" id="newMatricula" minlength="13" maxlength="13" required oninput="onMatriculaInput()"/>
+                                <input type="text" id="newMatricula" minlength="13" maxlength="13" required oninput="onMatriculaInput()" />
                             </div>
                             <small id="matriculaStatus" style="display: none; margin-top: 4px;"></small>
                         </div>
@@ -530,7 +618,7 @@
     <div id="toastSucesso" class="toast hidden">
         <div class="toast-content">
             <strong>✅ Sucesso!</strong>
-            <p id="toastSecessoMsg"></p>
+            <p id="toastSucessoMsg"></p>
             <div class="toast-timer"></div>
         </div>
     </div>
@@ -542,6 +630,15 @@
             <div class="toast-timer"></div>
         </div>
     </div>
+
+    <div id="toastAtencao" class="toast toast-atencao hidden">
+        <div class="toast-content">
+            <strong>⚠ Atenção</strong>
+            <p id="toastAtencaoMsg"></p>
+            <div class="toast-timer"></div>
+        </div>
+    </div>
+
 
     <div id="modalConfirmarSenha" class="modal nicer-modal hidden">
         <div class="modal-container">
@@ -580,8 +677,8 @@
             <textarea id="editDescricao" rows="5"></textarea>
 
             <div class="modal-actions">
-                <button onclick="salvarEdicaoNoticia()">💾 Salvar</button>
-                <button class="btn-cancel" onclick="fecharModalEditar()">❌ Cancelar</button>
+                <button onclick="salvarEdicaoNoticia()" class="botao-noticias">Salvar</button>
+                <button class="botao-noticias-cancelar" onclick="fecharModalEditar()" class="botao-noticias-cancelar"> Cancelar</button>
             </div>
         </div>
     </div>
@@ -590,7 +687,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Detalhes</h2>
-                <button class="close-btn" onclick="fecharModal()">✕</button>
+                <button class="close-btn" onclick="fecharModal()" class="botao-noticias-cancelar">✕</button>
             </div>
 
             <div class="modal-body">

@@ -65,11 +65,45 @@ let currentUser = null;
 let inscriptions = [];
 let currentInscription = null;
 
+
 document.addEventListener('DOMContentLoaded', () => {
+    // 🔹 carrega dados iniciais
+    carregarNoticias();
+    carregarModalidades();
+    document.querySelectorAll('.user-name').forEach(el => {
+        el.textContent = currentUser.nome;
+    });
+
     const usuarioSalvo = localStorage.getItem('usuarioLogado');
 
     if (usuarioSalvo) {
-        currentUser = JSON.parse(usuarioSalvo); // 🔥 ESSENCIAL
+        currentUser = JSON.parse(usuarioSalvo);
+
+        document.getElementById('userName').textContent = currentUser.nome;
+
+        const foto = currentUser.foto || 'assets/avatar-default.png';
+        atualizarAvatar(foto);
+    }
+
+
+    if (usuarioSalvo) {
+        currentUser = JSON.parse(usuarioSalvo);
+
+        // 👤 nome do usuário
+        const userNameEl = document.getElementById('userName');
+        if (userNameEl) userNameEl.textContent = currentUser.nome;
+
+        // 👤 avatar
+        carregarAvatar();
+
+        // 📄 dados do perfil
+        document.getElementById('perfilNome').textContent = currentUser.nome;
+        document.getElementById('perfilMatricula').textContent = currentUser.matricula;
+        document.getElementById('perfilCurso').textContent = currentUser.descricao_curso;
+        document.getElementById('perfilTurma').textContent = currentUser.turma;
+        document.getElementById('perfilCampus').textContent = currentUser.campus;
+        document.getElementById('perfilNascimento').textContent = currentUser.data_nascimento;
+        document.getElementById('perfilEmailPessoal').textContent = currentUser.email_pessoal;
 
         document.getElementById('loginPage').classList.add('hidden');
         document.getElementById('homePage').classList.remove('hidden');
@@ -78,10 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const paginaSalva = localStorage.getItem('paginaAtual') || 'dashboard';
 
-        if (paginaSalva === 'dashboard') {
-            abrirDashboard(); // ✅ CARREGA TUDO NO MOMENTO CERTO
-        } else if (paginaSalva === 'admin' && currentUser.role !== 'ADMIN') {
-            abrirDashboard(); // 🔐 bloqueio
+        if (paginaSalva === 'admin' && currentUser.role !== 'ADMIN') {
+            showPage('dashboard');
         } else {
             showPage(paginaSalva);
         }
@@ -90,7 +122,34 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('loginPage').classList.remove('hidden');
         document.getElementById('homePage').classList.add('hidden');
     }
+
+    // 🖼️ avatar upload
+    const avatar = document.getElementById('userAvatar');
+    const upload = document.getElementById('uploadAvatar');
+
+    if (avatar && upload) {
+        avatar.addEventListener('click', () => upload.click());
+
+        upload.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                avatar.src = reader.result;
+
+                currentUser.foto = reader.result;
+                localStorage.setItem(
+                    'usuarioLogado',
+                    JSON.stringify(currentUser)
+                );
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 });
+
+
 
 // ===== FUNCTIONS =====
 
@@ -113,7 +172,7 @@ function handleLogin(event) {
         .then(res => res.json())
         .then(data => {
             if (!data.sucesso) {
-                alert('Matrícula ou senha inválida!');
+                showToastErro('Matrícula ou senha inválida!');
                 return;
             }
 
@@ -130,7 +189,7 @@ function handleLogin(event) {
             abrirDashboard(); // ← força ponto inicial correto
         })
         .catch(() => {
-            alert('Erro inesperado no login');
+            showToastErro('Erro inesperado no login');
         });
 }
 
@@ -163,26 +222,94 @@ function showHomePage() {
     }
 }
 
+function carregarAvatar() {
+    const avatar = document.getElementById('userAvatar');
+    if (!avatar || !currentUser) return;
+
+    avatar.src = currentUser.foto ?
+        currentUser.foto :
+        'assets/avatar-default.png';
+}
+
+function toggleUserMenu() {
+    document.getElementById('userDropdown').classList.toggle('hidden');
+}
+
+
+
+function atualizarAvatar(src) {
+    document.getElementById('userPhoto').src = src;
+    document.getElementById('userAvatar').src = src;
+}
+
+function toggleConfigPanel() {
+    document.getElementById('configPanel').classList.toggle('hidden');
+}
+
+function toggleConfigItem(item) {
+    const panel = item.nextElementSibling;
+    item.classList.toggle('open');
+    panel.classList.toggle('open');
+}
+
+
+const fotoSalva = localStorage.getItem('fotoUsuario');
+if (fotoSalva) {
+    userPhoto.src = fotoSalva;
+    document.getElementById("userPhoto").src = fotoSalva;
+    document.getElementById("userAvatar").src = fotoSalva;
+
+}
+
+const avatar = document.getElementById('userAvatar');
+const upload = document.getElementById('uploadAvatar');
+const uploadIcon = document.querySelector('.upload-icon');
+
+if (avatar && upload && uploadIcon) {
+    avatar.addEventListener('click', () => upload.click());
+    uploadIcon.addEventListener('click', () => upload.click());
+
+    upload.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            avatar.src = reader.result;
+            currentUser.foto = reader.result;
+            localStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
+        };
+        reader.readAsDataURL(file);
+    });
+}
+/////////////CETA ANIMADA///////////////////////////
+
+function toggleSubmenu(id, element) {
+    const submenu = document.getElementById(id);
+    submenu.classList.toggle('hidden');
+
+    if (element) {
+        element.classList.toggle('open');
+    }
+}
+
+
+///////////////////////////////////////////////////////
+
 function logout() {
-    // Limpa estado global
+    // limpa apenas o usuário
+    localStorage.removeItem('usuarioLogado');
+    localStorage.removeItem('paginaAtual');
+
+    // limpa estado em memória
     currentUser = null;
     inscriptions = [];
     currentInscription = null;
 
-    // Limpa persistência
-    localStorage.removeItem('usuarioLogado');
-    localStorage.removeItem('paginaAtual');
-
-    // Limpa UI sensível
-    document.querySelectorAll('.admin-only').forEach(el => el.remove());
-
-    // Limpa perfil visualmente
-    limparPerfil();
-
-    // Volta para login
-    document.getElementById('homePage').classList.add('hidden');
-    document.getElementById('loginPage').classList.remove('hidden');
+    // recarrega a página
+    location.reload();
 }
+
 
 function limparPerfil() {
     const campos = [
@@ -390,14 +517,14 @@ function renderNews(noticias) {
                             : ''
                     }
 
-                    <div class="card-actions">
-                        <button onclick="verNoticia(${n.id})"> Ver</button>
+                    <div class="botao-">
+                        <button onclick="verNoticia(16)" class="botao-noticias"> Ver</button>
 
                         ${
                             currentUser.role === 'ADMIN'
                                 ? `
-                                    <button onclick="editarNoticia(${n.id})"> Editar</button>
-                                    <button onclick="excluirNoticia(${n.id})"> Excluir</button>
+                                    <button onclick="editarNoticia(${n.id})"class="botao-noticias"> Editar</button>
+                                    <button onclick="excluirNoticia(${n.id})"class="botao-noticias"> Excluir</button>
                                   `
                                 : ''
                         }
@@ -489,7 +616,7 @@ function confirmarTrocaSenha() {
         .then(res => res.json())
         .then(data => {
             if (data.sucesso) {
-                showToastSucesso();
+                showToastSucesso(mensagem);
             } else if (data.tipo === 'senha_atual_incorreta') {
                 showToastErro('Senha atual incorreta');
             } else if (data.tipo === 'mesma_senha') {
@@ -511,16 +638,36 @@ function confirmarTrocaSenha() {
         });
 }
 
+function alterarFoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+        const novaFoto = e.target.result;
+
+        // Atualiza os dois avatares
+        document.getElementById("userPhoto").src = novaFoto;
+        document.getElementById("userAvatar").src = novaFoto;
+
+        // (opcional) salvar no localStorage
+        localStorage.setItem("fotoUsuario", novaFoto);
+    };
+
+    reader.readAsDataURL(file);
+}
+
 
 function showToastSucesso(mensagem) {
     const toast = document.getElementById('toastSucesso');
-    document.getElementById('toastSecessoMsg').textContent = mensagem;
+    document.getElementById('toastSucessoMsg').textContent = mensagem;
 
     toast.classList.remove('hidden');
 
     setTimeout(() => {
         toast.classList.add('hidden');
-    }, 3000); // 3 segundos
+    }, 5000); // 3 segundos
 }
 
 function showToastErro(mensagem) {
@@ -531,8 +678,33 @@ function showToastErro(mensagem) {
 
     setTimeout(() => {
         toast.classList.add('hidden');
-    }, 3000);
+    }, 5000);
 }
+function mostrarToastAtencao(mensagem, tempo = 3000) {
+    const toast = document.getElementById('toastAtencao');
+    const msg = document.getElementById('toastAtencaoMsg');
+    const timer = toast.querySelector('.toast-timer');
+
+    msg.textContent = mensagem;
+
+    toast.classList.remove('hidden');
+    toast.style.animation = 'slideDown 0.4s ease';
+
+    // reset da barra de tempo
+    timer.style.animation = 'none';
+    timer.offsetHeight;
+    timer.style.animation = `timer ${tempo / 1000}s linear forwards`;
+
+    setTimeout(() => {
+        toast.style.animation = 'slideOutUp 0.3s ease forwards';
+
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 300);
+
+    }, tempo);
+}
+
 
 function closeModalConfirmar() {
     document.getElementById('modalConfirmarSenha').classList.add('hidden');
@@ -554,7 +726,7 @@ function closeModal(id) {
 function showModalDetails(modalidadeId) {
     const mod = modalidades.find(m => String(m.id) === String(modalidadeId));
     if (!mod) {
-        alert('Modalidade não encontrada');
+        showToastErro('Modalidade não encontrada');
         return;
     }
 
@@ -577,7 +749,7 @@ function showModalDetails(modalidadeId) {
 
 function subscribeToJICS(modalidadeId) {
     if (!currentUser) {
-        alert('Faça login primeiro!');
+        mostrarToastAtencao('Faça login primeiro!');
         return;
     }
 
@@ -592,7 +764,7 @@ function subscribeToJICS(modalidadeId) {
     .then(res => res.json())
     .then(data => {
         if (!data.sucesso) {
-            alert(data.mensagem);
+            mostrarToastAtencao(data.mensagem);
             return;
         }
 
@@ -603,18 +775,18 @@ function subscribeToJICS(modalidadeId) {
         carregarInscricoesAdmin();
     })
     .catch(() => {
-        alert('Erro ao realizar inscrição');
+        showToastErro('Erro ao realizar inscrição');
     });
 }
 
 function confirmInscription() {
     if (!currentUser) {
-        alert('Faça login para se inscrever.');
+        mostrarToastAtencao('Faça login para se inscrever.');
         return;
     }
 
     if (!currentInscription) {
-        alert('Nenhuma modalidade selecionada.');
+        mostrarToastAtencao('Nenhuma modalidade selecionada.');
         return;
     }
 
@@ -641,7 +813,7 @@ function addModalidade(event) {
     ).map(el => el.value);
 
     if (diasSelecionados.length === 0 || diasSelecionados.length > 2) {
-        alert('Selecione até 2 dias de treino.');
+        mostrarToastAtencao('Selecione até 2 dias de treino.');
         return;
     }
 
@@ -662,7 +834,7 @@ function addModalidade(event) {
     .then(res => res.json())
     .then(data => {
         if (!data.sucesso) {
-            alert('Erro ao cadastrar modalidade');
+            showToastErro('Erro ao cadastrar modalidade');
             return;
         }
         diasModalidades[titulo] = dias;
@@ -678,7 +850,7 @@ function addModalidade(event) {
             descricao
         });
 
-        alert('🏅 Modalidade cadastrada com sucesso!');
+        showToastSucesso('🏅 Modalidade cadastrada com sucesso!');
         event.target.reset();
 
         renderModalities();
@@ -845,19 +1017,17 @@ function addNoticia(event) {
     .then(res => res.json())
     .then(data => {
         if (!data.sucesso) {
-            alert('Erro ao publicar notícia');
+            showToastErro('Erro ao publicar notícia');
             return;
         }
 
-        alert('📰 Notícia publicada com sucesso!');
+        showToastSucesso('📰 Notícia publicada com sucesso!');
         event.target.reset();
         carregarNoticias(); // 🔥 atualiza para todos
     });
 }
 
-function showNotifications() {
-    alert('Você tem 3 notificações:\n1. Novos horários de treino\n2. Inscrições abertas\n3. Próximo evento em 2 semanas');
-}
+
 
 
 function atualizarDashboard() {
@@ -926,7 +1096,7 @@ function salvarEdicaoNoticia() {
     const descricao = document.getElementById('editDescricao').value.trim();
 
     if (!titulo || !descricao) {
-        alert('Preencha todos os campos.');
+        mostrarToastAtencao('Preencha todos os campos.');
         return;
     }
 
@@ -985,7 +1155,7 @@ function confirmarExclusao() {
         fecharModalExcluir();
     })
     .catch(() => {
-        alert('Erro ao excluir notícia');
+        showToastErro('Erro ao excluir notícia');
         fecharModalExcluir();
     });
 }
@@ -1042,11 +1212,58 @@ function resetCustomSelects() {
 }
 //FIM DO SELECT DE TURMA
 
+let fotoTemp = null;
+
+function alterarFoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+        fotoTemp = e.target.result;
+
+        document.getElementById("previewFoto").src = fotoTemp;
+        document.getElementById("modalPreviewFoto").classList.remove("hidden");
+    };
+
+    reader.readAsDataURL(file);
+}
+
+function salvarFoto() {
+    if (!fotoTemp) return;
+
+    document.getElementById("userPhoto").src = fotoTemp;
+    document.getElementById("userAvatar").src = fotoTemp;
+
+    localStorage.setItem("fotoUsuario", fotoTemp);
+
+    fecharPreviewFoto();
+}
+
+function fecharPreviewFoto() {
+    document.getElementById("modalPreviewFoto").classList.add("hidden");
+    fotoTemp = null;
+}
 
 
 // Initialize
-window.onclick = function(event) {
-    if (event.target.classList.contains('modal')) {
-        event.target.classList.remove('show');
-    }
-}
+
+const userTrigger = document.getElementById('userTrigger');
+const userDropdown = document.getElementById('userDropdown');
+const userMenu = document.getElementById('userMenu');
+
+userTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userDropdown.classList.toggle('hidden');
+});
+
+// 🔒 NÃO fecha ao clicar dentro do menu
+userDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+// 🔻 fecha apenas clicando fora
+document.addEventListener('click', () => {
+    userDropdown.classList.add('hidden');
+});

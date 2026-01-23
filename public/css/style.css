@@ -663,6 +663,457 @@ tbody tr:hover {
 }
 
 
+/* Container principal */
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+
+/* Nome e matrícula */
+
+.user-info {
+    text-align: right;
+    line-height: 1.1;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 14px;
+    display: block;
+}
+
+.user-matricula {
+    font-size: 12px;
+    color: #64748b;
+}
+
+
+/* Avatar */
+
+.user-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+
+/* Dropdown */
+
+.user-dropdown {
+    position: absolute;
+    top: 55px;
+    right: 0;
+    width: 260px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .15);
+    padding: 10px;
+    z-index: 1000;
+}
+
+
+/* Cabeçalho do dropdown */
+
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dropdown-header img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+
+/* Itens */
+
+.dropdown-item {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background: #f1f5f9;
+}
+
+.dropdown-item.logout {
+    color: #dc2626;
+}
+
+
+/* Utilitário */
+
+.hidden {
+    display: none;
+}
+
+
+/*botão do perfil*/
+
+.preview-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #0f766e;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.user-avatar img {
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #0b7c6c;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.user-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+}
+
+.avatar-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+#userAvatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #0f766e;
+    cursor: pointer;
+}
+
+
+/* Ícone de upload */
+
+.upload-icon {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    background: #0f766e;
+    color: #fff;
+    font-size: 11px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.user-dropdown {
+    position: absolute;
+    right: 0;
+    top: 55px;
+    width: 280px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
+    padding: 15px;
+    z-index: 1000;
+}
+
+.user-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.user-header img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+}
+
+.menu,
+.submenu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu li {
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.menu li:hover {
+    background: #f2f2f2;
+}
+
+.submenu {
+    display: flex;
+    justify-content: space-between;
+}
+
+.submenu-list {
+    margin-left: 15px;
+}
+
+.config-panel {
+    padding: 10px 0;
+}
+
+.logout {
+    color: red;
+    font-weight: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+
+/*ceta animada*/
+
+.menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.arrow {
+    transition: transform 0.3s ease;
+}
+
+.menu-item.open .arrow {
+    transform: rotate(180deg);
+}
+
+.submenu-list {
+    margin-left: 15px;
+    margin-top: 5px;
+}
+
+
+/*-----------------------------------------------------------------------------*/
+
+
+/*configurações*/
+
+
+/* Item Configurações */
+
+.config-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+/* Painel */
+
+.config-panel {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 6px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+
+/* Quando aberto */
+
+.config-panel.open {
+    max-height: 120px;
+    opacity: 1;
+}
+
+
+/* Item interno */
+
+.config-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-radius: 8px;
+    background: #fff;
+}
+
+
+/* Botão upload */
+
+.upload-btn {
+    display: flex;
+    width: 100%;
+    cursor: pointer;
+}
+
+
+/* Esconde input feio */
+
+.upload-btn input {
+    display: none;
+}
+
+
+/* Seta */
+
+.arrow {
+    transition: transform 0.3s ease;
+}
+
+
+/* Seta girada */
+
+.menu-item.open .arrow {
+    transform: rotate(180deg);
+}
+
+
+/*=----------------------------------------------------------------=*/
+
+
+/*----------------------------------------BOTÃO-------------------------------------*/
+
+
+/* ===== MENU PADRÃO ===== */
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.menu-btn,
+.submenu-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.25s ease;
+}
+
+.menu-btn {
+    background: #f9fafb;
+}
+
+.menu-btn:hover {
+    background: #e6f4f1;
+    transform: translateX(3px);
+}
+
+.menu-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+/* SUBMENU */
+
+.submenu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-left: 12px;
+}
+
+.submenu-btn {
+    background: #f1f5f9;
+    font-size: 13px;
+}
+
+.submenu-btn:hover {
+    background: #e2e8f0;
+}
+
+
+/* SETA ANIMADA */
+
+.arrow {
+    transition: transform 0.3s ease;
+}
+
+.menu-item.open .arrow {
+    transform: rotate(180deg);
+}
+
+
+/* CONFIG UPLOAD */
+
+.upload-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+/* LOGOUT */
+
+.logout {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.logout:hover {
+    background: #fecaca;
+}
+
+.user-trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-info-navbar {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2c3e50;
+    white-space: nowrap;
+}
+
+
+/*************************************************************************************/
+
+
 /*Botão notícia*/
 
 .modal-content {
@@ -727,6 +1178,26 @@ tbody tr:hover {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 6px 14px rgba(34, 197, 94, 0.35);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.botao-noticias-cancelar {
+    background: linear-gradient(135deg, #f6284a, #762931);
+    color: #ffffff;
+    border: none;
+    /* 🔹 Espaçamento */
+    margin: 16px 0;
+    /* distância da margem (topo e baixo) */
+    padding: 12px 22px;
+    /* tamanho do botão */
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 14px rgb(99, 16, 22);
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -916,7 +1387,9 @@ tbody tr:hover {
     color: #43a047;
 }
 
+
 /*ESTIZAÇÃO DOS SELECTS DO ADMIN*/
+
 .custom-select {
     margin-top: 10px;
     position: relative;
@@ -929,12 +1402,15 @@ tbody tr:hover {
     border-radius: 6px;
     background: #fff;
     cursor: pointer;
-
+    /*/////////*/
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
 }
+
+
+/*/////////*/
 
 .custom-options {
     position: absolute;
@@ -975,10 +1451,14 @@ tbody tr:hover {
     transition: transform 0.2s ease;
 }
 
+
 /* gira a seta quando abrir */
+
 .custom-select.open .seta {
     transform: rotate(180deg);
 }
+
+
 /*FIM DA ESTILIZAÇÃO DOS SELECTS*/
 
 
@@ -1018,7 +1498,7 @@ tbody tr:hover {
     border-radius: 6px;
 }
 
-.form-group .horario{
+.form-group .horario {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1031,6 +1511,7 @@ tbody tr:hover {
 .dias-semana label {
     font-weight: normal;
 }
+
 .btn-submit {
     background: var(--cyan);
     color: var(--teal);
@@ -1297,5 +1778,31 @@ tbody tr:hover {
     .modal-content {
         margin: 20px;
         max-width: calc(100% - 40px);
+    }
+}
+
+
+/* ================= TOAST ATENÇÃO ================= */
+
+.toast-atencao {
+    background: #fff7ed;
+    border-left: 6px solid #f59e0b;
+}
+
+.toast-atencao strong {
+    color: #f59e0b;
+}
+
+.toast-atencao .toast-timer {
+    background: #f59e0b;
+}
+
+
+/* animação de saída */
+
+@keyframes slideOutUp {
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
     }
 }
