@@ -1,0 +1,368 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFRO Esportes - Admin</title>
+  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/light-override.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
+</head>
+<body data-page="admin" data-theme="light" class="admin-shell">
+  <div id="appShell">
+    <nav class="navbar">
+      <div class="navbar-left">
+        <button class="icon-btn nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
+        <button class="navbar-brand" onclick="scrollToTop()">IFRO ESPORTES - ADMIN</button>
+      </div>
+      <div class="navbar-right">
+        <button class="icon-btn" onclick="toggleAdminMenu(event)"><span class="material-symbols-outlined">settings</span></button>
+        <div class="user-menu">
+          <button class="user-trigger" onclick="toggleUserDrawer()">
+            <span id="userNameNavbar" class="user-name"></span>
+            <img id="userAvatar" class="user-avatar" src="assets/avatar-default.png" alt="Avatar" />
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div id="adminMenuOverlay" class="overlay hidden" onclick="closeAdminMenu()"></div>
+    <div id="adminMenuDropdown" class="card hidden" style="position: fixed; top: 70px; right: 24px; width: 220px; z-index: 70;">
+      <button class="btn-ghost" onclick="location.href='dashboard.html'">Voltar ao painel</button>
+      <button class="btn-ghost" onclick="location.href='sumula.html'">Súmula</button>
+      <button class="btn-ghost" onclick="logout()">Sair</button>
+    </div>
+
+    <div class="app-body">
+      <aside id="sideNav" class="side-drawer">
+        <div class="side-header">Admin</div>
+        <a class="side-link" href="dashboard.html">Inicio</a>
+        <a class="side-link" href="admin.html">Painel</a>
+        <a class="side-link" href="noticias.html">Noticias</a>
+        <a class="side-link" href="modalidades.html">Modalidades</a>
+        <a class="side-link" href="horarios.html">Horarios</a>
+        <a class="side-link" href="resultados.html">Resultados</a>
+      </aside>
+
+      <main class="page admin-panel">
+        <section class="page-header">
+          <div>
+            <div class="page-title">Painel Administrativo</div>
+            <div class="page-subtitle" id="adminCrumb">Visao geral</div>
+          </div>
+        </section>
+
+        <section class="form-row">
+          <div class="card">
+            <div class="stat-number" id="metricUsuarios">-</div>
+            <div class="stat-label">Usuarios</div>
+          </div>
+          <div class="card">
+            <div class="stat-number" id="metricInscricoes">-</div>
+            <div class="stat-label">Inscricoes</div>
+          </div>
+          <div class="card">
+            <div class="stat-number" id="metricModalidades">-</div>
+            <div class="stat-label">Modalidades</div>
+          </div>
+          <div class="card">
+            <div class="stat-number" id="metricComunicados">-</div>
+            <div class="stat-label">Comunicados</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="tabInscricoes" onclick="switchAdminTab('tabInscricoes', this)">Inscricoes</button>
+            <button class="admin-tab" data-tab="tabUsuarios" onclick="switchAdminTab('tabUsuarios', this)">Usuarios</button>
+            <button class="admin-tab" data-tab="tabNoticias" onclick="switchAdminTab('tabNoticias', this)">Noticias</button>
+            <button class="admin-tab" data-tab="tabModalidades" onclick="switchAdminTab('tabModalidades', this)">Modalidades</button>
+            <button class="admin-tab" data-tab="tabSorteio" onclick="switchAdminTab('tabSorteio', this)">Sorteio</button>
+            <button class="admin-tab" data-tab="tabBuscarAluno" onclick="switchAdminTab('tabBuscarAluno', this)">Buscar aluno</button>
+          </div>
+        </section>
+
+        <section id="tabInscricoes" class="tab-content active">
+          <div class="card">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Modalidade</label>
+                <select id="filtInscModalidade"></select>
+              </div>
+              <div class="form-group">
+                <label>Sexo</label>
+                <select id="filtInscSexo">
+                  <option value="">Todos</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Feminino</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Turma</label>
+                <select id="filtInscTurma"></select>
+              </div>
+              <div class="form-group">
+                <label>Campus</label>
+                <select id="filtInscCampus"></select>
+              </div>
+              <div class="form-group" style="align-self:end;">
+                <button class="btn-primary" onclick="loadInscricoesAdmin()">Filtrar</button>
+              </div>
+            </div>
+          </div>
+          <div class="card table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Aluno</th>
+                  <th>Matricula</th>
+                  <th>Turma</th>
+                  <th>Modalidade</th>
+                  <th>Sexo</th>
+                  <th>Data</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody id="inscBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tabUsuarios" class="tab-content">
+          <div class="card form-grid">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Buscar usuario</label>
+                <input id="searchUser" type="text" placeholder="Nome ou matricula" />
+              </div>
+              <div class="form-group" style="align-self:end;">
+                <button class="btn-outline" onclick="loadUsuariosAdmin()">Buscar</button>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Matricula</label>
+                <input id="newMatricula" oninput="onMatriculaInput()" />
+                <small id="matriculaStatus" class="page-subtitle"></small>
+              </div>
+              <div class="form-group">
+                <label>Nome</label>
+                <input id="newNome" />
+              </div>
+              <div class="form-group">
+                <label>Campus</label>
+                <input id="newCampus" />
+              </div>
+              <div class="form-group">
+                <label>Curso</label>
+                <input id="newCurso" />
+              </div>
+              <div class="form-group">
+                <label>Turma</label>
+                <input id="newTurma" />
+              </div>
+              <div class="form-group">
+                <label>Nascimento</label>
+                <input id="newNascimento" type="date" />
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input id="newEmail" type="email" />
+              </div>
+              <div class="form-group">
+                <label>Senha</label>
+                <input id="newSenha" type="password" />
+              </div>
+              <div class="form-group">
+                <label>Role</label>
+                <select id="newRole">
+                  <option value="ALUNO">Aluno</option>
+                  <option value="PROFESSOR">Professor</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </div>
+            </div>
+            <button class="btn-primary" onclick="addUser(event)">Cadastrar usuario</button>
+          </div>
+          <div class="card table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Matricula</th>
+                  <th>Turma</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody id="usersBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tabNoticias" class="tab-content">
+          <div class="card form-grid">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Titulo</label>
+                <input id="newsTitulo" />
+              </div>
+              <div class="form-group">
+                <label>Autor</label>
+                <input id="newsAutor" />
+              </div>
+              <div class="form-group">
+                <label>Data</label>
+                <input id="newsData" type="date" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Descricao</label>
+              <textarea id="newsDescricao" rows="4"></textarea>
+            </div>
+            <button class="btn-primary" onclick="saveNews(event)">Publicar noticia</button>
+          </div>
+          <div class="card table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Titulo</th>
+                  <th>Autor</th>
+                  <th>Data</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody id="newsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tabModalidades" class="tab-content">
+          <div class="card form-grid">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nome da modalidade</label>
+                <input id="modNome" />
+              </div>
+              <div class="form-group">
+                <label>Horario</label>
+                <input id="modHorario" />
+              </div>
+            </div>
+            <button class="btn-primary" onclick="saveMod(event)">Salvar modalidade</button>
+          </div>
+          <div class="card table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Modalidade</th>
+                  <th>Horario</th>
+                  <th>Acoes</th>
+                </tr>
+              </thead>
+              <tbody id="modsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tabSorteio" class="tab-content">
+          <div class="card form-grid">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Modalidade</label>
+                <select id="sorteioModalidade"></select>
+              </div>
+              <div class="form-group">
+                <label>Sexo</label>
+                <select id="sorteioSexo">
+                  <option value="M">Masculino</option>
+                  <option value="F">Feminino</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Chave</label>
+                <select id="sorteioChave">
+                  <option value="">Todas</option>
+                  <option value="CH A">CH A</option>
+                  <option value="CH B">CH B</option>
+                  <option value="CH C">CH C</option>
+                  <option value="CH D">CH D</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Local</label>
+                <input id="sorteioLocal" value="Quadra A" />
+              </div>
+              <div class="form-group">
+                <label>Modo</label>
+                <select id="sorteioModo">
+                  <option value="GRUPOS">Grupos</option>
+                  <option value="MATA_MATA">Mata-mata</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Hora inicio</label>
+                <input id="sorteioHoraInicio" type="time" value="07:30" />
+              </div>
+              <div class="form-group">
+                <label>Intervalo (min)</label>
+                <input id="sorteioIntervalo" type="number" value="10" />
+              </div>
+            </div>
+            <div class="form-row">
+              <button class="btn-primary" onclick="gerarTabelaSorteio()">Gerar tabela</button>
+              <button class="btn-outline" onclick="aplicarHorariosSorteio()">Aplicar horarios</button>
+              <button class="btn-outline" onclick="limparSorteio()">Limpar</button>
+            </div>
+          </div>
+          <div class="card table-responsive">
+            <div class="page-title" id="sorteioTituloModalidade">Tabela de sorteio</div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Ordem</th>
+                  <th>Jogo</th>
+                  <th>Hora</th>
+                  <th>Chave</th>
+                  <th>Equipe A</th>
+                  <th>X</th>
+                  <th>Equipe B</th>
+                  <th>Status</th>
+                  <th>Sumula</th>
+                </tr>
+              </thead>
+              <tbody id="sorteioBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="tabBuscarAluno" class="tab-content">
+          <div class="card form-grid">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Matricula</label>
+                <input id="buscaMatricula" />
+              </div>
+              <div class="form-group" style="align-self:end;">
+                <button class="btn-primary" onclick="buscarAluno()">Buscar</button>
+              </div>
+            </div>
+            <div id="buscaResultado"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="sideOverlay" class="overlay"></div>
+    <div id="drawerOverlay" class="overlay"></div>
+    <div id="userDrawer" class="user-drawer"></div>
+    <div id="globalModals"></div>
+  </div>
+
+  <script src="js/jsdosistema.js"></script>
+</body>
+</html>
+

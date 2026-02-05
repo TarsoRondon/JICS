@@ -1,0 +1,342 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Sorteio</title>
+  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/light-override.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
+  <style>
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      .no-print { display: none !important; }
+      .table { width: 100%; border-collapse: collapse; }
+      .table th, .table td { border: 1px solid #000 !important; color: #000 !important; }
+      .print-header { display: table-row !important; }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <div id="appShell">
+    <nav class="navbar no-print">
+      <div class="navbar-left">
+        <button class="icon-btn nav-hamburger" onclick="toggleSideNav()" aria-label="Abrir menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div>
+          <div class="page-title">Sorteio</div>
+          <div class="page-subtitle">Planilha de jogos por chave</div>
+        </div>
+      </div>
+      <div class="navbar-right">
+        <button class="btn-outline" onclick="toggleTheme()">Tema</button>
+      </div>
+    </nav>
+
+    <div class="app-body">
+      <aside id="sideNav" class="side-drawer no-print">
+        <div class="side-header">JICS Admin</div>
+        <a class="side-link active" href="admin-sorteio.html">Sorteio</a>
+        <a class="side-link" href="admin-sumula.html">Sumula</a>
+        <a class="side-link" href="admin-ranking.html">Ranking</a>
+        <a class="side-link" href="admin-admins.html">Administradores</a>
+      </aside>
+
+      <main class="page">
+        <section class="card no-print">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Evento</label>
+              <select id="eventoSelect">
+                <option value="">Evento</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Modalidade</label>
+              <select id="modalidadeSelect">
+                <option value="">Modalidade</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Sexo</label>
+              <select id="sexoSelect">
+                <option value="">Sexo</option>
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Local</label>
+              <input id="localInput" placeholder="Local" value="Quadra A" />
+            </div>
+            <div class="form-group">
+              <label>Hora inicio</label>
+              <input id="horaInput" placeholder="07:30" value="07:30" />
+            </div>
+            <div class="form-group">
+              <label>Intervalo (min)</label>
+              <input id="intervaloInput" type="number" min="0" value="10" />
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+            <button id="btnGerar" class="btn-primary">Gerar tabela</button>
+            <button id="btnHorarios" class="btn-outline">Gerar horarios</button>
+            <button id="btnLimpar" class="btn-danger">Limpar</button>
+            <button id="btnPdf" class="btn-outline">Exportar PDF</button>
+            <button id="btnPrint" class="btn-outline">Imprimir</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr class="print-header hidden">
+                  <th colspan="9" style="text-align:left;">
+                    <div id="printLocal"></div>
+                    <div id="printModalidade"></div>
+                    <div id="printSexo"></div>
+                  </th>
+                </tr>
+                <tr>
+                  <th>Ordem</th>
+                  <th>Jogo</th>
+                  <th>Hora</th>
+                  <th>Chave</th>
+                  <th>Equipe A</th>
+                  <th style="text-align:center;">X</th>
+                  <th>Equipe B</th>
+                  <th>Status</th>
+                  <th class="no-print">Sumula</th>
+                </tr>
+              </thead>
+              <tbody id="sorteioTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="sideOverlay" class="overlay no-print"></div>
+  </div>
+
+  <script src="ui-kit.js"></script>
+  <script>
+    const sideNav = document.getElementById('sideNav');
+    const sideOverlay = document.getElementById('sideOverlay');
+
+    function toggleSideNav() {
+      sideNav.classList.toggle('open');
+      sideOverlay.classList.toggle('active');
+    }
+
+    sideOverlay.addEventListener('click', () => {
+      sideNav.classList.remove('open');
+      sideOverlay.classList.remove('active');
+    });
+
+    const statusClass = (status) => {
+      const s = String(status || '').toLowerCase();
+      if (s === 'em_andamento') return 'status-pill status-em_andamento';
+      if (s === 'finalizado') return 'status-pill status-finalizado';
+      return 'status-pill status-nao_iniciado';
+    };
+
+    async function fetchEventos() {
+      try {
+        const res = await fetch('/eventos', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.sucesso) throw new Error();
+        const select = document.getElementById('eventoSelect');
+        (data.data || []).forEach(e => {
+          const opt = document.createElement('option');
+          opt.value = e.id;
+          opt.textContent = `${e.nome} (${e.ano})`;
+          select.appendChild(opt);
+        });
+      } catch {
+        showToast({ type: 'warning', title: 'Aviso', message: 'Nao foi possivel carregar eventos.' });
+      }
+    }
+
+    async function fetchModalidades() {
+      try {
+        const res = await fetch('/modalidades');
+        const data = await res.json();
+        const select = document.getElementById('modalidadeSelect');
+        (data || []).forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.titulo || m.nome;
+          select.appendChild(opt);
+        });
+      } catch {
+        showToast({ type: 'warning', title: 'Aviso', message: 'Nao foi possivel carregar modalidades.' });
+      }
+    }
+
+    function renderTabela(jogos, meta) {
+      const tbody = document.getElementById('sorteioTable');
+      if (!jogos || !jogos.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="center muted" style="padding:18px;">Nenhum jogo encontrado.</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = jogos.map(j => `
+        <tr>
+          <td>${j.ordem ?? '-'}</td>
+          <td>${j.jogo_label || j.numero_jogo || '-'}</td>
+          <td>${j.hora || 'A seguir'}</td>
+          <td>${j.chave || '-'}</td>
+          <td>${j.equipe_a}</td>
+          <td style="text-align:center;">x</td>
+          <td>${j.equipe_b}</td>
+          <td><span class="${statusClass(j.status)}">${j.status || 'NAO_INICIADO'}</span></td>
+          <td class="no-print"><a href="admin-sumula.html?jogoId=${j.id}" class="btn-link">Sumula</a></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('printLocal').textContent = `Local: ${meta?.local_jogos || ''}`;
+      document.getElementById('printModalidade').textContent = `Modalidade: ${document.getElementById('modalidadeSelect').selectedOptions[0]?.text || ''}`;
+      document.getElementById('printSexo').textContent = `Sexo: ${document.getElementById('sexoSelect').value || ''}`;
+    }
+
+    async function carregarTabela() {
+      const eventoId = document.getElementById('eventoSelect').value;
+      const modalidadeId = document.getElementById('modalidadeSelect').value;
+      const sexo = document.getElementById('sexoSelect').value;
+      if (!eventoId || !modalidadeId || !sexo) {
+        showToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento, modalidade e sexo.' });
+        return;
+      }
+      showLoading(true);
+      try {
+        const res = await fetch(`/sorteio/${eventoId}/${modalidadeId}/${sexo}`, { credentials: 'include' });
+        const data = await res.json();
+        if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro');
+        renderTabela(data.data.jogos || [], data.data.meta);
+      } catch (err) {
+        showToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao carregar.' });
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    async function gerarTabela() {
+      const eventoId = document.getElementById('eventoSelect').value;
+      const modalidadeId = document.getElementById('modalidadeSelect').value;
+      const sexo = document.getElementById('sexoSelect').value;
+      const local = document.getElementById('localInput').value;
+      const hora_inicio = document.getElementById('horaInput').value;
+      const intervalo_min = Number(document.getElementById('intervaloInput').value || 0);
+      if (!eventoId || !modalidadeId || !sexo) {
+        showToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento, modalidade e sexo.' });
+        return;
+      }
+      showLoading(true);
+      try {
+        const res = await fetch('/sorteio/gerar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ evento_id: eventoId, modalidade_id: modalidadeId, sexo, local_jogos: local, hora_inicio, intervalo_min })
+        });
+        const data = await res.json();
+        if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro');
+        showToast({ type: 'success', title: 'Sorteio gerado', message: 'Tabela atualizada.' });
+        carregarTabela();
+      } catch (err) {
+        showToast({ type: 'error', title: 'Erro', message: err.message });
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    async function gerarHorarios() {
+      const eventoId = document.getElementById('eventoSelect').value;
+      const modalidadeId = document.getElementById('modalidadeSelect').value;
+      const sexo = document.getElementById('sexoSelect').value;
+      const hora_inicio = document.getElementById('horaInput').value;
+      const intervalo_min = Number(document.getElementById('intervaloInput').value || 0);
+      if (!eventoId || !modalidadeId || !sexo) {
+        showToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento, modalidade e sexo.' });
+        return;
+      }
+      showLoading(true);
+      try {
+        const res = await fetch('/sorteio/horarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ evento_id: eventoId, modalidade_id: modalidadeId, sexo, hora_inicio, intervalo_min })
+        });
+        const data = await res.json();
+        if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro');
+        showToast({ type: 'success', title: 'Horarios aplicados', message: 'Tabela atualizada.' });
+        carregarTabela();
+      } catch (err) {
+        showToast({ type: 'error', title: 'Erro', message: err.message });
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function limparTabela() {
+      const eventoId = document.getElementById('eventoSelect').value;
+      const modalidadeId = document.getElementById('modalidadeSelect').value;
+      const sexo = document.getElementById('sexoSelect').value;
+      if (!eventoId || !modalidadeId || !sexo) {
+        showToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento, modalidade e sexo.' });
+        return;
+      }
+      openConfirmModal({
+        title: 'Limpar sorteio',
+        message: 'Digite CONFIRMAR para apagar todos os jogos.',
+        confirmText: 'CONFIRMAR',
+        onConfirm: async () => {
+          showLoading(true);
+          try {
+            const res = await fetch('/sorteio/limpar', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ evento_id: eventoId, modalidade_id: modalidadeId, sexo })
+            });
+            const data = await res.json();
+            if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro');
+            showToast({ type: 'success', title: 'Limpo', message: 'Jogos removidos.' });
+            carregarTabela();
+          } catch (err) {
+            showToast({ type: 'error', title: 'Erro', message: err.message });
+          } finally {
+            showLoading(false);
+          }
+        }
+      });
+    }
+
+    document.getElementById('btnGerar').addEventListener('click', gerarTabela);
+    document.getElementById('btnHorarios').addEventListener('click', gerarHorarios);
+    document.getElementById('btnLimpar').addEventListener('click', limparTabela);
+    document.getElementById('btnPrint').addEventListener('click', () => window.print());
+    document.getElementById('btnPdf').addEventListener('click', () => {
+      const eventoId = document.getElementById('eventoSelect').value;
+      const modalidadeId = document.getElementById('modalidadeSelect').value;
+      const sexo = document.getElementById('sexoSelect').value;
+      if (!eventoId || !modalidadeId || !sexo) {
+        showToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento, modalidade e sexo.' });
+        return;
+      }
+      window.open(`/sorteio/${eventoId}/${modalidadeId}/${sexo}/pdf`, '_blank');
+    });
+
+    fetchEventos();
+    fetchModalidades();
+  </script>
+</body>
+</html>
+

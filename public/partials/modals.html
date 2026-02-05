@@ -1,0 +1,308 @@
+﻿<!-- Global Modals / Overlays -->
+<div id="detailModal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="detailTitle">Detalhes</h2>
+      <button class="icon-btn" onclick="closeModal('detailModal')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body" id="detailContent"></div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModal('detailModal')">Fechar</button>
+      <button class="btn-primary" onclick="confirmInscription()">Confirmar inscricao</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalVerNoticia" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="verTitulo">Noticia</h2>
+      <button class="icon-btn" onclick="fecharModalVer()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <p id="verDescricao"></p>
+      <div class="muted">
+        <small id="verPublicacao"></small><br />
+        <small id="verEdicao"></small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="fecharModalVer()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalEditarNoticia" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Editar noticia</h2>
+      <button class="icon-btn" onclick="fecharModalEditar()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editNoticiaId" />
+      <label>Titulo</label>
+      <input type="text" id="editTitulo" />
+      <label>Descricao</label>
+      <textarea id="editDescricao" rows="5"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="fecharModalEditar()">Cancelar</button>
+      <button class="btn-primary" onclick="salvarEdicaoNoticia()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalExcluir" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Excluir noticia</h2>
+      <button class="icon-btn" onclick="fecharModalExcluir()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <p>Tem certeza que deseja excluir esta noticia? Essa acao nao pode ser desfeita.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="fecharModalExcluir()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmarExclusao()">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalSenha" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Alterar senha</h2>
+      <button class="icon-btn" onclick="closeModalSenha()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <label>Senha atual</label>
+      <input type="password" id="senhaAtualInput" />
+      <label>Nova senha</label>
+      <input type="password" id="novaSenhaInput" />
+      <label>Confirmar senha</label>
+      <input type="password" id="confirmarSenhaInput" />
+      <div class="password-ux">
+        <div id="rulesModalSenha" class="password-rules">
+          <div class="password-rule rule-bad" data-rule="length"><span class="rule-icon">?</span> minimo 8 caracteres</div>
+          <div class="password-rule rule-bad" data-rule="upper"><span class="rule-icon">?</span> pelo menos 1 letra maiuscula</div>
+          <div class="password-rule rule-bad" data-rule="number"><span class="rule-icon">?</span> pelo menos 1 numero</div>
+          <div class="password-rule rule-bad" data-rule="symbol"><span class="rule-icon">?</span> pelo menos 1 simbolo</div>
+        </div>
+        <div class="password-strength">
+          <div class="strength-bar"><span id="strengthBarModalSenha" class="strength-fill"></span></div>
+          <div id="strengthTextModalSenha" class="strength-text">Forca: fraca</div>
+        </div>
+        <div id="matchModalSenha" class="password-match match-bad">? Senhas conferem</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModalSenha()">Cancelar</button>
+      <button class="btn-primary btn-disabled" id="btnSalvarSenha" onclick="confirmarAlteracaoSenha()" disabled>Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalConfirmarSenha" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Confirmar alteracao</h2>
+      <button class="icon-btn" onclick="closeModalConfirmar()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <p>Tem certeza que deseja alterar sua senha? Essa acao nao podera ser desfeita.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeModalConfirmar()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmarTrocaSenha()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalDangerConfirm" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="dangerConfirmTitle">Confirmar acao</h2>
+      <button class="icon-btn" onclick="closeDangerConfirm()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <p id="dangerConfirmText">Esta acao e perigosa. Digite CONFIRMAR para continuar.</p>
+      <input type="text" id="dangerConfirmInput" placeholder="Digite CONFIRMAR" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closeDangerConfirm()">Cancelar</button>
+      <button class="btn-danger" id="dangerConfirmBtn" onclick="confirmDangerAction()" disabled>Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalFoto" class="modal hidden">
+  <div class="modal-card modal-photo">
+    <div class="modal-header">
+      <h2>Alterar foto</h2>
+      <button class="icon-btn" onclick="closePhotoModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-body">
+      <div class="photo-cropper">
+        <div id="cropArea" class="crop-area">
+          <img id="cropImg" draggable="false" />
+        </div>
+        <div class="crop-actions">
+          <button type="button" id="btnFit">Ajustar</button>
+          <button type="button" id="btnCenter">Centralizar</button>
+        </div>
+        <small class="crop-hint">
+          Arraste a foto e use a roda do mouse para zoom
+        </small>
+      </div>
+      <input id="photoInput" type="file" accept="image/*" onchange="loadPhoto(event)" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" onclick="closePhotoModal()">Cancelar</button>
+      <button class="btn-primary" onclick="savePhoto()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div id="passwordRecoveryModal" class="modal hidden">
+  <div class="modal-card password-recovery-card">
+    <div class="modal-header">
+      <h2>Recuperar senha</h2>
+      <button class="icon-btn" onclick="closePasswordRecoveryModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="password-recovery-body">
+      <iframe id="passwordRecoveryFrame" class="password-recovery-frame" title="Recuperar senha" src="solicitar-otp.html"></iframe>
+    </div>
+  </div>
+</div>
+
+<div id="helpPanel" class="help-panel hidden">
+  <div class="help-header">
+    <h3>Ajuda rapida</h3>
+    <button class="icon-btn" onclick="toggleHelpPanel()"><span class="material-symbols-outlined">close</span></button>
+  </div>
+  <div class="help-content">
+    <div class="tutorials user-only">
+      <button class="tutorial-card" onclick="startTour('inscricao')">
+        <strong>Como fazer inscricao</strong>
+        <span>Tour guiado passo a passo</span>
+      </button>
+      <button class="tutorial-card" onclick="startTour('senha')">
+        <strong>Como trocar senha</strong>
+        <span>Dica rapida e pratica</span>
+      </button>
+      <button class="tutorial-card" onclick="startTour('foto')">
+        <strong>Como trocar foto</strong>
+        <span>Com previa e centralizacao</span>
+      </button>
+      <button class="tutorial-card" onclick="startTour('resultados')">
+        <strong>Como ver resultados</strong>
+        <span>Filtrar e baixar CSV</span>
+      </button>
+      <button class="tutorial-card" onclick="startTour('completo')">
+        <strong>Tour completo</strong>
+        <span>Conheca todo o site</span>
+      </button>
+    </div>
+
+    <div class="tutorials staff-only">
+      <button class="tutorial-card" onclick="startTour('completo')">
+        <strong>Atalhos do admin</strong>
+        <span>Inscricoes, usuarios, noticias e modalidades.</span>
+      </button>
+      <button class="tutorial-card" onclick="openAdminTab('tabInscricoes')">
+        <strong>Gerenciar inscricoes</strong>
+        <span>Acesse a aba Inscricoes.</span>
+      </button>
+      <button class="tutorial-card" onclick="openAdminTab('tabBuscarAluno')">
+        <strong>Buscar aluno</strong>
+        <span>Encontre e edite perfis.</span>
+      </button>
+      <button class="tutorial-card" onclick="openAdminTab('tabNoticias')">
+        <strong>Publicar noticias</strong>
+        <span>Cadastre e edite comunicados.</span>
+      </button>
+      <button class="tutorial-card" onclick="openAdminTab('tabModalidades')">
+        <strong>Modalidades</strong>
+        <span>Cadastre novas modalidades.</span>
+      </button>
+    </div>
+
+    <div class="faq user-only">
+      <h4>Perguntas frequentes</h4>
+      <details>
+        <summary>Como fazer inscricao?</summary>
+        <p>Va em "Inscricoes", escolha uma modalidade e confirme. O sistema salva automaticamente.</p>
+      </details>
+      <details>
+        <summary>Como alterar senha?</summary>
+        <p>Acesse o menu de perfil e clique em "Alterar senha".</p>
+      </details>
+      <details>
+        <summary>Como atualizar a foto?</summary>
+        <p>Abra o menu do usuario, clique em "Alterar foto" e ajuste a previa.</p>
+      </details>
+      <details>
+        <summary>Como ver resultados?</summary>
+        <p>Abra a pagina "Resultados" e filtre por modalidade, fase, sexo ou etapa.</p>
+      </details>
+    </div>
+
+    <div class="faq staff-only">
+      <h4>Perguntas frequentes (admin)</h4>
+      <details>
+        <summary>Como gerenciar inscricoes?</summary>
+        <p>No painel admin, abra a aba Inscricoes para ver e exportar.</p>
+      </details>
+      <details>
+        <summary>Como buscar um aluno?</summary>
+        <p>Use a aba Buscar aluno e clique em "Ver perfil".</p>
+      </details>
+      <details>
+        <summary>Como publicar noticias?</summary>
+        <p>Na aba Noticias, preencha titulo e descricao e publique.</p>
+      </details>
+      <details>
+        <summary>Como cadastrar modalidades?</summary>
+        <p>Na aba Modalidades, preencha o formulario e salve.</p>
+      </details>
+      <details>
+        <summary>Como editar modalidades?</summary>
+        <p>Na pagina de horarios, use a tabela administrativa.</p>
+      </details>
+    </div>
+  </div>
+</div>
+
+<div id="tourOverlay" class="tour-overlay hidden">
+  <div id="tourHighlight" class="tour-highlight"></div>
+  <div id="tourTooltip" class="tour-tooltip">
+    <h4 id="tourTitle"></h4>
+    <p id="tourText"></p>
+    <div class="tour-actions">
+      <button class="btn-outline" onclick="prevTourStep()">Voltar</button>
+      <button class="btn-primary" onclick="nextTourStep()">Proximo</button>
+      <button class="icon-btn" onclick="endTour(false)"><span class="material-symbols-outlined">close</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="toastSucesso" class="toast hidden" role="status" aria-live="polite">
+  <div class="toast-content">
+    <strong>Sucesso</strong>
+    <p id="toastSucessoMsg"></p>
+  </div>
+</div>
+<div id="toastErro" class="toast toast-error hidden" role="alert" aria-live="assertive">
+  <div class="toast-content">
+    <strong>Erro</strong>
+    <p id="toastErroMsg"></p>
+  </div>
+</div>
+<div id="toastAtencao" class="toast toast-warning hidden" role="status" aria-live="polite">
+  <div class="toast-content">
+    <strong>Atencao</strong>
+    <p id="toastAtencaoMsg"></p>
+  </div>
+</div>
+
+

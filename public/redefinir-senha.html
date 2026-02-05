@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFRO Esportes - Redefinir senha</title>
+  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/light-override.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body data-page="redefinir-senha" data-theme="light">
+  <div class="login-shell">
+    <div class="login-card">
+      <div>
+        <h1 class="page-title">Redefinir senha</h1>
+        <p class="page-subtitle">Defina uma nova senha para sua conta.</p>
+      </div>
+
+      <form id="resetForm" class="form-grid" novalidate>
+        <div class="form-group">
+          <label>Matricula</label>
+          <input id="matricula" type="text" inputmode="numeric" maxlength="13" required>
+        </div>
+        <div class="form-group">
+          <label>Nova senha</label>
+          <input id="novaSenha" type="password" required>
+        </div>
+        <button class="btn-primary" type="submit">Atualizar senha</button>
+        <p id="status" class="page-subtitle"></p>
+      </form>
+
+      <div class="page-subtitle">
+        <a class="btn-link" href="index.html" target="_top">Voltar ao login</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('resetForm');
+    const statusEl = document.getElementById('status');
+    const matriculaInput = document.getElementById('matricula');
+    const savedMatricula = localStorage.getItem('otpMatricula') || localStorage.getItem('recuperacaoMatricula');
+    if (savedMatricula) matriculaInput.value = savedMatricula;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = 'Atualizando...';
+
+      const matricula = matriculaInput.value.trim();
+      const novaSenha = document.getElementById('novaSenha').value.trim();
+      const resetToken = localStorage.getItem('resetToken');
+
+      try {
+        const res = await fetch('/auth/password/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ matricula, reset_token: resetToken, nova_senha: novaSenha })
+        });
+        const data = await res.json();
+        if (!data.sucesso) {
+          statusEl.textContent = data.mensagem || 'Erro ao redefinir senha.';
+          return;
+        }
+        statusEl.textContent = 'Senha atualizada com sucesso!';
+        localStorage.removeItem('resetToken');
+        setTimeout(() => { location.href = 'index.html'; }, 1200);
+      } catch {
+        statusEl.textContent = 'Erro inesperado.';
+      }
+    });
+  </script>
+</body>
+</html>
+

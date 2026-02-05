@@ -1,0 +1,235 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JICS - Dashboard</title>
+  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/light-override.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
+</head>
+<body data-theme="light">
+  <div id="appShell">
+    <nav class="navbar">
+      <div class="navbar-left">
+        <button class="icon-btn nav-hamburger" onclick="toggleSideNav()" aria-label="Abrir menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <button class="navbar-brand">IFRO ESPORTES</button>
+      </div>
+      <div class="navbar-right">
+        <button class="btn-outline" onclick="toggleTheme()">Tema</button>
+        <button id="btnSair" class="btn-danger">Sair</button>
+      </div>
+    </nav>
+
+    <div class="app-body">
+      <aside id="sideNav" class="side-drawer">
+        <div class="side-header">Menu</div>
+        <a class="side-link active" href="app-dashboard.html">Dashboard</a>
+        <a class="side-link" href="app-inscricoes.html">Inscricoes</a>
+        <a class="side-link" href="app-meus-jogos.html">Meus jogos</a>
+        <a class="side-link" href="app-ranking.html">Ranking</a>
+        <a class="side-link" href="app-perfil.html">Perfil</a>
+        <a class="side-link" href="app-ajuda.html">Ajuda</a>
+      </aside>
+
+      <main class="page with-bottom-nav">
+        <section class="hero">
+          <h1>Bem-vindo(a) ao JICS</h1>
+          <p>Acompanhe seus jogos, inscricoes e resultados em tempo real.</p>
+        </section>
+
+        <section class="card-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon"><span class="material-symbols-outlined">how_to_reg</span></div>
+              <div>
+                <div class="card-title">Minhas inscricoes</div>
+                <div id="resumoInscricoes" class="page-subtitle">0 inscricoes</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon"><span class="material-symbols-outlined">sports_soccer</span></div>
+              <div>
+                <div class="card-title">Proximos jogos</div>
+                <div id="resumoJogos" class="page-subtitle">0 jogos</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon"><span class="material-symbols-outlined">campaign</span></div>
+              <div>
+                <div class="card-title">Avisos</div>
+                <div id="resumoAvisos" class="page-subtitle">Sem avisos</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon"><span class="material-symbols-outlined">verified_user</span></div>
+              <div>
+                <div class="card-title">Perfil</div>
+                <div id="resumoPerfil" class="page-subtitle">Atualizado</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page-grid">
+          <div class="card">
+            <div class="page-header">
+              <div>
+                <div class="page-title">Proximos jogos</div>
+                <div class="page-subtitle">Agenda do seu time</div>
+              </div>
+            </div>
+            <div id="listProximos" class="page-grid"></div>
+          </div>
+          <div class="card">
+            <div class="page-header">
+              <div>
+                <div class="page-title">Ultimos resultados</div>
+                <div class="page-subtitle">Resultados recentes</div>
+              </div>
+            </div>
+            <div id="listResultados" class="page-grid"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Noticias</div>
+              <div class="page-subtitle">Comunicados do evento</div>
+            </div>
+          </div>
+          <div id="listNoticias" class="card-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="sideOverlay" class="overlay"></div>
+
+    <nav class="bottom-nav">
+      <a class="bottom-link active" href="app-dashboard.html">
+        <span class="material-symbols-outlined">home</span>
+        Dashboard
+      </a>
+      <a class="bottom-link" href="app-inscricoes.html">
+        <span class="material-symbols-outlined">how_to_reg</span>
+        Inscricoes
+      </a>
+      <a class="bottom-link" href="app-meus-jogos.html">
+        <span class="material-symbols-outlined">sports_soccer</span>
+        Jogos
+      </a>
+      <a class="bottom-link" href="app-ranking.html">
+        <span class="material-symbols-outlined">leaderboard</span>
+        Ranking
+      </a>
+      <a class="bottom-link" href="app-perfil.html">
+        <span class="material-symbols-outlined">person</span>
+        Perfil
+      </a>
+    </nav>
+  </div>
+
+  <script src="ui-kit.js"></script>
+  <script>
+    const sideNav = document.getElementById('sideNav');
+    const sideOverlay = document.getElementById('sideOverlay');
+
+    function toggleSideNav() {
+      sideNav.classList.toggle('open');
+      sideOverlay.classList.toggle('active');
+    }
+
+    sideOverlay.addEventListener('click', () => {
+      sideNav.classList.remove('open');
+      sideOverlay.classList.remove('active');
+    });
+
+    document.getElementById('btnSair').addEventListener('click', () => {
+      openConfirmModal({
+        title: 'Sair do sistema',
+        message: 'Digite CONFIRMAR para sair.',
+        confirmText: 'CONFIRMAR',
+        onConfirm: async () => {
+          await fetch('/auth/aluno/logout', { method: 'POST', credentials: 'include' });
+          window.location.href = 'app-login.html';
+        }
+      });
+    });
+
+    async function api(url) {
+      showLoading(true);
+      try {
+        const res = await fetch(url, { credentials: 'include' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.sucesso === false) throw new Error(data?.erro?.mensagem || 'Erro');
+        return data.data || data;
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function renderList(container, items, emptyText) {
+      if (!items.length) {
+        container.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+        return;
+      }
+      container.innerHTML = items.map(i => `
+        <div class="result-card">
+          <strong>${i.titulo || i.modalidade || 'Item'}</strong>
+          <span class="muted">${i.subtitulo || i.data || ''}</span>
+        </div>
+      `).join('');
+    }
+
+    async function loadDashboard() {
+      try {
+        const resumo = await api('/aluno/resumo');
+        document.getElementById('resumoInscricoes').textContent = `${resumo.inscricoes || 0} inscricoes`;
+        document.getElementById('resumoJogos').textContent = `${resumo.proximos_jogos || 0} jogos`;
+        document.getElementById('resumoAvisos').textContent = resumo.avisos ? `${resumo.avisos} avisos` : 'Sem avisos';
+        document.getElementById('resumoPerfil').textContent = resumo.perfil_ok ? 'Atualizado' : 'Pendencias';
+      } catch (err) {
+        showToast({ type: 'warning', title: 'Aviso', message: 'Nao foi possivel carregar o resumo.' });
+      }
+
+      try {
+        const proximos = await api('/aluno/jogos/proximos');
+        renderList(document.getElementById('listProximos'), proximos || [], 'Sem jogos agendados.');
+      } catch {
+        renderList(document.getElementById('listProximos'), [], 'Sem jogos agendados.');
+      }
+
+      try {
+        const ultimos = await api('/aluno/jogos/ultimos');
+        renderList(document.getElementById('listResultados'), ultimos || [], 'Sem resultados recentes.');
+      } catch {
+        renderList(document.getElementById('listResultados'), [], 'Sem resultados recentes.');
+      }
+
+      try {
+        const noticias = await api('/noticias');
+        const list = (noticias || []).slice(0, 4).map(n => ({ titulo: n.titulo, subtitulo: n.data_publicacao || '' }));
+        renderList(document.getElementById('listNoticias'), list, 'Sem noticias.');
+      } catch {
+        renderList(document.getElementById('listNoticias'), [], 'Sem noticias.');
+      }
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>
+

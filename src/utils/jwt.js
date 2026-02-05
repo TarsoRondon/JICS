@@ -1,0 +1,52 @@
+import jwt from 'jsonwebtoken';
+
+const ADMIN_COOKIE = process.env.ADMIN_AUTH_COOKIE || 'admin_token';
+
+function getJwtSecret() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    // Falha rapida: em producao isso deve ser obrigatorio.
+    return 'dev-insecure-secret-change-me';
+  }
+  return secret;
+}
+
+export function signAdminToken(payload, options = {}) {
+  const secret = getJwtSecret();
+  return jwt.sign(payload, secret, {
+    expiresIn: options.expiresIn || process.env.JWT_EXPIRES_IN || '8h',
+    issuer: options.issuer || 'jics-ifro-esportes',
+    audience: options.audience || 'admin',
+  });
+}
+
+export function verifyAdminToken(token) {
+  const secret = getJwtSecret();
+  return jwt.verify(token, secret, {
+    issuer: 'jics-ifro-esportes',
+    audience: 'admin',
+  });
+}
+
+export function getAuthCookieName() {
+  return ADMIN_COOKIE;
+}
+
+export function getAuthCookieOptions() {
+  const isProd = (process.env.NODE_ENV || '').toLowerCase() === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    path: '/',
+  };
+}
+
+export function setAuthCookie(res, token) {
+  res.cookie(ADMIN_COOKIE, token, getAuthCookieOptions());
+}
+
+export function clearAuthCookie(res) {
+  res.clearCookie(ADMIN_COOKIE, { path: '/' });
+}
+

@@ -1,0 +1,19 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn-primary    { @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-white bg-brand-500 hover:bg-brand-600 shadow-card transition shadow-md; }
+  .btn-secondary  { @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-brand-100 bg-surface-subtle border border-brand-500/50 hover:bg-brand-500/10; }
+  .btn-ghost      { @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-brand-100 hover:bg-white/5; }
+  .btn-compact    { @apply px-3 py-1.5 text-sm rounded-lg border border-white/10 text-brand-100 hover:bg-white/5; }
+
+  .card           { @apply bg-surface-panel border border-white/5 rounded-2xl p-6 shadow-card; }
+  .card-hover     { @apply transition hover:shadow-hover hover:-translate-y-0.5; }
+  .section-title  { @apply text-lg font-semibold text-white; }
+  .section-sub    { @apply text-sm text-brand-100/80; }
+  .input-solid    { @apply w-full bg-surface-subtle border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-brand-50 placeholder:text-brand-100/50 focus:outline-none focus:ring-2 focus:ring-brand-400/70; }
+  .pill-tab       { @apply px-4 py-2 rounded-xl bg-surface-subtle text-brand-100 border border-white/5 hover:bg-white/5 transition; }
+  .pill-tab-active{ @apply bg-brand-500 text-white shadow-card; }
+}
+

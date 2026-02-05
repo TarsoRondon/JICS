@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JICS Admin - Login</title>
+  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/light-override.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
+</head>
+<body data-theme="light">
+  <div class="login-shell">
+    <form id="loginForm" class="login-card">
+      <div class="center">
+        <div class="card-icon"><span class="material-symbols-outlined">shield</span></div>
+        <div class="page-title">JICS Admin</div>
+        <div class="page-subtitle">Acesso administrativo</div>
+      </div>
+
+      <div id="loginError" class="page-subtitle"></div>
+
+      <div class="form-group">
+        <label for="orgSigla">Organizacao (opcional)</label>
+        <input id="orgSigla" type="text" placeholder="SIGLA" autocomplete="organization" />
+        <small id="orgHelp" class="muted"></small>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="admin@ifro.edu.br" autocomplete="username" />
+        <small id="emailHelp" class="muted"></small>
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <div class="form-row" style="grid-template-columns: 1fr auto; align-items:center;">
+          <input id="senha" type="password" autocomplete="current-password" />
+          <button type="button" class="icon-btn" id="toggleSenha" aria-label="Mostrar senha">
+            <span class="material-symbols-outlined">visibility</span>
+          </button>
+        </div>
+        <small id="senhaHelp" class="muted"></small>
+      </div>
+
+      <button id="submitBtn" type="submit" class="btn-primary">Entrar</button>
+      <a class="btn-link" href="#">Esqueci minha senha</a>
+    </form>
+  </div>
+
+  <script src="ui-kit.js"></script>
+  <script>
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const senhaInput = document.getElementById('senha');
+    const orgInput = document.getElementById('orgSigla');
+    const emailHelp = document.getElementById('emailHelp');
+    const senhaHelp = document.getElementById('senhaHelp');
+    const submitBtn = document.getElementById('submitBtn');
+    const loginError = document.getElementById('loginError');
+
+    function setError(input, helpEl, message) {
+      if (message) {
+        input.classList.add('input-erro');
+        helpEl.textContent = message;
+      } else {
+        input.classList.remove('input-erro');
+        helpEl.textContent = '';
+      }
+    }
+
+    document.getElementById('toggleSenha').addEventListener('click', () => {
+      senhaInput.type = senhaInput.type === 'password' ? 'text' : 'password';
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      loginError.textContent = '';
+
+      const email = emailInput.value.trim();
+      const senha = senhaInput.value.trim();
+      const orgSigla = orgInput.value.trim();
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+      setError(emailInput, emailHelp, emailOk ? '' : 'Email invalido.');
+      setError(senhaInput, senhaHelp, senha ? '' : 'Senha obrigatoria.');
+      if (!emailOk || !senha) return;
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('btn-disabled');
+      showLoading(true);
+      try {
+        const res = await fetch('/auth/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, senha, ...(orgSigla ? { organization_sigla: orgSigla } : {}) })
+        });
+        const data = await res.json();
+        if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Falha no login');
+        showToast({ type: 'success', title: 'Login OK', message: 'Redirecionando...' });
+        setTimeout(() => { window.location.href = 'admin-admins.html'; }, 600);
+      } catch (err) {
+        showToast({ type: 'error', title: 'Erro', message: err.message || 'Falha no login' });
+        loginError.textContent = 'Nao foi possivel entrar. Verifique seus dados.';
+      } finally {
+        showLoading(false);
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('btn-disabled');
+      }
+    });
+  </script>
+</body>
+</html>
+

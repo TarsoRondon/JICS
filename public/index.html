@@ -1,758 +1,111 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IFRO Esportes - JICS</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" type="image/png" href="assets/ifro.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFRO Esportes - Login</title>
+  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/light-override.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
 </head>
+<body data-page="login" data-theme="light" class="login-page">
+  <div class="login-layout">
+    <section class="login-hero">
+      <div class="login-hero__brand">
+        <img src="assets/logo-ifro.jpg" alt="Logo IFRO" />
+        <div>
+          <div class="login-hero__org">INSTITUTO FEDERAL</div>
+          <div class="login-hero__region">Rondônia</div>
+        </div>
+      </div>
+      <h1 class="login-hero__title">Portal de esportes e experiências do IFRO.</h1>
+      <p class="login-hero__subtitle">Acesse inscrições, modalidades, comunicados e resultados em um só lugar.</p>
 
-<body>
-    <!-- LOGIN PAGE -->
-    <div id="loginPage" class="login-container">
-        <div class="login-left">
-            <div class="logo">
-                <div class="logo-icon">IF</div>
-                <div class="logo-text">
-                    <h1>INSTITUTO FEDERAL</h1>
-                    <p>Rondônia</p>
-                </div>
-            </div>
-            <h2>Um software desenvolvido por uma instituição pública para instituições públicas.</h2>
+      <div class="login-hero__features">
+        <div class="feature-card">
+          <span class="feature-icon material-symbols-outlined">sports</span>
+          <div>
+            <strong>Modalidades</strong>
+            <p>Treinos, horários e professores.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon material-symbols-outlined">event_note</span>
+          <div>
+            <strong>Inscrições</strong>
+            <p>Controle suas inscrições com poucos cliques.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon material-symbols-outlined">campaign</span>
+          <div>
+            <strong>Comunicados</strong>
+            <p>Avisos oficiais e atualizações do JICS.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="login-hero__meta">
+        <div>
+          <span>ATENDIMENTO</span>
+          <strong>Seg-Sex · 08h-18h</strong>
+        </div>
+        <div>
+          <span>SUPORTE</span>
+          <strong>jics.ifro@gmail.com</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <form class="login-panel__card" onsubmit="handleLogin(event)">
+        <div class="login-panel__head">
+          <h2>Login</h2>
+          <p>Acesse o SUAP IFRO:</p>
         </div>
 
-        <div class="login-right">
-            <div class="login-form">
-                <h3>Login</h3>
-                <p class="login-form-subtitle">Acesse ao Suap IFRO:</p>
+        <div id="loginError" class="login-panel__error"></div>
 
-                <form id="loginForm" onsubmit="handleLogin(event)">
-                    <div class="form-group">
-                        <label class="form-label">Usuário:</label>
-                        <input type="text" id="usuario" class="form-input" maxlength="13" required />
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Senha:</label>
-                        <div class="password-container">
-                            <input type="password" id="senha" class="form-input" required />
-                            <button type="button" class="password-toggle" onclick="togglePassword()"></button>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-login">Acessar</button>
-                </form>
-
-                <div class="login-links">
-                    <a href="#" onclick="alert('Entre em contato com o suporte IFRO')">Esqueceu ou deseja alterar sua senha?</a>
-                    <a href="#" onclick="alert('Entre em contato com o suporte IFRO')">Esqueceu seu número de matrícula?</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- HOME PAGE -->
-    <div id="homePage" class="home-container hidden">
-        <nav class="navbar">
-            <div class="navbar-left">
-                <div class="navbar-brand">IFRO ESPORTES</div>
-                <ul class="navbar-nav">
-                    <li><a class="nav-link active" onclick="showPage('dashboard')">Início</a></li>
-                    <li><a class="nav-link" onclick="showPage('modalidades')">Inscrições</a></li>
-                    <li><a class="nav-link" onclick="showPage('horarios')">Horários</a></li>
-                    <li><a class="nav-link" onclick="showPage('noticias')">Notícias</a></li>
-                    <li><a class="nav-link" onclick="showPage('perfil')">Perfil</a></li>
-                </ul>
-            </div>
-
-
-            <div class="user-menu" id="userMenu">
-                <div class="user-trigger" id="userTrigger">
-                    <div class="user-info-navbar">
-                        <span id="userNameNavbar"></span>
-
-                    </div>
-
-                    <div class="user-avatar">
-                        <img id="userPhoto" src="assets/avatar-default.png" />
-                    </div>
-                </div>
-
-
-                <div id="userDropdown" class="user-dropdown hidden">
-                    <div class="user-header">
-                        <div id="userTrigger">
-                            <img id="userAvatar" src="assets/avatar-default.png" alt="Avatar">
-                            <span id="userName">Nome do Usuário</span>
-                        </div>
-
-
-
-                    </div>
-
-                    <!-- MENU -->
-                    <ul class="menu">
-                        <li class="menu-btn" onclick="showPage('perfil')">
-                            <span class="menu-left">Perfil</span>
-                        </li>
-
-                        <li class="menu-btn menu-item" onclick="toggleSubmenu('modalidadesSubmenu', this)">
-                            <span class="menu-left">Modalidades</span>
-                            <span class="arrow">▾</span>
-                        </li>
-
-                        <ul id="modalidadesSubmenu" class="submenu-list hidden">
-                            <li class="submenu-btn">Minhas Modalidades</li>
-                            <li class="submenu-btn" onclick="showPage('modalidades')">Inscrições </li>
-                        </ul>
-
-                        <li class="menu-btn menu-item" onclick="toggleSubmenu('notificacoesSub', this)">
-                            <span class="menu-left">Notícias</span>
-                            <span class="arrow">▾</span>
-                        </li>
-
-                        <ul id="notificacoesSub" class="submenu-list hidden">
-                            <li class="submenu-btn">Últimas</li>
-                            <li class="submenu-btn">Todas</li>
-                        </ul>
-
-                        <li class="menu-btn menu-item" onclick="toggleSubmenu('configPanel', this)">
-                            <span class="menu-left">Configurações</span>
-                            <span class="arrow">▾</span>
-                        </li>
-
-                        <ul id="configPanel" class="submenu-list hidden">
-                            <li class="submenu-btn upload-row">
-                                <label class="upload-btn">
-                        <span>Alterar foto</span>
-                        <input type="file" accept="image/*" hidden onchange="alterarFoto(event)">
-                    </label>
-                            </li>
-                        </ul>
-
-                        <li class="menu-btn logout" onclick="logout()">
-                            <span class="menu-left">Sair</span>
-                        </li>
-                    </ul>
-                </div>
-
-            </div>
-
-
-        </nav>
-
-        <!--FOTO DE PERFIL-->
-        <div id="modalPreviewFoto" class="modal nicer-modal hidden">
-            <div class="modal-container">
-                <div class="modal-header">
-                    <h2>📷 Pré-visualizar foto</h2>
-                    <button class="close-btn" onclick="fecharPreviewFoto()">✕</button>
-                </div>
-
-                <div class="modal-body" style="text-align:center">
-                    <img id="previewFoto" class="preview-avatar">
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn-secondary" onclick="fecharPreviewFoto()">Cancelar</button>
-                    <button class="btn-primary" onclick="salvarFoto()">Salvar</button>
-                </div>
-            </div>
+        <div class="login-v2__field">
+          <label for="usuario">Matrícula</label>
+          <div class="login-input">
+            <span class="material-symbols-outlined">person</span>
+            <input id="usuario" type="text" placeholder="Número de matrícula" autocomplete="username" />
+          </div>
         </div>
 
-        <!--------------------------------------------------------------->
-        <!-- Dashboard -->
-        <div id="dashboard" class="page-content">
-            <div class="hero">
-                <h1>Bem-vindo(a) ao IFRO ESPORTES!</h1>
-                <p class="hero-subtitle">Instituto Federal de Ciência, Educação e Tecnologia de Rondônia - Campus Porto Velho Calama</p>
-                <div class="hero-stats">
-                    <div class="stat-box">
-                        <div class="stat-number" id="totalInscritos">0</div>
-                        <div class="stat-label">Inscritos</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-number" id="totalModalidades">0</div>
-                        <div class="stat-label">Modalidades</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-number" id="totalNoticias">0</div>
-                        <div class="stat-label">Notícias</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="main-content">
-                <h2 class="section-title">Próximas Ações</h2>
-
-                <div class="action-buttons">
-                    <button class="btn-action primary" onclick="showPage('horarios')"> <!--TIRAMOS O openModal('jics')-->
-                        📋 Participe dos Treinos
-                    </button>
-                    <button class="btn-action" onclick="showPage('modalidades')"> <!--TIRAMOS O openModal('jics')-->
-                        🏅 Participe do JIC's 2026
-                    </button>
-                </div>
-
-                <h2 class="section-title" style="margin-top: 60px;">Modalidades Destaque</h2>
-                <div class="cards-grid" id="modalidadesGrid"></div>
-
-                <h2 class="section-title" style="margin-top: 60px;">Últimas Notícias</h2>
-                <div class="cards-grid" id="noticiasGrid"></div>
-            </div>
+        <div class="login-v2__field">
+          <label for="senha">Senha</label>
+          <div class="login-input login-input--password">
+            <span class="material-symbols-outlined">lock</span>
+            <input id="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" />
+            <button type="button" class="login-v2__toggle" onclick="togglePassword()" aria-label="Mostrar senha">
+              <span class="material-symbols-outlined">visibility</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Modalidades -->
-        <div id="modalidades" class="page-content hidden">
-            <div class="main-content">
-                <h2 class="section-title">Modalidades Disponíveis</h2>
-                <p class="section-subtitle">Escolha sua modalidade favorita para se inscrever</p>
-                <div class="cards-grid" id="allModalidadesGrid"></div>
-            </div>
+        <button id="loginSubmit" type="submit" class="btn-primary btn-full">Acessar</button>
+
+        <button type="button" class="btn-gov" onclick="entrarGovBr()">
+          <span>Entrar com</span>
+          <strong class="gov-logo">gov.br</strong>
+        </button>
+
+        <div class="login-panel__links">
+          <a class="btn-link password-recovery-link" href="solicitar-otp.html">Esqueceu ou deseja alterar sua senha?</a>
+          <a class="btn-link" href="recuperar-matricula.html">Esqueceu seu número de matrícula?</a>
         </div>
-
-        <!-- Horários -->
-        <div id="horarios" class="page-content hidden">
-            <div class="main-content">
-                <h2 class="section-title">Horários de Treino</h2>
-                <p class="section-subtitle">Confira os horários das atividades esportivas no IFRO Campus Porto Velho Calama.</p>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Modalidade</th>
-                            <th>Professor(a)</th>
-                            <th>Dia(s)</th>
-                            <th>Horário</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabelaHorarios">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Notícias -->
-        <div id="noticias" class="page-content hidden">
-            <div class="main-content">
-                <h2 class="section-title">Notícias e Comunicados</h2>
-                <p class="section-subtitle">Fique por dentro dos últimos acontecimentos dos JICS</p>
-                <div class="cards-grid" id="allNoticiasGrid"></div>
-            </div>
-        </div>
-
-        <!-- Perfil -->
-        <div id="perfil" class="page-content hidden">
-            <div class="main-content">
-                <h2 class="section-title">Meu Perfil</h2>
-                <p class="section-subtitle">Informações do aluno cadastrado no sistema</p>
-
-                <div class="profile-card">
-                    <div class="profile-row">
-                        <strong>Nome:</strong>
-                        <span id="perfilNome"></span>
-                    </div>
-
-                    <div class="profile-row">
-                        <strong>Matrícula:</strong>
-                        <span id="perfilMatricula"></span>
-                    </div>
-
-                    <div class="profile-row">
-                        <strong>Curso:</strong>
-                        <span id="perfilCurso"></span>
-                    </div>
-
-                    <div class="profile-row">
-                        <strong>Turma:</strong>
-                        <span id="perfilTurma"></span>
-                    </div>
-
-                    <div class="profile-row">
-                        <strong>Campus:</strong>
-                        <span id="perfilCampus"></span>
-                    </div>
-
-                    <div class="profile-row">
-                        <strong>Data de Nascimento:</strong>
-                        <span id="perfilNascimento"></span>
-                    </div>
-
-                    <div class="profile-row">
-                        <strong>Telefone:</strong>
-                        <span id="perfilTelefone"></span>
-                    </div>
-
-                    <div class="profile-row">
-                        <strong>Email Acadêmico:</strong>
-                        <span id="perfilEmailAcademico"></span>
-                    </div>
-
-                    <div class="profile-row">
-                        <strong>Email Pessoal:</strong>
-                        <span id="perfilEmailPessoal"></span>
-                    </div>
-
-                    <button class="btn-primary btn-alterar-senha" onclick="editarSenha()">
-                        🔐 Alterar Senha
-                    </button>
-                </div>
-            </div>
-        </div>
-
-
-        <!-- Admin Panel -->
-        <div id="admin" class="page-content hidden">
-            <div class="main-content">
-                <h2 class="section-title">Painel Administrativo</h2>
-
-                <div class="admin-tabs">
-                    <button class="admin-tab active" onclick="switchAdminTab('inscricoes')">Inscrições</button>
-                    <button class="admin-tab" onclick="switchAdminTab('usuarios')">Usuários</button>
-                    <button class="admin-tab" onclick="switchAdminTab('noticias2')">Notícias</button>
-                    <button class="admin-tab" onclick="switchAdminTab('modalidade')">Modalidade</button>
-                </div>
-
-                <div id="inscricoes" class="tab-content active">
-                    <h3 class="titulo-painel">Gerenciar Inscrições</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Matrícula</th>
-                                <th>Turma</th>
-                                <th>Modalidade</th>
-                                <th>Sexo</th>
-                                <th>Tipo</th>
-                                <th>Data</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaInscricoes"></tbody>
-                    </table>
-                </div>
-
-                <div id="usuarios" class="tab-content">
-                    <h3 class="titulo-painel">Registrar Novo Usuário</h3>
-                    <form onsubmit="addUser(event)" style="display: grid; gap: 15px; max-width: 500px;">
-                        <div class="form-group">
-                            <label>Nome Completo</label>
-                            <input type="text" id="newNome" required />
-                        </div>
-                        <div class="form-group">
-                            <label>Matrícula</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="text" id="newMatricula" minlength="13" maxlength="13" required oninput="onMatriculaInput()" />
-                            </div>
-                            <small id="matriculaStatus" style="display: none; margin-top: 4px;"></small>
-                        </div>
-                        <div class="form-group">
-                            <label>Campus</label>
-                            <div class="custom-select" data-input="newCampus">
-                                <div class="custom-selected">
-                                    <span class="label">Selecione...</span>
-                                    <span class="seta">▾</span>
-                                </div>
-                                <div class="custom-options">
-                                    <div class="custom-option" data-value="PVH_CALAMA">PVH_CALAMA</div>
-                                    <div class="custom-option" data-value="PVH_ZN">PVH_ZN</div>
-                                </div>
-                            </div>
-                            <!-- valor real enviado -->
-                            <input type="hidden" id="newCampus" name="campus" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Curso</label>
-                            <div class="custom-select" data-input="newCurso">
-                                <div class="custom-selected">
-                                    <span class="label">Selecione...</span>
-                                    <span class="seta">▾</span>
-                                </div>
-                                <div class="custom-options">
-                                    <div class="custom-option" data-value="Técnico em Eletrotécnica Integrado ao Ensino Médio">
-                                        Eletrotécnica
-                                    </div>
-                                    <div class="custom-option" data-value="Técnico em Informática Integrado ao Ensino Médio">
-                                        Informática
-                                    </div>
-                                    <div class="custom-option" data-value="Técnico em Química Integrado ao Ensino Médio">
-                                        Química
-                                    </div>
-                                    <div class="custom-option" data-value="Técnico em Edificações Integrado ao Ensino Médio">
-                                        Edificações
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- valor real enviado -->
-                            <input type="hidden" id="newCurso" name="curso" required>
-                        </div>
-
-
-
-                        <div class="form-group">
-                            <label>Turma</label>
-
-                            <div class="custom-select" id="turmaSelect" data-input="newTurma">
-                                <div class="custom-selected" id="turmaSelecionada">
-                                    <span class="label">Selecione a turma...</span>
-                                    <span class="seta">▾</span>
-                                </div>
-
-                                <div class="custom-options" id="turmaOptions">
-                                    <div class="custom-option" data-value="20251.1.0604.2I - 1º Edificações B">1º Edificações B</div>
-                                    <div class="custom-option" data-value="20251.1.0604.1I - 1º Edificações A">1º Edificações A</div>
-                                    <div class="custom-option" data-value="20251.1.0605.2I - 1º Eletrotécnica B">1º Eletrotécnica B</div>
-                                    <div class="custom-option" data-value="20251.1.0605.1I - 1º Eletrotécnica A">1º Eletrotécnica A</div>
-                                    <div class="custom-option" data-value="20251.1.0606.1I - 1º Informática A">1º Informática A</div>
-                                    <div class="custom-option" data-value="20251.1.0606.2I - 1º Informática B">1º Informática B</div>
-                                    <div class="custom-option" data-value="20251.1.0608.1I - 1º Química A">1º Química A</div>
-                                    <div class="custom-option" data-value="20251.1.0608.2I - 1º Química B">1º Química B</div>
-                                    <div class="custom-option" data-value="20251.2.0604.1I - 2º Edificações A">2º Edificações A</div>
-                                    <div class="custom-option" data-value="20251.2.0604.2I - 2º Edificações B">2º Edificações B</div>
-                                    <div class="custom-option" data-value="20251.2.0605.1I - 2º Eletrotécnica A">2º Eletrotécnica A</div>
-                                    <div class="custom-option" data-value="20251.2.0605.2I - 2º Eletrotécnica B">2º Eletrotécnica B</div>
-                                    <div class="custom-option" data-value="20251.2.0606.1I - 2º Informática A">2º Informática A</div>
-                                    <div class="custom-option" data-value="20251.2.0606.2I - 2º Informática B">2º Informática B</div>
-                                    <div class="custom-option" data-value="20251.2.0608.1I - 2º Química A">2º Química A</div>
-                                    <div class="custom-option" data-value="20251.2.0608.2I - 2º Química B">2º Química B</div>
-                                    <div class="custom-option" data-value="20251.3.0606.1I - 3º Informática A">3º Informática A</div>
-                                    <div class="custom-option" data-value="20251.3.0606.2I - 3º Informática B">3º Informática B</div>
-                                    <div class="custom-option" data-value="20251.3.0605.1I - 3º Eletrotécnica A">3º Eletrotécnica A</div>
-                                    <div class="custom-option" data-value="20251.3.0605.2I - 3º Eletrotécnica B">3º Eletrotécnica B</div>
-                                    <div class="custom-option" data-value="20251.3.0604.1I - 3º Edificações A">3º Edificações A</div>
-                                    <div class="custom-option" data-value="20251.3.0604.2I - 3º Edificações B">3º Edificações B</div>
-                                    <div class="custom-option" data-value="20251.3.0608.1I - 3º Química A">3º Química A</div>
-                                    <div class="custom-option" data-value="20251.3.0608.2I - 3º Química B">3º Química B</div>
-                                </div>
-
-                            </div>
-
-                            <!-- input escondido que será enviado -->
-                            <input type="hidden" id="newTurma" required>
-                        </div>
-
-
-                        <div class="form-group">
-                            <label>Data de Nascimento</label>
-                            <input type="date" id="newNascimento" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Email-Pessoal</label>
-                            <input type="email" id="newEmail" placeholder="Email pessoal" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Senha Inicial</label>
-                            <input type="password" id="newSenha" placeholder="Senha inicial" required>
-                        </div>
-
-                        <button type="submit" class="btn-submit">Adicionar Usuário</button>
-                    </form>
-                </div>
-
-                <div id="noticias2" class="tab-content">
-                    <h3 class="titulo-painel">Adicionar Nova Notícia</h3>
-                    <form onsubmit="addNoticia(event)" style="display: grid; gap: 15px; max-width: 500px;">
-                        <div class="form-group">
-                            <label>Título</label>
-                            <input type="text" id="infoTitulo" required />
-                        </div>
-                        <div class="form-group">
-                            <label>Descrição</label>
-                            <textarea id="infoDescricao" required></textarea>
-                        </div>
-                        <button type="submit" class="btn-submit">Adicionar</button>
-                    </form>
-                </div>
-
-                <div id="modalidade" class="tab-content">
-                    <h3 class="titulo-painel">Adicionar Nova Modalidade</h3>
-
-                    <form onsubmit="addModalidade(event)" style="display: grid; gap: 15px; max-width: 500px;">
-                        <div class="form-group">
-                            <label>Título</label>
-                            <input type="text" id="modalidadeTitulo" required />
-                        </div>
-                        <div class="form-group">
-                            <label>Ícone da Modalidade</label>
-                            <select id="modalidadeIcone" required>
-                                <option value="">Selecione...</option>
-                                <option value="⚽">⚽ Futebol</option>
-                                <option value="🏀">🏀 Basquete</option>
-                                <option value="🏐">🏐 Vôlei</option>
-                                <option value="🏃">🏃 Atletismo</option>
-                                <option value="🥋">🥋 Judô</option>
-                                <option value="🏊">🏊 Natação</option>
-                                <option value="🏓">🏓 Tênis de mesa</option>
-                                <option value="🏋️">🏋️ Musculação</option>
-                            </select>
-                        </div>
-
-
-                        <div class="form-group">
-                            <label>Descrição</label>
-                            <textarea id="modalidadeDescricao" required></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Professor(a)</label>
-                            <select id="modalidadeProfessor" required>
-                                <option value="">Selecione...</option>
-                                <option value="Juarez">Prof Juarez</option>
-                                <option value="Marília">Prof Marília</option>
-                                <option value="Aline">Prof Aline</option>
-                                <option value="Livre">Livre</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Dias de Treino</label>
-
-                            <div class="dias-semana">
-                                <label><input type="checkbox" value="Segunda"> Segunda</label>
-                                <label><input type="checkbox" value="Terça"> Terça</label>
-                                <label><input type="checkbox" value="Quarta"> Quarta</label>
-                                <label><input type="checkbox" value="Quinta"> Quinta</label>
-                                <label><input type="checkbox" value="Sexta"> Sexta</label>
-                            </div>
-
-                            <small>Selecione até 2 dias</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Horário</label>
-                            <div style="display: flex; gap: 10px;" class="horario">
-                                <input type="time" id="horaInicio" required>
-                                <span>às</span>
-                                <input type="time" id="horaFim" required>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn-submit">Adicionar</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <div id="modalTreinos" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Inscreva-se aos Treinos</h2>
-                <button class="modal-close" onclick="closeModal('modalTreinos')">✕</button>
-            </div>
-            <div class="modal-body">
-                <p>Selecione a modalidade desejada:</p>
-                <div class="cards-grid" id="treinosOptions"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalJICS" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Participe do JIC's 2026</h2>
-                <button class="modal-close" onclick="closeModal('modalJICS')">✕</button>
-            </div>
-            <div class="modal-body">
-                <p>Selecione a modalidade para participar dos Jogos Internos do Campus:</p>
-                <div class="cards-grid" id="jicsOptions"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="detailModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="detailTitle">Detalhes</h2>
-                <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
-            </div>
-            <div class="modal-body" id="detailContent"></div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModal('detailModal')">Fechar</button>
-                <button class="btn-primary" onclick="confirmInscription()">Confirmar Inscrição</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalCodigo" class="modal hidden">
-        <div class="modal-container">
-            <h2>📩 Código de verificação</h2>
-
-            <p>Digite o código enviado para seu e-mail:</p>
-
-            <input type="text" id="codigoInput" class="input-field" placeholder="Código de 6 dígitos">
-
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModalCodigo()">Cancelar</button>
-                <button class="btn-primary" onclick="confirmarCodigo()">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Modal Alterar Senha -->
-    <div id="modalSenha" class="modal nicer-modal hidden">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h2>🔐 Alterar Senha</h2>
-                <button class="close-btn" onclick="closeModalSenha()">✕</button>
-            </div>
-
-            <div class="modal-body">
-                <p>Digite sua senha atual:</p>
-                <input type="password" id="senhaAtualInput" class="input-field" placeholder="Senha atual...">
-
-                <p style="margin-top: 15px;">Digite sua nova senha:</p>
-                <input type="password" id="novaSenhaInput" class="input-field" placeholder="Nova senha...">
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModalSenha()">Cancelar</button>
-                <button class="btn-primary" onclick="confirmarAlteracaoSenha()">Salvar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="toastSucesso" class="toast hidden">
-        <div class="toast-content">
-            <strong>✅ Sucesso!</strong>
-            <p id="toastSucessoMsg"></p>
-            <div class="toast-timer"></div>
-        </div>
-    </div>
-
-    <div id="toastErro" class="toast toast-error hidden">
-        <div class="toast-content">
-            <strong>❌ Erro</strong>
-            <p id="toastErroMsg"></p>
-            <div class="toast-timer"></div>
-        </div>
-    </div>
-
-    <div id="toastAtencao" class="toast toast-atencao hidden">
-        <div class="toast-content">
-            <strong>⚠ Atenção</strong>
-            <p id="toastAtencaoMsg"></p>
-            <div class="toast-timer"></div>
-        </div>
-    </div>
-
-
-    <div id="modalConfirmarSenha" class="modal nicer-modal hidden">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h2>⚠️ Confirmar alteração</h2>
-                <button class="close-btn" onclick="closeModalConfirmar()">✕</button>
-            </div>
-
-            <div class="modal-body">
-                <p>
-                    Tem certeza que deseja alterar sua senha?
-                    <br><br>
-                    <strong>Essa ação não poderá ser desfeita.</strong>
-                </p>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="closeModalConfirmar()">Cancelar</button>
-                <button class="btn-danger" onclick="confirmarTrocaSenha()">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
-    <!--editar noticias-->
-
-    <div id="modalEditarNoticia" class="modal">
-        <div class="modal-content">
-            <h2>✏️ Editar Notícia</h2>
-
-            <input type="hidden" id="editNoticiaId">
-
-            <label>Título</label>
-            <input type="text" id="editTitulo">
-
-            <label>Descrição</label>
-            <textarea id="editDescricao" rows="5"></textarea>
-
-            <div class="modal-actions">
-                <button onclick="salvarEdicaoNoticia()" class="botao-noticias">Salvar</button>
-                <button class="botao-noticias-cancelar" onclick="fecharModalEditar()" class="botao-noticias-cancelar"> Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalDetalhes" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Detalhes</h2>
-                <button class="close-btn" onclick="fecharModal()" class="botao-noticias-cancelar">✕</button>
-            </div>
-
-            <div class="modal-body">
-                <!-- conteúdo -->
-            </div>
-
-            <div class="modal-actions">
-                <button onclick="fecharModal()">Fechar</button>
-                <button class="btn-primary">Confirmar Inscrição</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Editar (somente ADMIN) -->
-    <div id="editar" class="page-content hidden">
-        <div class="main-content">
-            <h2 class="section-title">Área de Edição</h2>
-            <p class="section-subtitle">
-                Esta área é exclusiva para administradores.
-            </p>
-
-            <!-- Por enquanto vazio -->
-        </div>
-    </div>
-
-    !
-    <!--botão ver-->
-    <div id="modalVerNoticia" class="modal-overlay">
-        <div class="modal-box modal-ver">
-            <h3 id="verTitulo">📢 Título da notícia</h3>
-
-            <p class="ver-descricao" id="verDescricao"></p>
-
-            <div class="ver-datas">
-                <small id="verPublicacao"></small><br>
-                <small id="verEdicao"></small>
-            </div>
-
-            <div class="modal-buttons">
-                <button class="btn-cancelar" onclick="fecharModalVer()">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-
-    <!--modal de excluir noticia-->
-    <div id="modalExcluir" class="modal-overlay">
-        <div class="modal-box">
-            <h3> Excluir notícia</h3>
-            <p>Tem certeza que deseja excluir esta notícia?<br>
-                <strong>Essa ação não pode ser desfeita.</strong>
-            </p>
-
-            <div class="modal-buttons">
-                <button class="btn-cancelar" onclick="fecharModalExcluir()">Cancelar</button>
-                <button class="btn-excluir" onclick="confirmarExclusao()">Excluir</button>
-            </div>
-        </div>
-    </div>
-
-
-    <script src="js/jsdosistema.js"></script>
-
+      </form>
+    </section>
+  </div>
+
+  <div id="globalModals"></div>
+  <script src="js/jsdosistema.js"></script>
 </body>
-
 </html>
 
-</html>

@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFRO Esportes - Validar codigo</title>
+  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/light-override.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body data-page="validar-otp" data-theme="light">
+  <div class="login-shell">
+    <div class="login-card">
+      <div>
+        <h1 class="page-title">Validar codigo</h1>
+        <p class="page-subtitle">Digite o codigo enviado para o seu e-mail.</p>
+      </div>
+
+      <form id="otpVerifyForm" class="form-grid" novalidate>
+        <div class="form-group">
+          <label>Matricula</label>
+          <input id="matricula" type="text" inputmode="numeric" maxlength="13" required>
+        </div>
+        <div class="form-group">
+          <label>Codigo OTP</label>
+          <input id="otp" type="text" inputmode="numeric" maxlength="6" required>
+        </div>
+        <button class="btn-primary" type="submit">Validar</button>
+        <p id="status" class="page-subtitle"></p>
+      </form>
+
+      <div class="page-subtitle">
+        <a class="btn-link" href="solicitar-otp.html">Voltar</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('otpVerifyForm');
+    const statusEl = document.getElementById('status');
+    const matriculaInput = document.getElementById('matricula');
+    const savedMatricula = localStorage.getItem('otpMatricula') || localStorage.getItem('recuperacaoMatricula');
+    if (savedMatricula) matriculaInput.value = savedMatricula;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = 'Validando...';
+      const matricula = matriculaInput.value.trim();
+      const otp = document.getElementById('otp').value.trim();
+
+      try {
+        const res = await fetch('/auth/password/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ matricula, otp })
+        });
+        const data = await res.json();
+        if (!data.sucesso) {
+          statusEl.textContent = data.mensagem || 'Codigo invalido.';
+          return;
+        }
+        localStorage.setItem('resetToken', data.reset_token);
+        if (matricula) localStorage.setItem('otpMatricula', matricula);
+        statusEl.textContent = 'Codigo valido!';
+        setTimeout(() => { location.href = 'redefinir-senha.html'; }, 1000);
+      } catch {
+        statusEl.textContent = 'Erro ao validar codigo.';
+      }
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFRO Esportes - Primeiro acesso</title>
+  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/light-override.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+</head>
+<body data-page="primeiro-acesso" data-theme="light">
+  <div class="login-shell">
+    <div class="login-card">
+      <div>
+        <h1 class="page-title">Primeiro acesso</h1>
+        <p class="page-subtitle">Informe sua matricula e email pessoal para receber o codigo.</p>
+      </div>
+
+      <form id="firstAccessForm" class="form-grid" novalidate>
+        <div class="form-group">
+          <label>Matricula</label>
+          <input id="matricula" type="text" inputmode="numeric" maxlength="13" required />
+          <p id="matriculaHelp" class="page-subtitle"></p>
+        </div>
+        <div class="form-group">
+          <label>Email pessoal</label>
+          <input id="email" type="email" required />
+          <p id="emailHelp" class="page-subtitle"></p>
+        </div>
+        <button id="submitBtn" type="submit" class="btn-primary btn-disabled" disabled>Enviar codigo</button>
+        <p id="status" class="page-subtitle"></p>
+      </form>
+
+      <div class="page-subtitle">
+        <a class="btn-link" href="index.html">Voltar ao login</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('firstAccessForm');
+    const statusEl = document.getElementById('status');
+    const matriculaInput = document.getElementById('matricula');
+    const emailInput = document.getElementById('email');
+    const matriculaHelp = document.getElementById('matriculaHelp');
+    const emailHelp = document.getElementById('emailHelp');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function isValidMatricula(value) { return /^\d{13}$/.test(value); }
+    function isValidEmail(value) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value); }
+
+    function setFieldState({ input, help, valid, message }) {
+      const hasValue = input.value.trim().length > 0;
+      if (!hasValue) {
+        input.classList.remove('input-erro', 'input-ok');
+        help.textContent = '';
+        return;
+      }
+      if (valid) {
+        input.classList.remove('input-erro');
+        input.classList.add('input-ok');
+        help.textContent = message || '';
+        return;
+      }
+      input.classList.remove('input-ok');
+      input.classList.add('input-erro');
+      help.textContent = message || 'Invalido.';
+    }
+
+    function updateButtonState() {
+      const canSubmit = isValidMatricula(matriculaInput.value.trim()) && isValidEmail(emailInput.value.trim());
+      submitBtn.disabled = !canSubmit;
+      submitBtn.classList.toggle('btn-disabled', !canSubmit);
+    }
+
+    matriculaInput.addEventListener('input', () => {
+      setFieldState({ input: matriculaInput, help: matriculaHelp, valid: isValidMatricula(matriculaInput.value.trim()), message: 'Matricula valida.' });
+      updateButtonState();
+    });
+    emailInput.addEventListener('input', () => {
+      setFieldState({ input: emailInput, help: emailHelp, valid: isValidEmail(emailInput.value.trim()), message: 'Email valido.' });
+      updateButtonState();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = '';
+      try {
+        const res = await fetch('/auth/password/otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ matricula: matriculaInput.value.trim(), email: emailInput.value.trim() })
+        });
+        const data = await res.json();
+        const ok = (typeof data.sucesso === 'boolean') ? data.sucesso : data.ok;
+        const message = data.mensagem || data.message;
+        if (!res.ok || !ok) {
+          statusEl.textContent = message || 'Nao foi possivel enviar o codigo.';
+          return;
+        }
+        localStorage.setItem('otpMatricula', matriculaInput.value.trim());
+        localStorage.setItem('otpEmail', emailInput.value.trim());
+        statusEl.textContent = message || 'Codigo enviado. Verifique seu email.';
+        window.location.href = 'validar-otp.html';
+      } catch {
+        statusEl.textContent = 'Erro ao enviar o codigo.';
+      }
+    });
+  </script>
+</body>
+</html>
+

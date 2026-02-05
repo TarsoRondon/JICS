@@ -1,0 +1,30 @@
+﻿body[data-theme="light"],
+.light {
+  --bg: #f1f6f0;
+  --bg-soft: #ffffff;
+  --card: #ffffff;
+  --border: #d8e5d6;
+  --text: #1f2c24;
+  --muted: #5d7264;
+  --primary: #52bfa1;
+  --primary-dark: #85ac7b;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --info: #0284c7;
+  --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+body[data-theme="light"] .navbar {
+  background: rgba(241, 246, 240, 0.95);
+}
+
+body[data-theme="light"] .side-link:hover,
+body[data-theme="light"] .side-link.active {
+  background: rgba(82, 191, 161, 0.2);
+  color: #2b6a57;
+}
+
+body[data-theme="light"] .badge-blue { color: #1d4ed8; }
+body[data-theme="light"] .badge-yellow { color: #b45309; }
+body[data-theme="light"] .badge-green { color: #52bfa1; }
+
