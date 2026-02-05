@@ -18,8 +18,6 @@ let adminCache = {
   jogos: []
 };
 
-// Aviso leve: se não houver sessionAlive, apenas não força logout aqui
-
 function renderGridSkeleton(target, count = 3) {
     if (!target) return;
     const cards = Array.from({ length: count }).map(() => `
@@ -186,15 +184,15 @@ const tourSteps = {
 };
 
 function loadUserFromStorage() {
-    const saved = localStorage.getItem('usuarioLogado');
-    const sessionAlive = sessionStorage.getItem('sessionAlive') === '1';
-    if (saved && sessionAlive) {
+    const saved = sessionStorage.getItem('usuarioLogado');
+    if (saved) {
         currentUser = JSON.parse(saved);
-    } else {
-        // força início sempre no home em nova sessão
-        if (saved) localStorage.removeItem('usuarioLogado');
-        currentUser = null;
+        return;
     }
+    if (localStorage.getItem('usuarioLogado')) {
+        localStorage.removeItem('usuarioLogado');
+    }
+    currentUser = null;
 }
 
 async function ensureUserFromApi() {
@@ -205,7 +203,7 @@ async function ensureUserFromApi() {
         if (!res.ok) return;
         const data = await res.json();
         currentUser = { ...currentUser, ...data };
-        localStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
+        sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
     } catch (_) {
         // silencioso para não quebrar UX se offline
     }
@@ -563,8 +561,7 @@ function handleLogin(event) {
       }
       currentUser = data.user;
       currentUser.role = normalizeRole(currentUser.role);
-      localStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
-      sessionStorage.setItem('sessionAlive', '1');
+      sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
       localStorage.removeItem('tourActive');
       localStorage.removeItem('tourType');
       localStorage.removeItem('tourStep');
@@ -605,8 +602,7 @@ function bindLoginUX() {
 }
 
 function logout() {
-  localStorage.removeItem('usuarioLogado');
-  sessionStorage.removeItem('sessionAlive');
+  sessionStorage.removeItem('usuarioLogado');
   location.href = 'index.html';
 }
 
@@ -1622,7 +1618,7 @@ function savePhoto() {
     const dataUrl = canvas.toDataURL('image/png');
     if (currentUser) {
       currentUser.foto = dataUrl;
-      localStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
+      sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
     }
     const avatar = document.getElementById('userAvatar');
     const drawerAvatar = document.getElementById('drawerAvatar');
@@ -2406,8 +2402,7 @@ function initPage() {
 
   if (currentUser) {
     currentUser.role = normalizeRole(currentUser.role);
-    localStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
-    sessionStorage.setItem('sessionAlive', '1');
+    sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
   }
 
   if (isPublicPage) {
