@@ -453,7 +453,7 @@ function renderDrawer() {
   const avatar = document.getElementById('userAvatar');
   if (avatar) avatar.src = currentUser?.foto || 'assets/avatar-default.png';
   const name = document.getElementById('userNameNavbar');
-  if (name) name.textContent = currentUser?.nome || '';
+  if (name) animateUserName(currentUser?.nome || '');
   const userMenu = document.querySelector('.user-menu');
   if (userMenu) userMenu.classList.remove('hidden');
 
@@ -467,6 +467,29 @@ function setNavbarGuest() {
   if (name) name.textContent = '';
   const avatar = document.getElementById('userAvatar');
   if (avatar) avatar.src = 'assets/avatar-default.png';
+}
+
+let nameTypeTimer = null;
+function animateUserName(text) {
+  const el = document.getElementById('userNameNavbar');
+  if (!el) return;
+  const safeText = String(text || '').trim();
+  if (!safeText) {
+    el.textContent = '';
+    return;
+  }
+  if (nameTypeTimer) clearInterval(nameTypeTimer);
+  el.innerHTML = `<span class="user-name-text"></span><span class="user-cursor">_</span>`;
+  const textEl = el.querySelector('.user-name-text');
+  let i = 0;
+  nameTypeTimer = setInterval(() => {
+    textEl.textContent = safeText.slice(0, i + 1);
+    i += 1;
+    if (i >= safeText.length) {
+      clearInterval(nameTypeTimer);
+      nameTypeTimer = null;
+    }
+  }, 35);
 }
 
 function togglePassword() {

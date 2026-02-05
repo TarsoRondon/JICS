@@ -15,5 +15,14 @@
             "username": "root",
             "password": "251030"
         }
-    ]
+    ],
+    "typescript.tsserver.exclude": [
+        "node_modules/**"
+    ],
+    "search.exclude": {
+        "**/node_modules": true
+    },
+    "files.exclude": {
+        "**/node_modules": true
+    }
 }

@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "tht13.html-preview-vscode"
+        "tht13.html-preview-vscode",
+        "ms-vscode.cpptools-themes"
     ]
 }
