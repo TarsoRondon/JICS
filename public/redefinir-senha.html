@@ -139,6 +139,7 @@
     input {
       width: 100%;
       padding: 12px 14px;
+      padding-right: 44px;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: transparent;
@@ -155,14 +156,18 @@
 
     .input-wrap button {
       position: absolute;
-      right: 10px;
+      right: 8px;
       top: 50%;
       transform: translateY(-50%);
       border: none;
-      background: transparent;
+      background: rgba(0, 168, 119, 0.08);
       color: var(--muted);
       cursor: pointer;
-      padding: 6px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      padding: 0;
       border-radius: 8px;
     }
 

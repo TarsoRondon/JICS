@@ -1,4 +1,4 @@
-﻿export function toast(message, type = 'ok') {
+﻿function toast(message, type = 'ok') {
   if (typeof window !== 'undefined') {
     window.toast = window.toast || toast;
   }
@@ -17,3 +17,4 @@
 if (typeof window !== 'undefined') {
   window.toast = window.toast || toast;
 }
+

@@ -75,9 +75,27 @@
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.sucesso === false) {
-        throw new Error(data.mensagem || "Nao foi possivel entrar.");
+        const motivo = String(data.motivo || "").toLowerCase();
+        const msg =
+          data.mensagem ||
+          (motivo === "senha"
+            ? "Senha inválida."
+            : motivo === "matricula"
+            ? "Matrícula não encontrada."
+            : "Não foi possível entrar.");
+        console.warn("Falha no login:", data);
+        throw new Error(msg);
+      }
+      if (!data?.user) {
+        console.warn("Login sem user retornado:", data);
+        throw new Error("Não foi possível entrar.");
       }
 
+      if (data?.user) {
+        try {
+          sessionStorage.setItem("usuarioLogado", JSON.stringify(data.user));
+        } catch (_) {}
+      }
       window.toast?.("Login realizado!", "ok");
       const role = String(data.role || data?.user?.role || "").toUpperCase();
       if (role.includes("ADMIN")) window.location.href = "/admin.html";
