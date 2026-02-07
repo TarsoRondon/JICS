@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cadastrar Admin • JICS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/login.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="/js/ui/toast.js" defer></script>
+  <script src="/js/admin-cadastro.js" defer></script>
+</head>
+<body>
+  <main class="login-page">
+    <section class="login-hero" aria-label="Admin">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">J</div>
+        <div class="brand-text">
+          <strong>JICS</strong>
+          <span>Cadastro de admin</span>
+        </div>
+      </div>
+      <h1>Novo administrador</h1>
+      <p>Crie um admin com matrícula, senha e nível de acesso.</p>
+    </section>
+
+    <section class="login-card">
+      <header class="card-head">
+        <span class="chip">Admins</span>
+        <h2>Cadastrar</h2>
+        <p>Preencha os dados abaixo.</p>
+      </header>
+
+      <form id="adminForm" novalidate>
+        <div class="field">
+          <label for="matricula">Matrícula</label>
+          <div class="control">
+            <i data-lucide="id-card"></i>
+            <input id="matricula" name="matricula" type="text" required />
+          </div>
+          <small class="hint" data-hint="matricula"></small>
+        </div>
+
+        <div class="field">
+          <label for="senha">Senha</label>
+          <div class="control">
+            <i data-lucide="lock"></i>
+            <input id="senha" name="senha" type="password" required />
+          </div>
+          <small class="hint" data-hint="senha"></small>
+        </div>
+
+        <div class="field">
+          <label for="role">Role</label>
+          <div class="control">
+            <i data-lucide="shield"></i>
+            <select id="role" name="role">
+              <option value="ADMIN">ADMIN</option>
+              <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="criadoPor">Criado por (matrícula do admin)</label>
+          <div class="control">
+            <i data-lucide="user"></i>
+            <input id="criadoPor" name="criadoPor" type="text" placeholder="Opcional" />
+          </div>
+        </div>
+
+        <button class="btn primary" id="btnSalvar" type="submit">
+          <span class="btn-text">Salvar admin</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

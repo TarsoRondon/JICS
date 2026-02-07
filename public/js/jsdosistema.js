@@ -58,6 +58,16 @@ function setSelectOptions(select, values, placeholder) {
     select.innerHTML = `<option value="">${placeholder}</option>` + unique.map(val => `<option value="${val}">${val}</option>`).join('');
 }
 
+function getModalidadeIdSelecionada() {
+    const select = document.getElementById('sorteioModalidade');
+    if (!select || !select.value) return null;
+    const value = select.value;
+    const mod = (adminCache.modalidades || []).find(m =>
+        String(m.id) === String(value) || m.nome === value || m.titulo === value
+    );
+    return mod ? mod.id : value;
+}
+
 function normalizeRole(role) {
     const value = String(role || '').toUpperCase();
     if (value === 'ADMIN' || value === 'ADMINISTRADOR') return 'ADMIN';
@@ -221,11 +231,10 @@ function applyHeroGreeting() {
 }
 
 function initTheme() {
-    const savedTheme = 'light';
+    const savedTheme = sessionStorage.getItem('tema') || 'light';
     document.body.dataset.theme = savedTheme;
-    localStorage.setItem('tema', savedTheme);
     const label = document.getElementById('themeLabel');
-    if (label) label.textContent = 'Claro';
+    if (label) label.textContent = savedTheme === 'dark' ? 'Escuro' : 'Claro';
 }
 
 async function loadSharedModals() {
@@ -302,11 +311,11 @@ function toggleDrawerGroup(id, btn) {
 }
 
 function toggleTheme() {
-    // Tema fixo claro
-    document.body.dataset.theme = 'light';
-    localStorage.setItem('tema', 'light');
+    const nextTheme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.body.dataset.theme = nextTheme;
+    sessionStorage.setItem('tema', nextTheme);
     const label = document.getElementById('themeLabel');
-    if (label) label.textContent = 'Claro';
+    if (label) label.textContent = nextTheme === 'dark' ? 'Escuro' : 'Claro';
 }
 
 function toggleHelpPanel() {
@@ -626,6 +635,7 @@ function bindLoginUX() {
 
 function logout() {
   sessionStorage.removeItem('usuarioLogado');
+  sessionStorage.removeItem('tema');
   location.href = 'index.html';
 }
 
@@ -1099,7 +1109,14 @@ function subscribeToJICS(modalidadeId) {
     .catch(() => showToastErro('Erro ao realizar inscrição'));
 }
 
+function closeAllModals() {
+  document.querySelectorAll('.modal').forEach(modal => {
+    modal.classList.add('hidden');
+  });
+}
+
 function openModal(id) {
+  closeAllModals();
   const modal = document.getElementById(id);
   if (modal) modal.classList.remove('hidden');
 }
@@ -1187,10 +1204,16 @@ function confirmarExclusaoNoticia(id) {
 }
 
 function switchAdminTab(tabId, btn) {
-  document.querySelectorAll('.admin-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-content, .admin-panel').forEach(el => {
+    el.classList.remove('active');
+    if (el.classList.contains('tab-content')) el.style.display = 'none';
+  });
   document.querySelectorAll('.admin-tab, .pill-tab').forEach(el => el.classList.remove('active', 'pill-tab-active'));
   const tab = document.getElementById(tabId);
-  if (tab) tab.classList.add('active');
+  if (tab) {
+    tab.classList.add('active');
+    tab.style.display = 'block';
+  }
   const targetBtn = btn || document.querySelector(`.admin-tab[data-tab="${tabId}"], .pill-tab[data-tab="${tabId}"]`);
   if (targetBtn) {
     targetBtn.classList.add('active');
@@ -1805,17 +1828,13 @@ function renderStatusPill(status) {
 }
 
 async function loadAdminMetrics() {
-  const data = await adminFetch('/api/admin/metrics', {
-    usuarios: 604,
-    inscricoes: 3636,
-    modalidades: 6,
-    comunicados: 2
-  });
+  const data = await adminFetch('/api/admin/metrics', null);
+  const safe = data && typeof data === 'object' ? data : {};
   const m = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? '-'; };
-  m('metricUsuarios', data.usuarios);
-  m('metricInscricoes', data.inscricoes);
-  m('metricModalidades', data.modalidades);
-  m('metricComunicados', data.comunicados);
+  m('metricUsuarios', safe.usuarios ?? 0);
+  m('metricInscricoes', safe.inscricoes ?? 0);
+  m('metricModalidades', safe.modalidades ?? 0);
+  m('metricComunicados', safe.comunicados ?? 0);
 }
 
 async function loadInscricoesAdmin() {
@@ -1897,7 +1916,8 @@ function initAdminPage() {
     const t = localStorage.getItem('themeAdmin');
     if (t) body.dataset.theme = t;
     // tab ativa
-    openTab(adminActiveTab);
+    const tabId = adminActiveTab || 'tabInscricoes';
+    switchAdminTab(tabId);
     // dados
     loadAdminMetrics();
     loadInscricoesAdmin();

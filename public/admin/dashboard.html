@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard • JICS</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png" />
+  <link rel="stylesheet" href="/admin/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script type="module" src="/admin/dashboard.js" defer></script>
+</head>
+<body class="admin-theme">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">JICS Admin</div>
+      <nav class="menu">
+        <a class="active" href="/admin/dashboard.html">Dashboard</a>
+        <a href="/inscricoes.html">Inscricoes</a>
+        <a href="/modalidades.html">Modalidades</a>
+        <a href="/admin.html">Alunos</a>
+        <a href="/resultados.html">Relatorios</a>
+        <a href="/admin.html">Config</a>
+      </nav>
+      <div class="sidebar-footer">JICS • 2026</div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1>Visao geral</h1>
+          <span id="updatedAgo" class="muted">Atualizado ha --</span>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost" id="btnRefresh">Atualizar</button>
+          <div class="profile-pill">
+            <span class="dot"></span>
+            <span>Admin</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="kpis" id="kpiGrid"></section>
+
+        <section class="grid-two">
+          <div class="card">
+            <div class="card-head">
+              <h3>Inscricoes por modalidade</h3>
+              <span class="muted">Ultimos 30 dias</span>
+            </div>
+            <canvas id="chartModalidades" height="120"></canvas>
+          </div>
+          <div class="card" id="activityFeed"></div>
+        </section>
+
+        <section class="card" id="lastInscricoes"></section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

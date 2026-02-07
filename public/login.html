@@ -1,16 +1,17 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login • JICS</title>
-    <link rel="icon" type="image/png" href="assets/ifro.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="css/login.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/login.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/ui/toast.js" defer></script>
+    <script src="/js/login.js" defer></script>
 </head>
 
 <body>
@@ -52,33 +53,36 @@
                 <p>Digite sua matricula e senha.</p>
             </header>
 
-    <form id="loginForm" novalidate>
+            <form id="loginForm" novalidate>
                 <div class="field">
                     <label for="matricula">Matricula</label>
                     <div class="control">
                         <i data-lucide="id-card"></i>
-                        <input id="matricula" name="matricula" type="text" inputmode="numeric" autocomplete="username" placeholder="Digite sua matricula" required minlength="6" maxlength="13" />
+                        <input id="matricula" name="matricula" type="text" inputmode="numeric" autocomplete="username" placeholder="Digite sua matricula" required minlength="6" />
                     </div>
+                    <small class="hint" data-hint="matricula"></small>
                 </div>
 
                 <div class="field">
                     <label for="senha">Senha</label>
                     <div class="control">
                         <i data-lucide="lock"></i>
-                        <input id="senha" name="senha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required minlength="4" />
+                        <input id="senha" name="senha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required minlength="6" />
                         <button type="button" class="icon-btn" id="togglePass" aria-label="Mostrar senha">
-                            <i data-lucide="eye"></i>
-                        </button>
+              <i data-lucide="eye"></i>
+            </button>
                     </div>
+                    <small class="hint" data-hint="senha"></small>
                 </div>
 
                 <button class="btn primary" id="btnLogin" type="submit">
-                    <span class="btn-text">Acessar</span>
-                </button>
+          <span class="btn-text">Acessar</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
 
                 <div class="links">
                     <a href="/recuperar.html">Esqueceu ou deseja alterar sua senha?</a>
-                    <a href="/recuperar-matricula.html">Esqueceu seu numero de matricula?</a>
+                    <a href="/matricula.html">Esqueceu seu numero de matricula?</a>
                 </div>
             </form>
 
@@ -87,9 +91,6 @@
             </footer>
         </section>
     </main>
-
-    <script src="js/ui/toast.js"></script>
-    <script src="js/login.js"></script>
 </body>
 
 </html>

@@ -5,6 +5,8 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { conectar } from './testeConexao.js';
 import authRoutes from './src/routes/auth.routes.js';
 import adminsRoutes from './src/routes/admins.routes.js';
@@ -40,6 +42,14 @@ app.use('/jogos', jogosRoutes);
 app.use('/ranking', rankingRoutes);
 app.use('/public', publicRoutes);
 app.use('/auth/govbr', govRoutes);
+
+app.get('/', (_req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/login.html', (_req, res) => {
+    res.redirect('/');
+});
 
 app.get('/telao', (_req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'telao.html'));
@@ -86,6 +96,39 @@ app.post('/login', async (req, res) => {
 
     try {
         const conexao = await conectar();
+        // 1) Admin login (tabela admins)
+        const [adminRows] = await conexao.query(
+            `SELECT matricula, senha_hash, role, ultimo_login, criado_por
+             FROM admins
+             WHERE matricula = ?
+             LIMIT 1`,
+            [usuario]
+        );
+        if (adminRows.length > 0) {
+            const admin = adminRows[0];
+            const senhaPlain = String(senha || '');
+            let ok = await bcrypt.compare(senhaPlain, admin.senha_hash || '');
+            // fallback: admins antigos com SHA2(256) em hex
+            if (!ok && typeof admin.senha_hash === 'string' && admin.senha_hash.length === 64) {
+                const sha = crypto.createHash('sha256').update(senhaPlain).digest('hex');
+                if (sha === admin.senha_hash) {
+                    ok = true;
+                    const newHash = await bcrypt.hash(senhaPlain, 10);
+                    await conexao.query('UPDATE admins SET senha_hash = ? WHERE matricula = ?', [newHash, admin.matricula]);
+                }
+            }
+            if (!ok) {
+                await conexao.end();
+                return res.json({ sucesso: false, motivo: 'senha' });
+            }
+            await conexao.query(
+                'UPDATE admins SET ultimo_login = NOW() WHERE matricula = ?',
+                [admin.matricula]
+            );
+            await conexao.end();
+            return res.json({ sucesso: true, user: { matricula: admin.matricula, role: admin.role } });
+        }
+
         const [found] = await conexao.query(
             `SELECT id, matricula, nome, campus, turma, email_academico, email_pessoal,
                     descricao_curso, data_nascimento, telefone, sexo, role
@@ -118,6 +161,39 @@ app.post('/login', async (req, res) => {
         res.json({ sucesso: true, user });
     } catch (err) {
         console.error(err);
+        res.status(500).json({ sucesso: false });
+    }
+});
+
+app.post('/admin/cadastrar-admin', async (req, res) => {
+    const { matricula, senha, role, criado_por, criado_por_matricula } = req.body || {};
+    if (!matricula || !senha) {
+        return res.status(400).json({ sucesso: false, mensagem: 'Dados inválidos' });
+    }
+    const roleValue = ['SUPER_ADMIN', 'ADMIN'].includes(String(role || '').toUpperCase())
+        ? String(role).toUpperCase()
+        : 'ADMIN';
+    try {
+        const conexao = await conectar();
+        const [exists] = await conexao.query('SELECT matricula FROM admins WHERE matricula = ?', [matricula]);
+        if (exists.length > 0) {
+            await conexao.end();
+            return res.status(409).json({ sucesso: false, mensagem: 'Matrícula já cadastrada' });
+        }
+        let createdBy = criado_por || null;
+        if (!createdBy && criado_por_matricula) {
+            createdBy = criado_por_matricula;
+        }
+        const hash = await bcrypt.hash(String(senha), 10);
+        await conexao.query(
+            `INSERT INTO admins (matricula, senha_hash, role, criado_por)
+             VALUES (?, ?, ?, ?)`,
+            [matricula, hash, roleValue, createdBy]
+        );
+        await conexao.end();
+        res.json({ sucesso: true });
+    } catch (err) {
+        console.error('admin create', err);
         res.status(500).json({ sucesso: false });
     }
 });
@@ -629,7 +705,7 @@ app.post('/admin/sorteio/jogos', async (req, res) => {
     }
     try {
         const conexao = await conectar();
-        const [mods] = await conexao.query('SELECT id FROM modalidades WHERE nome = ? LIMIT 1', [modalidade]);
+        const [mods] = await conexao.query('SELECT id FROM modalidades WHERE titulo = ? LIMIT 1', [modalidade]);
         if (!mods.length) {
             await conexao.end();
             return res.status(400).json({ sucesso: false, mensagem: 'Modalidade não encontrada' });
@@ -666,12 +742,12 @@ app.get('/admin/jogos', async (req, res) => {
     const { modalidade, sexo, status, chave } = req.query;
     try {
         const conexao = await conectar();
-        let sql = `SELECT j.*, m.nome AS modalidade_nome
+        let sql = `SELECT j.*, m.titulo AS modalidade_nome
                    FROM jogos j
                    JOIN modalidades m ON m.id = j.modalidade_id
                    WHERE 1=1`;
         const params = [];
-        if (modalidade) { sql += ' AND m.nome = ?'; params.push(modalidade); }
+        if (modalidade) { sql += ' AND m.titulo = ?'; params.push(modalidade); }
         if (sexo) { sql += ' AND j.sexo = ?'; params.push(sexo); }
         if (status) { sql += ' AND j.status = ?'; params.push(status); }
         if (chave) { sql += ' AND j.chave = ?'; params.push(chave); }
@@ -714,7 +790,7 @@ app.post('/admin/sumulas', async (req, res) => {
     }
     try {
         const conexao = await conectar();
-        const [mods] = await conexao.query('SELECT id FROM modalidades WHERE nome = ? LIMIT 1', [modalidade]);
+        const [mods] = await conexao.query('SELECT id FROM modalidades WHERE titulo = ? LIMIT 1', [modalidade]);
         const modalidadeId = mods[0]?.id || null;
         const [result] = await conexao.query(
             `INSERT INTO sumulas (jogo_id, modalidade_id, sexo, fase, etapa, data, arbitro, mesarios, inicio, fim,
@@ -836,13 +912,17 @@ app.get('/api/noticias', async (req, res) => {
         const [rows] = await conexao.query(`
             SELECT id,
                    titulo,
-                   COALESCE(autor, 'IFRO Esportes') AS autor,
-                   DATE_FORMAT(criado_em, '%d/%m/%Y') AS data
+                   DATE_FORMAT(data_publicacao, '%d/%m/%Y') AS data
             FROM noticias
-            ORDER BY criado_em DESC
+            ORDER BY data_publicacao DESC
         `);
         await conexao.end();
-        res.json(rows);
+        res.json(rows.map(r => ({
+            id: r.id,
+            titulo: r.titulo,
+            autor: 'IFRO Esportes',
+            data: r.data
+        })));
     } catch (erro) {
         console.error('noticias', erro);
         res.status(500).json([]);
@@ -854,15 +934,187 @@ app.get('/api/modalidades', async (req, res) => {
         const conexao = await conectar();
         const [rows] = await conexao.query(`
             SELECT id,
-                   COALESCE(titulo, nome, 'Modalidade') AS nome,
-                   COALESCE(horarios, '') AS horario
+                   titulo AS nome,
+                   CONCAT(
+                     COALESCE(hora_inicio, ''), 
+                     CASE WHEN hora_inicio IS NOT NULL AND hora_fim IS NOT NULL THEN ' - ' ELSE '' END,
+                     COALESCE(hora_fim, '')
+                   ) AS horario
             FROM modalidades
-            ORDER BY nome
+            ORDER BY titulo
         `);
         await conexao.end();
         res.json(rows);
     } catch (erro) {
         console.error('modalidades', erro);
+        res.status(500).json([]);
+    }
+});
+
+// ===================== Dashboards SaaS =====================
+app.get('/dashboard/admin/stats', async (_req, res) => {
+    try {
+        const conexao = await conectar();
+        const [[{ total: alunos }]] = await conexao.query('SELECT COUNT(*) AS total FROM alunos');
+        const [[{ total: inscricoes }]] = await conexao.query('SELECT COUNT(*) AS total FROM inscricoes');
+        const [[{ total: modalidades }]] = await conexao.query('SELECT COUNT(*) AS total FROM modalidades');
+        const [[{ total: comunicados }]] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
+        await conexao.end();
+        res.json({ alunos, inscricoes, modalidades, pendencias: 0, comunicados });
+    } catch (err) {
+        console.error('dashboard admin stats', err);
+        res.status(500).json({ alunos: 0, inscricoes: 0, modalidades: 0, pendencias: 0, comunicados: 0 });
+    }
+});
+
+app.get('/dashboard/admin/ultimas-inscricoes', async (_req, res) => {
+    try {
+        const conexao = await conectar();
+        const [rows] = await conexao.query(`
+            SELECT a.nome, m.titulo AS modalidade, DATE_FORMAT(i.data_inscricao, '%d/%m/%Y %H:%i') AS data
+            FROM inscricoes i
+            JOIN alunos a ON a.id = i.aluno_id
+            JOIN modalidades m ON m.id = i.modalidade_id
+            ORDER BY i.data_inscricao DESC
+            LIMIT 8
+        `);
+        await conexao.end();
+        res.json(rows.map(r => ({
+            title: `${r.nome} • ${r.modalidade}`,
+            subtitle: 'Nova inscricao',
+            meta: r.data
+        })));
+    } catch (err) {
+        console.error('dashboard admin ultimas', err);
+        res.status(500).json([]);
+    }
+});
+
+app.get('/dashboard/admin/chart', async (_req, res) => {
+    try {
+        const conexao = await conectar();
+        const [rows] = await conexao.query(`
+            SELECT m.titulo AS modalidade, COUNT(*) AS total
+            FROM inscricoes i
+            JOIN modalidades m ON m.id = i.modalidade_id
+            GROUP BY m.titulo
+            ORDER BY total DESC
+            LIMIT 8
+        `);
+        await conexao.end();
+        res.json({
+            labels: rows.map(r => r.modalidade),
+            values: rows.map(r => r.total)
+        });
+    } catch (err) {
+        console.error('dashboard admin chart', err);
+        res.status(500).json({ labels: [], values: [] });
+    }
+});
+
+app.get('/dashboard/admin/activity', async (_req, res) => {
+    try {
+        const conexao = await conectar();
+        const [insc] = await conexao.query(`
+            SELECT a.nome, m.titulo AS modalidade, i.data_inscricao AS criado_em
+            FROM inscricoes i
+            JOIN alunos a ON a.id = i.aluno_id
+            JOIN modalidades m ON m.id = i.modalidade_id
+            ORDER BY i.data_inscricao DESC
+            LIMIT 5
+        `);
+        const [news] = await conexao.query(`
+            SELECT titulo, data_publicacao AS criado_em
+            FROM noticias
+            ORDER BY data_publicacao DESC
+            LIMIT 3
+        `);
+        await conexao.end();
+        const activity = [
+            ...insc.map(i => ({
+                type: 'nova inscricao',
+                message: `${i.nome} entrou em ${i.modalidade}`,
+                createdAt: new Date(i.criado_em).toLocaleString('pt-BR')
+            })),
+            ...news.map(n => ({
+                type: 'comunicado',
+                message: `Noticia publicada: ${n.titulo}`,
+                createdAt: new Date(n.criado_em).toLocaleString('pt-BR')
+            }))
+        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json(activity.slice(0, 8));
+    } catch (err) {
+        console.error('dashboard admin activity', err);
+        res.status(500).json([]);
+    }
+});
+
+app.get('/dashboard/aluno/summary', async (req, res) => {
+    const { matricula } = req.query;
+    if (!matricula) return res.status(400).json({ status: 'Pendente', inscricoesCount: 0, avisosCount: 0, nextGames: [] });
+    try {
+        const conexao = await conectar();
+        const [[{ total: inscricoesCount }]] = await conexao.query(`
+            SELECT COUNT(*) AS total
+            FROM inscricoes i
+            JOIN alunos a ON a.id = i.aluno_id
+            WHERE a.matricula = ?
+        `, [matricula]);
+        const [[{ total: avisosCount }]] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
+        await conexao.end();
+        res.json({
+            status: inscricoesCount > 0 ? 'Inscrito' : 'Pendente',
+            inscricoesCount,
+            avisosCount,
+            nextGames: []
+        });
+    } catch (err) {
+        console.error('dashboard aluno summary', err);
+        res.status(500).json({ status: 'Pendente', inscricoesCount: 0, avisosCount: 0, nextGames: [] });
+    }
+});
+
+app.get('/dashboard/aluno/inscricoes', async (req, res) => {
+    const { matricula } = req.query;
+    if (!matricula) return res.json([]);
+    try {
+        const conexao = await conectar();
+        const [rows] = await conexao.query(`
+            SELECT m.titulo AS modalidade, DATE_FORMAT(i.data_inscricao, '%d/%m/%Y %H:%i') AS data
+            FROM inscricoes i
+            JOIN alunos a ON a.id = i.aluno_id
+            JOIN modalidades m ON m.id = i.modalidade_id
+            WHERE a.matricula = ?
+            ORDER BY i.data_inscricao DESC
+        `, [matricula]);
+        await conexao.end();
+        res.json(rows.map(r => ({
+            modalidade: r.modalidade,
+            status: 'Ativa',
+            updatedAt: r.data
+        })));
+    } catch (err) {
+        console.error('dashboard aluno inscricoes', err);
+        res.status(500).json([]);
+    }
+});
+
+app.get('/dashboard/aluno/avisos', async (_req, res) => {
+    try {
+        const conexao = await conectar();
+        const [rows] = await conexao.query(`
+            SELECT titulo, descricao
+            FROM noticias
+            ORDER BY data_publicacao DESC
+            LIMIT 6
+        `);
+        await conexao.end();
+        res.json(rows.map(r => ({
+            title: r.titulo,
+            subtitle: r.descricao
+        })));
+    } catch (err) {
+        console.error('dashboard aluno avisos', err);
         res.status(500).json([]);
     }
 });

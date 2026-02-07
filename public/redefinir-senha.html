@@ -3,54 +3,601 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IFRO Esportes - Redefinir senha</title>
+  <title>IFRO Esportes - Atualizar senha</title>
   <link rel="icon" type="image/png" href="assets/ifro.png" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/light-override.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand-1: #00A877;
+      --brand-2: #0A5D54;
+      --bg: #f6fbf9;
+      --card: #ffffff;
+      --text: #0b1f1a;
+      --muted: #56736c;
+      --border: rgba(10, 93, 84, 0.12);
+      --shadow: 0 18px 40px rgba(16, 60, 52, 0.12);
+      --focus: rgba(0, 168, 119, 0.18);
+      --danger: #d94242;
+      --warn: #d78a22;
+      --ok: #0f9f7c;
+      --success: #0ca678;
+      --radius: 20px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #071613;
+        --card: #0d1f1b;
+        --text: #e8f6f2;
+        --muted: #9bb7b0;
+        --border: rgba(0, 168, 119, 0.18);
+        --shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+        --focus: rgba(0, 168, 119, 0.24);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    .auth-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 48px 20px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 820px;
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 8px;
+      text-align: left;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 26px;
+      letter-spacing: -0.4px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 20px;
+    }
+
+    .card-header {
+      display: grid;
+      gap: 6px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .card-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .group {
+      border: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .group-title {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: grid;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border .2s, box-shadow .2s;
+    }
+
+    input:focus {
+      border-color: var(--brand-1);
+      box-shadow: 0 0 0 4px var(--focus);
+    }
+
+    .input-wrap button {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+    }
+
+    .input-wrap button:focus-visible {
+      outline: 2px solid var(--brand-1);
+      outline-offset: 2px;
+    }
+
+    .helper {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+
+    .security-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(6, 46, 40, 0.08);
+      display: grid;
+      gap: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .security-card { background: #0f231f; }
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sec-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 168, 119, 0.12);
+      border: 1px solid rgba(0, 168, 119, 0.25);
+    }
+
+    .sec-title {
+      display: grid;
+      gap: 2px;
+    }
+
+    .sec-title span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .badge {
+      margin-left: auto;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 168, 119, 0.35);
+      color: var(--brand-2);
+      background: rgba(0, 168, 119, 0.1);
+    }
+
+    .meter {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      transition: width .3s ease, background .3s ease, box-shadow .3s ease;
+    }
+
+    .sec-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+      font-size: 12px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+    }
+
+    .check .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      color: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .check.ok {
+      color: var(--ok);
+    }
+
+    .check.ok .dot {
+      border-color: rgba(0, 168, 119, 0.4);
+      color: #ffffff;
+      background: var(--brand-1);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(140deg, var(--brand-1), var(--brand-2));
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 12px 26px rgba(0, 168, 119, 0.28);
+      transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 30px rgba(0, 168, 119, 0.34);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .toast-stack {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      display: grid;
+      gap: 10px;
+      z-index: 9999;
+    }
+
+    .toast {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--danger); }
+
+    .invalid {
+      border-color: var(--danger) !important;
+      box-shadow: 0 0 0 4px rgba(217, 66, 66, 0.12) !important;
+    }
+
+    .valid {
+      border-color: var(--ok) !important;
+      box-shadow: 0 0 0 4px rgba(15, 159, 124, 0.12) !important;
+    }
+
+    @media (max-width: 720px) {
+      .card { padding: 18px; }
+      .checklist { grid-template-columns: 1fr; }
+      .actions { align-items: stretch; }
+      .btn-primary { width: 100%; }
+    }
+  </style>
 </head>
-<body data-page="redefinir-senha" data-theme="light">
-  <div class="login-shell">
-    <div class="login-card">
-      <div>
-        <h1 class="page-title">Redefinir senha</h1>
-        <p class="page-subtitle">Defina uma nova senha para sua conta.</p>
-      </div>
+<body>
+  <main class="auth-shell">
+    <div class="wrap">
+      <section class="hero">
+        <h1>Atualizar senha</h1>
+        <p>Atualize sua senha com segurança para continuar acessando o sistema.</p>
+      </section>
 
-      <form id="resetForm" class="form-grid" novalidate>
-        <div class="form-group">
-          <label>Matricula</label>
-          <input id="matricula" type="text" inputmode="numeric" maxlength="13" required>
+      <form id="resetForm" class="card" novalidate>
+        <div class="card-header">
+          <h2>Atualize sua senha com segurança</h2>
+          <p>Preencha os dados e crie uma nova senha forte.</p>
         </div>
-        <div class="form-group">
-          <label>Nova senha</label>
-          <input id="novaSenha" type="password" required>
+
+        <fieldset class="group" aria-label="Dados de acesso">
+          <div class="group-title">Dados de acesso</div>
+          <div class="field">
+            <label for="matricula">Matrícula</label>
+            <div class="input-wrap">
+              <input id="matricula" type="text" inputmode="numeric" maxlength="13" required aria-required="true" />
+            </div>
+            <span class="helper">Use a matrícula cadastrada no sistema.</span>
+          </div>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <fieldset class="group" aria-label="Criar nova senha">
+          <div class="group-title">Criar nova senha</div>
+          <div class="field">
+            <label for="novaSenha">Nova senha</label>
+            <div class="input-wrap">
+              <input id="novaSenha" type="password" required aria-required="true" />
+              <button type="button" id="toggleNova" aria-label="Mostrar senha">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="confirmSenha">Confirmar senha</label>
+            <div class="input-wrap">
+              <input id="confirmSenha" type="password" required aria-required="true" />
+              <button type="button" id="toggleConfirm" aria-label="Mostrar confirmação de senha">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+            <span id="matchHint" class="helper" aria-live="polite"></span>
+          </div>
+        </fieldset>
+
+        <section class="security-card" aria-label="Segurança da senha">
+          <div class="sec-head">
+            <div class="sec-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div class="sec-title">
+              <strong>Segurança da senha</strong>
+              <span id="entropyInfo">Entropia: ~0 bits</span>
+            </div>
+            <span id="pwnedBadge" class="badge">Verificação local</span>
+          </div>
+
+          <div class="meter">
+            <div id="strengthBar" class="meter-fill"></div>
+          </div>
+
+          <div class="sec-meta">
+            <span>Nível: <strong id="strengthLabel">Muito fraca</strong></span>
+            <span id="strengthBadge">Muito fraca</span>
+          </div>
+
+          <div class="checklist">
+            <div class="check" data-check="length"><span class="dot">○</span> Mínimo de 10 caracteres</div>
+            <div class="check" data-check="upper"><span class="dot">○</span> Letra maiúscula</div>
+            <div class="check" data-check="lower"><span class="dot">○</span> Letra minúscula</div>
+            <div class="check" data-check="number"><span class="dot">○</span> Número</div>
+            <div class="check" data-check="symbol"><span class="dot">○</span> Símbolo</div>
+            <div class="check" data-check="noCommon"><span class="dot">○</span> Não é senha comum</div>
+          </div>
+        </section>
+
+        <div class="actions">
+          <button id="submitBtn" class="btn-primary" type="submit" disabled>Atualizar senha</button>
+          <a class="link" href="index.html" target="_top">Voltar ao login</a>
         </div>
-        <button class="btn-primary" type="submit">Atualizar senha</button>
-        <p id="status" class="page-subtitle"></p>
+        <div id="status" class="helper" aria-live="polite"></div>
       </form>
-
-      <div class="page-subtitle">
-        <a class="btn-link" href="index.html" target="_top">Voltar ao login</a>
-      </div>
     </div>
-  </div>
+  </main>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
 
   <script>
     const form = document.getElementById('resetForm');
     const statusEl = document.getElementById('status');
     const matriculaInput = document.getElementById('matricula');
+    const novaSenhaInput = document.getElementById('novaSenha');
+    const confirmInput = document.getElementById('confirmSenha');
+    const matchHint = document.getElementById('matchHint');
+    const submitBtn = document.getElementById('submitBtn');
+    const strengthBar = document.getElementById('strengthBar');
+    const strengthLabel = document.getElementById('strengthLabel');
+    const entropyInfo = document.getElementById('entropyInfo');
+    const strengthBadge = document.getElementById('strengthBadge');
+    const toastStack = document.getElementById('toastStack');
+
     const savedMatricula = localStorage.getItem('otpMatricula') || localStorage.getItem('recuperacaoMatricula');
     if (savedMatricula) matriculaInput.value = savedMatricula;
+
+    const COMMON = ['123456', 'senha', 'password', 'qwerty', '12345678', '111111', 'abc123'];
+
+    function toast(message, type = 'success') {
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.textContent = message;
+      toastStack.appendChild(t);
+      setTimeout(() => t.remove(), 3200);
+    }
+
+    function policyCheck(pw) {
+      return {
+        length: pw.length >= 10,
+        upper: /[A-Z]/.test(pw),
+        lower: /[a-z]/.test(pw),
+        number: /\d/.test(pw),
+        symbol: /[^A-Za-z0-9]/.test(pw),
+        noCommon: !COMMON.some(c => pw.toLowerCase().includes(c))
+      };
+    }
+
+    function estimateEntropyBits(pw) {
+      if (!pw) return 0;
+      let pool = 0;
+      if (/[a-z]/.test(pw)) pool += 26;
+      if (/[A-Z]/.test(pw)) pool += 26;
+      if (/\d/.test(pw)) pool += 10;
+      if (/[^A-Za-z0-9]/.test(pw)) pool += 32;
+      return Math.round(Math.log2(Math.max(pool, 1)) * pw.length);
+    }
+
+    function strengthFromEntropy(bits) {
+      if (bits < 20) return { label: 'Muito fraca', score: 18, color: '#d94242' };
+      if (bits < 28) return { label: 'Fraca', score: 35, color: '#d78a22' };
+      if (bits < 45) return { label: 'Média', score: 60, color: '#e0b04a' };
+      return { label: 'Forte', score: 100, color: '#0f9f7c' };
+    }
+
+    function updateChecklist(checks) {
+      document.querySelectorAll('.check').forEach(el => {
+        const key = el.getAttribute('data-check');
+        const ok = checks[key];
+        el.classList.toggle('ok', !!ok);
+        const dot = el.querySelector('.dot');
+        if (dot) dot.textContent = ok ? '✓' : '○';
+      });
+    }
+
+    function updateMatch() {
+      const match = confirmInput.value.length > 0 && novaSenhaInput.value === confirmInput.value;
+      matchHint.textContent = confirmInput.value.length
+        ? (match ? 'Senhas coincidem' : 'As senhas não coincidem')
+        : '';
+      confirmInput.classList.toggle('valid', match);
+      confirmInput.classList.toggle('invalid', !match && confirmInput.value.length > 0);
+      return match;
+    }
+
+    function updateStrength() {
+      const pw = novaSenhaInput.value;
+      const checks = policyCheck(pw);
+      const entropy = estimateEntropyBits(pw);
+      const strength = strengthFromEntropy(entropy);
+
+      strengthBar.style.width = `${strength.score}%`;
+      strengthBar.style.background = strength.color;
+      strengthBar.style.boxShadow = `0 0 10px ${strength.color}55`;
+      strengthLabel.textContent = strength.label;
+      strengthBadge.textContent = strength.label;
+      entropyInfo.textContent = `Entropia: ~${entropy} bits`;
+
+      updateChecklist(checks);
+      const okPolicy = Object.values(checks).every(Boolean);
+      const okMatch = updateMatch();
+
+      novaSenhaInput.classList.toggle('invalid', pw.length > 0 && !okPolicy);
+      novaSenhaInput.classList.toggle('valid', okPolicy && pw.length > 0);
+
+      const canSubmit = okPolicy && okMatch && strength.label !== 'Muito fraca' && strength.label !== 'Fraca';
+      submitBtn.disabled = !canSubmit;
+    }
+
+    function toggleVisibility(input, btn) {
+      const isPwd = input.type === 'password';
+      input.type = isPwd ? 'text' : 'password';
+      btn.setAttribute('aria-label', isPwd ? 'Ocultar senha' : 'Mostrar senha');
+    }
+
+    document.getElementById('toggleNova').addEventListener('click', (e) => {
+      toggleVisibility(novaSenhaInput, e.currentTarget);
+    });
+
+    document.getElementById('toggleConfirm').addEventListener('click', (e) => {
+      toggleVisibility(confirmInput, e.currentTarget);
+    });
+
+    novaSenhaInput.addEventListener('input', updateStrength);
+    confirmInput.addEventListener('input', updateStrength);
+    updateStrength();
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       statusEl.textContent = 'Atualizando...';
 
       const matricula = matriculaInput.value.trim();
-      const novaSenha = document.getElementById('novaSenha').value.trim();
+      const novaSenha = novaSenhaInput.value.trim();
       const resetToken = localStorage.getItem('resetToken');
 
       try {
@@ -62,16 +609,18 @@
         const data = await res.json();
         if (!data.sucesso) {
           statusEl.textContent = data.mensagem || 'Erro ao redefinir senha.';
+          toast(data.mensagem || 'Erro ao redefinir senha.', 'error');
           return;
         }
         statusEl.textContent = 'Senha atualizada com sucesso!';
+        toast('Senha atualizada com sucesso!', 'success');
         localStorage.removeItem('resetToken');
         setTimeout(() => { location.href = 'index.html'; }, 1200);
       } catch {
         statusEl.textContent = 'Erro inesperado.';
+        toast('Erro inesperado.', 'error');
       }
     });
   </script>
 </body>
 </html>
-

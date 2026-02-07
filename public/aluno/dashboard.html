@@ -1,0 +1,47 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aluno Dashboard • JICS</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png" />
+  <link rel="stylesheet" href="/aluno/dashboard.css" />
+  <script type="module" src="/aluno/dashboard.js" defer></script>
+</head>
+<body class="aluno-theme">
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>Meu painel</h1>
+        <span id="updatedAgo" class="muted">Atualizado ha --</span>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="btnRefresh">Atualizar</button>
+        <a class="btn" href="/dashboard.html">Abrir painel completo</a>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="hero">
+        <div class="hero-card">
+          <h2>Meu status</h2>
+          <p id="statusText">Carregando...</p>
+          <div class="chips">
+            <span class="chip" id="chipInscricoes">0 inscricoes</span>
+            <span class="chip" id="chipAvisos">0 avisos</span>
+          </div>
+        </div>
+        <div class="hero-card">
+          <h2>Proximas partidas</h2>
+          <div id="nextGames" class="list"></div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card" id="minhasInscricoes"></div>
+        <div class="card" id="avisos"></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
