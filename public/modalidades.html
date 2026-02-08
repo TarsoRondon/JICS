@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -14,12 +14,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
 </head>
 
-<body data-page="modalidades" data-theme="light">
+<body class="no-drawer" data-page="modalidades" data-theme="light">
     <div id="appShell">
         <nav class="navbar">
             <div class="navbar-left">
                 <button class="icon-btn nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
                 <button class="navbar-brand" onclick="scrollToTop()">IFRO ESPORTES</button>
+        <div class="navbar-links">
+          <a class="nav-link" href="dashboard.html">Inicio</a>
+          <a class="nav-link" href="modalidades.html">Modalidades</a>
+          <a class="nav-link" href="horarios.html">Horarios</a>
+          <a class="nav-link" href="inscricoes.html">Inscricoes</a>
+          <a class="nav-link" href="noticias.html">Noticias</a>
+        </div>
             </div>
             <div class="navbar-right">
                 <button class="icon-btn help-btn" onclick="toggleHelpPanel()"><span class="material-symbols-outlined">help</span></button>
@@ -58,8 +65,7 @@
                 </section>
             </main>
         </div>
-
-        <div id="sideOverlay" class="overlay"></div>
+<div id="sideOverlay" class="overlay"></div>
         <div id="drawerOverlay" class="overlay"></div>
         <div id="userDrawer" class="user-drawer"></div>
         <div id="globalModals"></div>
@@ -69,3 +75,7 @@
 </body>
 
 </html>
+
+
+
+

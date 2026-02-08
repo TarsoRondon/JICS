@@ -74,13 +74,15 @@
       <h2>Alterar senha</h2>
       <button class="icon-btn" onclick="closeModalSenha()"><span class="material-symbols-outlined">close</span></button>
     </div>
-    <div class="modal-body">
+    <form id="modalSenhaForm" class="modal-body" onsubmit="event.preventDefault(); confirmarAlteracaoSenha();">
+      <label class="sr-only" for="senhaUsernameInput">Usuario</label>
+      <input type="text" id="senhaUsernameInput" name="username" autocomplete="username" class="sr-only" />
       <label>Senha atual</label>
-      <input type="password" id="senhaAtualInput" />
+      <input type="password" id="senhaAtualInput" autocomplete="current-password" />
       <label>Nova senha</label>
-      <input type="password" id="novaSenhaInput" />
+      <input type="password" id="novaSenhaInput" autocomplete="new-password" />
       <label>Confirmar senha</label>
-      <input type="password" id="confirmarSenhaInput" />
+      <input type="password" id="confirmarSenhaInput" autocomplete="new-password" />
       <div class="password-ux">
         <div id="rulesModalSenha" class="password-rules">
           <div class="password-rule rule-bad" data-rule="length"><span class="rule-icon">?</span> minimo 8 caracteres</div>
@@ -94,10 +96,10 @@
         </div>
         <div id="matchModalSenha" class="password-match match-bad">? Senhas conferem</div>
       </div>
-    </div>
+    </form>
     <div class="modal-footer">
-      <button class="btn-outline" onclick="closeModalSenha()">Cancelar</button>
-      <button class="btn-primary btn-disabled" id="btnSalvarSenha" onclick="confirmarAlteracaoSenha()" disabled>Salvar</button>
+      <button class="btn-outline" type="button" onclick="closeModalSenha()">Cancelar</button>
+      <button class="btn-primary btn-disabled" id="btnSalvarSenha" type="submit" form="modalSenhaForm" disabled>Salvar</button>
     </div>
   </div>
 </div>

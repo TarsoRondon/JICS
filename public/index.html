@@ -4,39 +4,58 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login • JICS</title>
+    <title>Login - JICS</title>
     <link rel="icon" type="image/png" href="assets/ifro.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="css/login.css" />
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
 <body>
-    <main class="login-page">
-        <section class="login-hero" aria-label="Apresentacao do sistema">
-            <div class="brand">
-                <div class="brand-logo" aria-hidden="true">J</div>
+    <main class="login-page login-page--institutional">
+        <section class="login-left" aria-label="Apresentacao do sistema">
+            <header class="brand">
+                <span class="brand-mark" aria-hidden="true">
+                    <img src="assets/ifro.png" alt="IFRO" />
+                </span>
                 <div class="brand-text">
-                    <strong>JICS</strong>
-                    <span>IFRO Esportes</span>
+                    <strong>INSTITUTO FEDERAL</strong>
+                    <span>Rondonia - IFRO Esportes</span>
                 </div>
-            </div>
+            </header>
 
-            <h1>Portal esportivo do IFRO.</h1>
-            <p>Entre com sua matricula para acessar inscricoes, resultados e comunicados.</p>
+            <div class="hero-content">
+                <span class="hero-kicker">Sistema JICS</span>
+                <h1>IFRO Esportes - JICS</h1>
+                <p>Um software desenvolvido por uma instituicao publica para instituicoes publicas.</p>
+            </div>
 
             <div class="hero-cards">
                 <div class="hero-card">
-                    <i data-lucide="trophy"></i>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M8 4h8v3a4 4 0 0 1-8 0V4z" />
+                        <path d="M4 5h4v3a4 4 0 0 1-4-4V5z" />
+                        <path d="M20 5h-4v3a4 4 0 0 0 4-4V5z" />
+                        <path d="M10 14h4" />
+                        <path d="M9 18h6" />
+                        <path d="M10 14v4" />
+                        <path d="M14 14v4" />
+                    </svg>
                     <div>
                         <strong>Resultados</strong>
                         <span>Atualizados no painel</span>
                     </div>
                 </div>
                 <div class="hero-card">
-                    <i data-lucide="calendar"></i>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="4.5" width="18" height="16" rx="2.5" />
+                        <path d="M7 3v3" />
+                        <path d="M17 3v3" />
+                        <path d="M3 9h18" />
+                        <path d="M8.5 13.5h2.5" />
+                        <path d="M13 13.5h2.5" />
+                    </svg>
                     <div>
                         <strong>Eventos</strong>
                         <span>Organizacao rapida</span>
@@ -52,29 +71,45 @@
                 <p>Digite sua matricula e senha.</p>
             </header>
 
-    <form id="loginForm" novalidate>
+            <form id="loginForm" novalidate>
                 <div class="field">
                     <label for="matricula">Matricula</label>
                     <div class="control">
-                        <i data-lucide="id-card"></i>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="14" rx="2" />
+                            <path d="M7 9h6" />
+                            <path d="M7 13h4" />
+                            <circle cx="17" cy="12" r="2.5" />
+                        </svg>
                         <input id="matricula" name="matricula" type="text" inputmode="numeric" autocomplete="username" placeholder="Digite sua matricula" required minlength="6" maxlength="13" />
                     </div>
+                    <small class="hint"></small>
                 </div>
 
                 <div class="field">
                     <label for="senha">Senha</label>
                     <div class="control">
-                        <i data-lucide="lock"></i>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <rect x="4" y="10" width="16" height="10" rx="2" />
+                            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                            <path d="M12 14v2" />
+                        </svg>
                         <input id="senha" name="senha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required minlength="4" />
                         <button type="button" class="icon-btn" id="togglePass" aria-label="Mostrar senha">
-                            <i data-lucide="eye"></i>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
                         </button>
                     </div>
+                    <small class="hint"></small>
                 </div>
 
                 <button class="btn primary" id="btnLogin" type="submit">
                     <span class="btn-text">Acessar</span>
                 </button>
+
+                <a class="btn secondary" href="/app-primeiro-acesso.html">Primeiro acesso</a>
 
                 <div class="links">
                     <a href="/recuperar.html">Esqueceu ou deseja alterar sua senha?</a>
@@ -83,7 +118,7 @@
             </form>
 
             <footer class="card-foot">
-                <span>© JICS • 2026</span>
+                <span>(c) JICS - 2026</span>
             </footer>
         </section>
     </main>

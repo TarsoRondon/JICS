@@ -112,24 +112,28 @@ function ensureSideNavLinks() {
 }
 
 function ensureSiteFooter() {
-    const page = document.querySelector('.page');
-    if (!page || page.querySelector('.site-footer')) return;
+    if (document.querySelector('.site-footer')) return;
 
     const footer = document.createElement('footer');
     footer.className = 'site-footer';
     footer.innerHTML = `
-    <div>
-      <strong>IFRO Esportes</strong>
-      <span> Sistema institucional</span>
+    <div class="footer-left">
+      <span>© 2015</span>
+      <a href="https://gesstec.org/" target="_blank" rel="noopener">GESSTEC - IFRO</a>
+      <span>Todos os direitos reservados.</span>
     </div>
-    <div class="footer-links">
-      <a href="suporte.html">Suporte</a>
-      <a href="privacidade.html">Privacidade</a>
-      <a href="termos.html">Termos</a>
+    <div class="footer-right">
+      © 2026 IFRO ESPORTES
+      <span>Sistema institucional</span>
     </div>
-    <div>v1.0 Atualizado 2026</div>
   `;
-    page.appendChild(footer);
+    const shell = document.getElementById('appShell') || document.body;
+    const anchor = shell.querySelector('#sideOverlay') || shell.querySelector('#drawerOverlay');
+    if (anchor && anchor.parentElement === shell) {
+        shell.insertBefore(footer, anchor);
+        return;
+    }
+    shell.appendChild(footer);
 }
 
 function applyRoleVisibility() {
@@ -167,7 +171,7 @@ const tourState = {
 const tourSteps = {
     inscricao: [
         { selector: '.nav-hamburger', title: 'Menu rápido', text: 'Use o menu lateral para navegar pelas páginas.' },
-        { selector: '.hero-actions .btn-primary', title: 'Inscrição', text: 'Clique aqui para ir para a página de inscrições.', page: 'inscricoes.html' },
+        { selector: '.hero-actions .btn-primary', title: 'Inscrição', text: 'Clique aqui para ir para a página de modalidades.', page: 'modalidades.html' },
         { selector: '#allModalidadesGrid', title: 'Modalidades', text: 'Escolha uma modalidade e confirme a inscrição.' },
     ],
     senha: [
@@ -187,7 +191,7 @@ const tourSteps = {
     ],
     completo: [
         { selector: '.navbar-brand', title: 'Topo rápido', text: 'Clique no IFRO ESPORTES para voltar ao topo.' },
-        { selector: '.hero-actions .btn-primary', title: 'Inscrições', text: 'Comece pelas inscrições.', page: 'inscricoes.html' },
+        { selector: '.hero-actions .btn-primary', title: 'Inscrições', text: 'Comece pelas modalidades.', page: 'modalidades.html' },
         { selector: '.cards-grid', title: 'Modalidades', text: 'Confira as modalidades disponíveis.' },
         { selector: '.drawer-btn', title: 'Resultados', text: 'Acesse os resultados no menu.', page: 'resultados.html' },
     ],
@@ -301,6 +305,28 @@ function toggleUserDrawer() {
     if (!drawer || !overlay) return;
     drawer.classList.toggle('open');
     overlay.classList.toggle('active');
+}
+
+function bindDrawerOverlays() {
+    const sideOverlay = document.getElementById('sideOverlay');
+    const sideNav = document.getElementById('sideNav');
+    if (sideOverlay && sideNav && sideOverlay.dataset.bound !== '1') {
+        sideOverlay.dataset.bound = '1';
+        sideOverlay.addEventListener('click', () => {
+            sideNav.classList.remove('open');
+            sideOverlay.classList.remove('active');
+        });
+    }
+
+    const drawerOverlay = document.getElementById('drawerOverlay');
+    const drawer = document.getElementById('userDrawer');
+    if (drawerOverlay && drawer && drawerOverlay.dataset.bound !== '1') {
+        drawerOverlay.dataset.bound = '1';
+        drawerOverlay.addEventListener('click', () => {
+            drawer.classList.remove('open');
+            drawerOverlay.classList.remove('active');
+        });
+    }
 }
 
 function toggleDrawerGroup(id, btn) {
@@ -447,6 +473,9 @@ function renderDrawer() {
         <a class="drawer-sub-btn" href="recuperar-matricula.html">Recuperar matrícula</a>
         <button class="drawer-sub-btn" onclick="editarSenha()">Alterar senha</button>
         <button class="drawer-sub-btn" onclick="toggleHelpPanel()">FAQ / Ajuda</button>
+        <a class="drawer-sub-btn" href="suporte.html">Suporte</a>
+        <a class="drawer-sub-btn" href="privacidade.html">Privacidade</a>
+        <a class="drawer-sub-btn" href="termos.html">Termos</a>
         <div class="drawer-theme">
           <span>Tema</span>
           <button class="theme-toggle" onclick="toggleTheme()">
@@ -705,7 +734,7 @@ function carregarInscricoes() {
       url = `/inscricoes/jics?matricula=${encodeURIComponent(currentUser.matricula)}`;
     }
   }
-  renderTableSkeleton(document.getElementById('tabelaInscricoes'), 4, 7);
+  renderTableSkeleton(document.getElementById('tabelaInscricoes'), 4, 8);
   renderTableSkeleton(document.getElementById('tabelaMinhasInscricoes'), 3, 3);
   fetch(url)
     .then(res => res.json())
@@ -719,7 +748,7 @@ function carregarInscricoes() {
     .catch(() => {
       showToastErro('Não foi possível carregar as inscrições.');
       const tbody = document.getElementById('tabelaInscricoes');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="7">Nenhuma inscrição disponível.</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscrição disponível.</td></tr>';
       const minhas = document.getElementById('tabelaMinhasInscricoes');
       if (minhas) minhas.innerHTML = '<tr><td colspan="3">Nenhuma inscrição disponível.</td></tr>';
     });
@@ -924,39 +953,20 @@ function renderMinhasInscricoes() {
 
 function applyInscricoesFilters() {
   const busca = document.getElementById('filtroBuscaInscricoes');
-  const filtroModalidade = document.getElementById('filtroModalidadeInscricoes');
-  const filtroTurma = document.getElementById('filtroTurmaInscricoes');
-  const filtroSexo = document.getElementById('filtroSexoInscricoes');
-  const filtroTipo = document.getElementById('filtroTipoInscricoes');
-
-  if (busca || filtroModalidade || filtroTurma || filtroSexo) {
-    if (filtroModalidade && !filtroModalidade.dataset.ready) {
-      const current = filtroModalidade.value;
-      setSelectOptions(filtroModalidade, inscriptions.map(i => i.modalidade), 'Todas as modalidades');
-      filtroModalidade.value = current;
-      filtroModalidade.dataset.ready = '1';
-    }
-    if (filtroTurma && !filtroTurma.dataset.ready) {
-      const current = filtroTurma.value;
-      setSelectOptions(filtroTurma, inscriptions.map(i => i.turma), 'Todas as turmas');
-      filtroTurma.value = current;
-      filtroTurma.dataset.ready = '1';
-    }
-  }
-
   const term = busca ? busca.value.trim().toLowerCase() : '';
-  const mod = filtroModalidade ? filtroModalidade.value : '';
-  const turma = filtroTurma ? filtroTurma.value : '';
-  const sexo = filtroSexo ? filtroSexo.value : '';
-  const tipo = filtroTipo ? filtroTipo.value : '';
 
   filteredInscriptions = inscriptions.filter(i => {
-    const matchesTerm = !term || i.nome.toLowerCase().includes(term) || i.matricula.toLowerCase().includes(term);
-    const matchesMod = !mod || i.modalidade === mod;
-    const matchesTurma = !turma || i.turma === turma;
-    const matchesSexo = !sexo || String(i.sexo || '').toUpperCase() === sexo.toUpperCase();
-    const matchesTipo = !tipo || String(i.tipo || '').toLowerCase() === tipo.toLowerCase();
-    return matchesTerm && matchesMod && matchesTurma && matchesSexo && matchesTipo;
+    if (!term) return true;
+    const haystack = [
+      i.nome,
+      i.matricula,
+      i.turma,
+      i.modalidade,
+      i.sexo,
+      i.tipo,
+      i.data
+    ].filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(term);
   });
 
   updateInscriptionsTable(filteredInscriptions);
@@ -964,15 +974,7 @@ function applyInscricoesFilters() {
 
 function limparFiltrosInscricoes() {
   const busca = document.getElementById('filtroBuscaInscricoes');
-  const filtroModalidade = document.getElementById('filtroModalidadeInscricoes');
-  const filtroTurma = document.getElementById('filtroTurmaInscricoes');
-  const filtroSexo = document.getElementById('filtroSexoInscricoes');
-  const filtroTipo = document.getElementById('filtroTipoInscricoes');
   if (busca) busca.value = '';
-  if (filtroModalidade) filtroModalidade.value = '';
-  if (filtroTurma) filtroTurma.value = '';
-  if (filtroSexo) filtroSexo.value = '';
-  if (filtroTipo) filtroTipo.value = '';
   applyInscricoesFilters();
 }
 
@@ -999,18 +1001,10 @@ function exportarInscricoesCsv() {
 
 function initAdminFilters() {
   const busca = document.getElementById('filtroBuscaInscricoes');
-  const filtroModalidade = document.getElementById('filtroModalidadeInscricoes');
-  const filtroTurma = document.getElementById('filtroTurmaInscricoes');
-  const filtroSexo = document.getElementById('filtroSexoInscricoes');
-  const filtroTipo = document.getElementById('filtroTipoInscricoes');
-  if (!busca && !filtroModalidade && !filtroTurma && !filtroSexo && !filtroTipo) return;
+  if (!busca) return;
 
   const handler = () => applyInscricoesFilters();
-  if (busca) busca.addEventListener('input', handler);
-  if (filtroModalidade) filtroModalidade.addEventListener('change', handler);
-  if (filtroTurma) filtroTurma.addEventListener('change', handler);
-  if (filtroSexo) filtroSexo.addEventListener('change', handler);
-  if (filtroTipo) filtroTipo.addEventListener('change', handler);
+  busca.addEventListener('input', handler);
   applyInscricoesFilters();
 }
 
@@ -1107,6 +1101,60 @@ function subscribeToJICS(modalidadeId) {
       carregarInscricoes();
     })
     .catch(() => showToastErro('Erro ao realizar inscrição'));
+}
+
+function resolveModalidadeIdByName(nome) {
+  const label = String(nome || '').trim().toLowerCase();
+  if (!label) return null;
+  const mod = modalidades.find(m => String(m.nome || '').trim().toLowerCase() === label);
+  return mod ? mod.id : null;
+}
+
+function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modalidadeEnc) {
+  if (!currentUser) {
+    showToastErro('Usuário não identificado.');
+    return;
+  }
+  const inscricaoId = decodeURIComponent(inscricaoIdEnc || '').trim();
+  const matricula = decodeURIComponent(matriculaEnc || '').trim();
+  const modalidadeLabel = decodeURIComponent(modalidadeEnc || '').trim();
+  let modalidadeId = decodeURIComponent(modalidadeIdEnc || '').trim();
+  if (!modalidadeId) {
+    const resolved = resolveModalidadeIdByName(modalidadeLabel);
+    if (resolved) modalidadeId = resolved;
+  }
+  if (!inscricaoId && !modalidadeId) {
+    showToastErro('Não foi possível identificar a inscrição.');
+    return;
+  }
+
+  openDangerConfirm({
+    title: 'Cancelar inscrição',
+    message: `Digite CONFIRMAR para cancelar a inscrição${modalidadeLabel ? ` em ${modalidadeLabel}` : ''}.`,
+    onConfirm: () => {
+      const payload = {};
+      if (inscricaoId) payload.inscricao_id = inscricaoId;
+      if (modalidadeId) payload.modalidade_id = modalidadeId;
+      if (currentUser.id) payload.aluno_id = currentUser.id;
+      else if (matricula) payload.matricula = matricula;
+
+      fetch('/inscricoes/jics/cancelar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.sucesso) {
+            showToastSucesso('Inscrição cancelada.');
+            carregarInscricoes();
+          } else {
+            showToastErro(data.mensagem || 'Não foi possível cancelar.');
+          }
+        })
+        .catch(() => showToastErro('Erro ao cancelar inscrição.'));
+    }
+  });
 }
 
 function closeAllModals() {
@@ -1422,7 +1470,13 @@ function verificarMatriculaAutomatica(matricula) {
     .catch(() => { status.textContent = ''; });
 }
 
-function editarSenha() { openModal('modalSenha'); }
+function editarSenha() {
+  const usernameField = document.getElementById('senhaUsernameInput');
+  if (usernameField) {
+    usernameField.value = currentUser?.matricula || currentUser?.email || '';
+  }
+  openModal('modalSenha');
+}
 
 function closeModalSenha() {
   closeModal('modalSenha');
@@ -2462,6 +2516,7 @@ function initPage() {
 
   renderDrawer();
   ensureSideNavLinks();
+  bindDrawerOverlays();
   applyRoleVisibility();
   applyHeroGreeting();
   ensureUserFromApi().then(applyHeroGreeting);
@@ -2528,7 +2583,7 @@ function updateInscriptionsTable(list) {
   if (!tbody) return;
   const source = Array.isArray(list) ? list : inscriptions;
   if (!source.length) {
-    tbody.innerHTML = '<tr><td colspan="7">Nenhuma inscrição encontrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscrição encontrada.</td></tr>';
     if (empty) empty.classList.remove('hidden');
     return;
   }
@@ -2542,6 +2597,9 @@ function updateInscriptionsTable(list) {
       <td>${i.sexo}</td>
       <td>${i.tipo}</td>
       <td>${i.data}</td>
+      <td class="td-actions">
+        <button class="btn-danger btn-sm" onclick="cancelarInscricao('${encodeURIComponent(String(i.inscricao_id || ''))}','${encodeURIComponent(String(i.matricula || ''))}','${encodeURIComponent(String(i.modalidade_id || ''))}','${encodeURIComponent(String(i.modalidade || ''))}')">Cancelar</button>
+      </td>
     </tr>
   `).join('');
 }

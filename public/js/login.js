@@ -99,7 +99,7 @@
       window.toast?.("Login realizado!", "ok");
       const role = String(data.role || data?.user?.role || "").toUpperCase();
       if (role.includes("ADMIN")) window.location.href = "/admin.html";
-      else window.location.href = "/app-dashboard.html";
+      else window.location.href = "/dashboard.html";
     } catch (err) {
       window.toast?.(err.message, "err");
     } finally {

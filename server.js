@@ -658,6 +658,46 @@ app.post('/inscricoes/jics', async (req, res) => {
     }
 });
 
+app.post('/inscricoes/jics/cancelar', async (req, res) => {
+    const { inscricao_id, aluno_id, matricula, modalidade_id } = req.body || {};
+
+    if (!inscricao_id && (!modalidade_id || (!aluno_id && !matricula))) {
+        return res.status(400).json({ sucesso: false, mensagem: 'Dados inválidos' });
+    }
+
+    try {
+        const conexao = await conectar();
+        let alvoId = aluno_id;
+        if (!alvoId && matricula) {
+            const [rows] = await conexao.query('SELECT id FROM alunos WHERE matricula = ? LIMIT 1', [matricula]);
+            if (!rows.length) {
+                await conexao.end();
+                return res.json({ sucesso: false, mensagem: 'Aluno não encontrado' });
+            }
+            alvoId = rows[0].id;
+        }
+
+        let result;
+        if (inscricao_id) {
+            [result] = await conexao.query('DELETE FROM inscricoes WHERE id = ?', [inscricao_id]);
+        } else {
+            [result] = await conexao.query(
+                'DELETE FROM inscricoes WHERE aluno_id = ? AND modalidade_id = ?',
+                [alvoId, modalidade_id]
+            );
+        }
+
+        await conexao.end();
+        if (!result || result.affectedRows === 0) {
+            return res.json({ sucesso: false, mensagem: 'Inscrição não encontrada' });
+        }
+        res.json({ sucesso: true });
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({ sucesso: false });
+    }
+});
+
 app.get('/inscricoes/jics', async (req, res) => {
     const { aluno_id, matricula } = req.query;
     let where = '';
@@ -675,11 +715,13 @@ app.get('/inscricoes/jics', async (req, res) => {
         const conexao = await conectar();
         const [rows] = await conexao.query(`
             SELECT
+                i.id AS inscricao_id,
                 a.nome,
                 a.matricula,
                 a.turma,
                 a.sexo,
                 i.tipo,
+                i.modalidade_id,
                 m.titulo AS modalidade,
                 DATE_FORMAT(i.data_inscricao, '%d/%m/%Y %H:%i') AS data
             FROM inscricoes i
