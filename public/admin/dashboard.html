@@ -1,6 +1,9 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard • JICS</title>
@@ -8,6 +11,8 @@
   <link rel="stylesheet" href="/admin/dashboard.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script type="module" src="/admin/dashboard.js" defer></script>
+  <link rel="stylesheet" href="/assets/success-feedback.css" />
+  <script defer src="/assets/success-feedback.js"></script>
 </head>
 <body class="admin-theme">
   <div class="app-shell">
@@ -15,7 +20,7 @@
       <div class="brand">JICS Admin</div>
       <nav class="menu">
         <a class="active" href="/admin/dashboard.html">Dashboard</a>
-        <a href="/inscricoes.html">Inscricoes</a>
+        <a href="/inscricoes.html">Inscrições</a>
         <a href="/modalidades.html">Modalidades</a>
         <a href="/admin.html">Alunos</a>
         <a href="/resultados.html">Relatorios</a>
@@ -27,7 +32,7 @@
     <div class="main">
       <header class="topbar">
         <div class="topbar-left">
-          <h1>Visao geral</h1>
+          <h1>Visão geral</h1>
           <span id="updatedAgo" class="muted">Atualizado ha --</span>
         </div>
         <div class="topbar-actions">
@@ -59,3 +64,7 @@
   </div>
 </body>
 </html>
+
+
+
+

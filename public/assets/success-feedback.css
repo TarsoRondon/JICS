@@ -1,0 +1,202 @@
+:root{
+  --sf-green:#00A877;
+  --sf-green-dark:#0A5D54;
+  --sf-bg: rgba(255,255,255,.80);
+  --sf-border: rgba(255,255,255,.38);
+}
+
+.sf-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.48);
+  backdrop-filter: blur(10px);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .22s ease;
+  z-index:99999;
+}
+
+.sf-overlay.sf-show{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.sf-card{
+  width:min(392px, 92vw);
+  padding:26px 24px 22px;
+  border-radius:22px;
+  background: var(--sf-bg);
+  border:1px solid var(--sf-border);
+  box-shadow: 0 30px 90px rgba(0,0,0,.36);
+  transform: translateY(16px) scale(.78);
+  opacity:0;
+  position:relative;
+  overflow:hidden;
+  outline:none;
+}
+
+.sf-overlay.sf-show .sf-card{
+  animation: sf-pop .56s cubic-bezier(.2,.85,.2,1) forwards;
+}
+
+@keyframes sf-pop{
+  0%{ transform: translateY(16px) scale(.78); opacity:0;}
+  60%{ transform: translateY(0) scale(1.03); opacity:1;}
+  100%{ transform: translateY(0) scale(1); opacity:1;}
+}
+
+.sf-close{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  border:1px solid rgba(0,0,0,.08);
+  background:rgba(255,255,255,.72);
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.sf-close:hover{ transform: translateY(-1px); }
+
+.sf-icon{
+  width:92px;
+  height:92px;
+  margin: 4px auto 14px;
+  position:relative;
+  display:grid;
+  place-items:center;
+}
+
+.sf-glow{
+  position:absolute;
+  inset:-28%;
+  background: radial-gradient(circle, rgba(0,168,119,.38), rgba(0,168,119,0) 62%);
+  opacity:.9;
+  animation: sf-glow 1.7s ease-in-out infinite;
+}
+
+@keyframes sf-glow{
+  0%,100%{ transform: scale(1); opacity:.78;}
+  50%{ transform: scale(1.07); opacity:1;}
+}
+
+.sf-svg{
+  width:92px;
+  height:92px;
+  filter: drop-shadow(0 12px 20px rgba(0,168,119,.28));
+}
+
+.sf-circle{
+  fill: rgba(255,255,255,.22);
+  stroke: var(--sf-green);
+  stroke-width: 3.6;
+  stroke-dasharray: 155;
+  stroke-dashoffset: 155;
+}
+
+.sf-check{
+  fill:none;
+  stroke: var(--sf-green);
+  stroke-width: 5.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+}
+
+.sf-overlay.sf-show .sf-circle{ animation: sf-drawCircle .65s ease forwards; }
+.sf-overlay.sf-show .sf-check{ animation: sf-drawCheck .45s .55s ease forwards; }
+
+@keyframes sf-drawCircle{ to{ stroke-dashoffset:0; } }
+@keyframes sf-drawCheck{ to{ stroke-dashoffset:0; } }
+
+.sf-ring{
+  position:absolute;
+  width:92px;
+  height:92px;
+  border-radius:999px;
+  border:2px solid rgba(0,168,119,.35);
+  transform: scale(.82);
+  opacity:0;
+}
+
+.sf-overlay.sf-show .sf-ring{
+  animation: sf-ring 900ms .34s ease-out forwards;
+}
+
+@keyframes sf-ring{
+  0%{ transform: scale(.74); opacity:0; }
+  30%{ opacity:.95; }
+  100%{ transform: scale(1.22); opacity:0; }
+}
+
+.sf-sparkles{
+  position:absolute;
+  inset:-10%;
+  pointer-events:none;
+}
+
+.sf-sparkles i{
+  position:absolute;
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background: rgba(0,168,119,.92);
+  box-shadow: 0 0 0 6px rgba(0,168,119,.12);
+  opacity:0;
+}
+
+.sf-overlay.sf-show .sf-sparkles i{
+  animation: sf-spark 900ms ease-out forwards;
+}
+
+@keyframes sf-spark{
+  0%{ transform: translate(0,0) scale(.45); opacity:0; }
+  25%{ opacity:1; }
+  100%{ transform: translate(var(--dx), var(--dy)) scale(1); opacity:0; }
+}
+
+.sf-title{
+  margin:0;
+  text-align:center;
+  color: var(--sf-green-dark);
+  font-weight: 850;
+  letter-spacing: .2px;
+  font-size: 20px;
+}
+
+.sf-message{
+  margin: 8px 0 0;
+  text-align:center;
+  color: rgba(0,0,0,.65);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.sf-actions{
+  display:flex;
+  justify-content:center;
+  margin-top: 16px;
+}
+
+.sf-btn{
+  border:none;
+  border-radius: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, var(--sf-green), #17c28b);
+  color: #fff;
+  font-weight: 850;
+  cursor:pointer;
+  box-shadow: 0 14px 28px rgba(0,168,119,.28);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.sf-btn:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(0,168,119,.34);
+}

@@ -1,368 +1,1369 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IFRO Esportes - Admin</title>
-  <link rel="icon" type="image/png" href="assets/ifro.png" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/light-override.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
+  <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IFRO Esportes - Admin</title>
+    <link rel="icon" type="image/png" href="/assets/ifro.png" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="/assets/success-feedback.css" />
+    <script defer src="/assets/success-feedback.js"></script>
 </head>
-<body data-page="admin" data-theme="light" class="admin-shell">
-  <div id="appShell">
-    <nav class="navbar">
-      <div class="navbar-left">
-        <button class="icon-btn nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
-        <button class="navbar-brand" onclick="scrollToTop()">IFRO ESPORTES - ADMIN</button>
-      </div>
-      <div class="navbar-right">
-        <button class="icon-btn" onclick="toggleAdminMenu(event)"><span class="material-symbols-outlined">settings</span></button>
-        <div class="user-menu">
-          <button class="user-trigger" onclick="toggleUserDrawer()">
+
+<body data-page="admin" data-theme="light" class="admin-shell admin-ui">
+    <div id="appShell">
+        <nav class="navbar">
+            <div class="navbar-left">
+                <button class="icon-btn nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
+                <button class="navbar-brand" onclick="scrollToTop()">IFRO ESPORTES - ADMIN</button>
+            </div>
+            <div class="navbar-right">
+                <button class="icon-btn" onclick="toggleAdminMenu(event)"><span class="material-symbols-outlined">settings</span></button>
+                <div class="user-menu">
+                    <button class="user-trigger" onclick="toggleUserDrawer()">
             <span id="userNameNavbar" class="user-name"></span>
-            <img id="userAvatar" class="user-avatar" src="assets/avatar-default.png" alt="Avatar" />
+            <img id="userAvatar" class="user-avatar" src="/assets/avatar-default.png" alt="Avatar" onerror="this.src='/assets/avatar-default.png'">
           </button>
+                </div>
+            </div>
+        </nav>
+
+        <div id="sessionBanner" class="session-banner hidden">
+          <span id="sessionBannerText">Sessão expirada. Faça login novamente.</span>
+            <button class="btn-outline btn-sm" type="button" onclick="location.href='index.html'">Fazer login</button>
         </div>
-      </div>
-    </nav>
 
-    <div id="adminMenuOverlay" class="overlay hidden" onclick="closeAdminMenu()"></div>
-    <div id="adminMenuDropdown" class="card hidden" style="position: fixed; top: 70px; right: 24px; width: 220px; z-index: 70;">
-      <button class="btn-ghost" onclick="location.href='dashboard.html'">Voltar ao painel</button>
-      <button class="btn-ghost" onclick="location.href='sumula.html'">Súmula</button>
-      <button class="btn-ghost" onclick="logout()">Sair</button>
-    </div>
+        <div id="adminMenuOverlay" class="overlay hidden" onclick="closeAdminMenu()"></div>
+        <div id="adminMenuDropdown" class="card hidden admin-menu-dropdown">
+            <button class="btn-ghost" onclick="logout()">Sair</button>
+        </div>
 
-    <div class="app-body">
-      <aside id="sideNav" class="side-drawer">
-        <div class="side-header">Admin</div>
-        <a class="side-link" href="dashboard.html">Inicio</a>
-        <a class="side-link" href="admin.html">Painel</a>
-        <a class="side-link" href="noticias.html">Noticias</a>
-        <a class="side-link" href="modalidades.html">Modalidades</a>
-        <a class="side-link" href="horarios.html">Horarios</a>
-        <a class="side-link" href="resultados.html">Resultados</a>
-      </aside>
+        <div class="app-body">
+            <aside id="sideNav" class="side-drawer">
+                <div class="side-header">JICS Admin</div>
 
-      <main class="page admin-panel">
-        <section class="page-header">
-          <div>
-            <div class="page-title">Painel Administrativo</div>
-            <div class="page-subtitle" id="adminCrumb">Visao geral</div>
-          </div>
-        </section>
+                <button class="side-group-btn open" onclick="toggleDrawerGroup('adminOps', this)">
+          Operações
+          <span class="material-symbols-outlined">expand_more</span>
+        </button>
+                <div id="adminOps" class="side-sub open">
+                    <a class="side-link active" data-tab="tabDashboard" href="admin.html" onclick="openAdminTab('tabDashboard'); return false;">Visão geral</a>
+                    <a class="side-link" data-tab="tabInscricoes" href="admin.html" onclick="openAdminTab('tabInscricoes'); return false;">Inscrições</a>
+                    <a class="side-link staff-only" data-tab="tabSorteio" href="admin.html" onclick="openAdminTab('tabSorteio'); return false;">Sorteio</a>
+                    <a class="side-link" data-tab="tabBuscarAluno" href="admin.html" onclick="openAdminTab('tabBuscarAluno'); return false;">Buscar aluno</a>
+                    <a class="side-link staff-only" data-tab="tabSumula" href="admin.html" onclick="openAdminTab('tabSumula'); return false;">Súmula</a>
+                </div>
 
-        <section class="form-row">
-          <div class="card">
-            <div class="stat-number" id="metricUsuarios">-</div>
-            <div class="stat-label">Usuarios</div>
-          </div>
-          <div class="card">
-            <div class="stat-number" id="metricInscricoes">-</div>
-            <div class="stat-label">Inscricoes</div>
-          </div>
-          <div class="card">
-            <div class="stat-number" id="metricModalidades">-</div>
-            <div class="stat-label">Modalidades</div>
-          </div>
-          <div class="card">
-            <div class="stat-number" id="metricComunicados">-</div>
-            <div class="stat-label">Comunicados</div>
-          </div>
-        </section>
+                <div class="side-divider"></div>
+                <button class="side-group-btn" onclick="toggleDrawerGroup('adminCad', this)">
+          Cadastros
+          <span class="material-symbols-outlined">expand_more</span>
+        </button>
+                <div id="adminCad" class="side-sub">
+                    <a class="side-link" data-tab="tabUsuarios" href="admin.html" onclick="openAdminTab('tabUsuarios'); return false;">Usuários</a>
+                    <a class="side-link" data-tab="tabNoticias" href="admin.html" onclick="openAdminTab('tabNoticias'); return false;">Notícias</a>
+                    <a class="side-link" data-tab="tabModalidades" href="admin.html" onclick="openAdminTab('tabModalidades'); return false;">Modalidades</a>
+                    <a class="side-link staff-only" data-tab="tabEventos" href="admin.html" onclick="openAdminTab('tabEventos'); return false;">Eventos</a>
+                    <a class="side-link staff-only" data-tab="tabOrganizadores" href="admin.html" onclick="openAdminTab('tabOrganizadores'); return false;">Organizadores</a>
+                    <a class="side-link admin-only" data-tab="tabAdmins" href="admin.html" onclick="openAdminTab('tabAdmins'); return false;">Administradores</a>
+                    <a class="side-link admin-only" href="admin-cadastro.html">Novo administrador</a>
+                </div>
 
-        <section class="card">
-          <div class="admin-tabs">
-            <button class="admin-tab active" data-tab="tabInscricoes" onclick="switchAdminTab('tabInscricoes', this)">Inscricoes</button>
-            <button class="admin-tab" data-tab="tabUsuarios" onclick="switchAdminTab('tabUsuarios', this)">Usuarios</button>
-            <button class="admin-tab" data-tab="tabNoticias" onclick="switchAdminTab('tabNoticias', this)">Noticias</button>
-            <button class="admin-tab" data-tab="tabModalidades" onclick="switchAdminTab('tabModalidades', this)">Modalidades</button>
-            <button class="admin-tab" data-tab="tabSorteio" onclick="switchAdminTab('tabSorteio', this)">Sorteio</button>
-            <button class="admin-tab" data-tab="tabBuscarAluno" onclick="switchAdminTab('tabBuscarAluno', this)">Buscar aluno</button>
-          </div>
-        </section>
+                <div class="side-divider"></div>
+                <button class="side-group-btn" onclick="toggleDrawerGroup('adminRel', this)">
+          Relatórios
+          <span class="material-symbols-outlined">expand_more</span>
+        </button>
+                <div id="adminRel" class="side-sub">
+                    <a class="side-link staff-only" data-tab="tabGraficos" href="admin.html" onclick="openAdminTab('tabGraficos'); return false;">Gráficos</a>
+                    <a class="side-link staff-only" data-tab="tabRanking" href="admin.html" onclick="openAdminTab('tabRanking'); return false;">Ranking</a>
+                    <a class="side-link admin-only" data-tab="tabLogs" href="admin.html" onclick="openAdminTab('tabLogs'); return false;">Logs</a>
+                </div>
+            </aside>
 
-        <section id="tabInscricoes" class="tab-content active">
-          <div class="card">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Modalidade</label>
-                <select id="filtInscModalidade"></select>
-              </div>
-              <div class="form-group">
-                <label>Sexo</label>
-                <select id="filtInscSexo">
+            <main class="page admin-panel">
+                <section id="tabDashboard" class="tab-content active">
+                    <section class="hero">
+                        <h1 id="heroGreeting">Bem-vindo ao IFRO ESPORTES</h1>
+                        <p>Escolha modalidades, acompanhe resultados e mantenha seu perfil atualizado.</p>
+                        <div class="hero-actions">
+                            <a class="btn-primary user-only" href="modalidades.html">Fazer inscrição</a>
+                            <a class="btn-outline" href="modalidades.html">Ver modalidades</a>
+                            <a class="btn-outline admin-only" href="admin.html" onclick="openAdminTab('tabEventos'); return false;">Eventos</a>
+                            <a class="btn-outline staff-only" href="admin.html" onclick="openAdminTab('tabSorteio'); return false;">Sorteio</a>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="stat-box">
+                                <div class="stat-number" id="totalModalidades">0</div>
+                                <div class="stat-label">Modalidades</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number" id="totalInscritos">0</div>
+                                <div class="stat-label">Inscrições</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-number" id="totalNoticias">0</div>
+                                <div class="stat-label">Notícias</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="page-header admin-header">
+                        <div>
+                            <div class="page-title">Visão geral do admin</div>
+                            <div class="page-subtitle">Métricas e atividade do sistema em tempo real.</div>
+                        </div>
+                        <div class="admin-header-actions">
+                            <button class="btn-primary" type="button" onclick="openAdminTab('tabEventos')">Eventos</button>
+                            <button class="btn-outline" type="button" onclick="openAdminTab('tabSorteio')">Sorteio</button>
+                        </div>
+                    </section>
+
+                    <section class="admin-kpi-grid">
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Usuários</div>
+                            <div class="kpi-value" id="kpiUsuarios">--</div>
+                            <div class="kpi-meta">Total cadastrado</div>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Inscrições</div>
+                            <div class="kpi-value" id="kpiInscricoes">--</div>
+                            <div class="kpi-meta">Ativas no sistema</div>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Modalidades</div>
+                            <div class="kpi-value" id="kpiModalidades">--</div>
+                            <div class="kpi-meta">Disponíveis</div>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Comunicados</div>
+                            <div class="kpi-value" id="kpiComunicados">--</div>
+                            <div class="kpi-meta">Publicados</div>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <div class="card-header">
+                            <div class="card-title">Últimas inscrições</div>
+                            <small class="page-subtitle">Atualizações mais recentes</small>
+                        </div>
+                        <div id="latestInscriptions" class="admin-list"></div>
+                    </section>
+                    <section class="grid">
+                        <div class="card">
+                            <div class="page-header">
+                                <div>
+                                    <div class="page-title">Modalidades em destaque</div>
+                                    <div class="page-subtitle">Veja as atividades disponíveis.</div>
+                                </div>
+                                <a class="btn-link" href="modalidades.html">Ver todas</a>
+                            </div>
+                            <div id="modalidadesGrid" class="grid-cards"></div>
+                        </div>
+                        <div class="card">
+                            <div class="page-header">
+                                <div>
+                                <div class="page-title">Notícias recentes</div>
+                                    <div class="page-subtitle">Avisos e comunicados do evento.</div>
+                                </div>
+                                <a class="btn-link" href="noticias.html">Ver mural</a>
+                            </div>
+                            <div id="noticiasGrid" class="grid-cards"></div>
+                        </div>
+                    </section>
+
+                    <section class="page-header">
+                        <div>
+                            <div class="page-title">Painel Administrativo</div>
+                            <div class="page-subtitle" id="adminCrumb">Visão geral</div>
+                        </div>
+                    </section>
+
+                    <section class="form-row">
+                        <div class="card">
+                            <div class="stat-number" id="metricUsuarios">-</div>
+                            <div class="stat-label">Usuários</div>
+                        </div>
+                        <div class="card">
+                            <div class="stat-number" id="metricInscricoes">-</div>
+                            <div class="stat-label">Inscrições</div>
+                        </div>
+                        <div class="card">
+                            <div class="stat-number" id="metricModalidades">-</div>
+                            <div class="stat-label">Modalidades</div>
+                        </div>
+                        <div class="card">
+                            <div class="stat-number" id="metricComunicados">-</div>
+                            <div class="stat-label">Comunicados</div>
+                        </div>
+                    </section>
+                </section>
+
+                <section id="tabGraficos" class="tab-content">
+                    <section class="page-header admin-header">
+                        <div>
+                            <div class="page-title">Gráficos e métricas</div>
+                            <div class="page-subtitle">Acompanhe o desempenho do evento em tempo real.</div>
+                        </div>
+                    </section>
+
+                    <section class="admin-dashboard-grid">
+                        <div class="admin-col">
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <div class="card-title">Inscrições por modalidade</div>
+                                    <small class="page-subtitle">Top 8 modalidades</small>
+                                </div>
+                                <div id="chartModalidades" class="bar-chart"></div>
+                            </div>
+
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <div class="card-title">Inscrições na última semana</div>
+                                    <small class="page-subtitle">Últimos 7 dias</small>
+                                </div>
+                                <div id="chartSemanal" class="line-chart"></div>
+                                <div id="chartSemanalLabels" class="line-labels"></div>
+                            </div>
+                        </div>
+
+                        <div class="admin-col">
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <div class="card-title">Distribuição por sexo</div>
+                                    <small class="page-subtitle">Inscrições registradas</small>
+                                </div>
+                                <div class="donut-wrap">
+                                    <div id="chartSexo" class="donut"></div>
+                                    <div id="chartSexoLegend" class="legend"></div>
+                                </div>
+                            </div>
+
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <div class="card-title">Atividade recente</div>
+                                    <small class="page-subtitle">Últimas ações do sistema</small>
+                                </div>
+                                <div id="activityList" class="admin-list"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="page-header admin-header">
+                        <div>
+                            <div class="page-title">Dashboard Administrativo</div>
+                            <div class="page-subtitle">Visão geral das inscrições por turma, curso e série.</div>
+                        </div>
+                    </section>
+
+                    <section class="admin-dashboard-grid">
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <div class="card-title">Inscritos por sala (turma)</div>
+                                <small class="page-subtitle">Top 8 turmas</small>
+                            </div>
+                            <div id="chartTurmas" class="bar-chart"></div>
+                        </div>
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <div class="card-title">Inscritos por curso</div>
+                                <small class="page-subtitle">Top 8 cursos</small>
+                            </div>
+                            <div id="chartCursos" class="bar-chart"></div>
+                        </div>
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <div class="card-title">Inscritos por série</div>
+                                <small class="page-subtitle">Distribuição por ano</small>
+                            </div>
+                            <div id="chartSeries" class="bar-chart"></div>
+                        </div>
+                        <div class="card chart-card">
+                            <div class="card-header">
+                                <div class="card-title">Modalidades mais inscritas</div>
+                                <small class="page-subtitle">Top 5 modalidades</small>
+                            </div>
+                            <div id="chartModalidadesAdmin" class="bar-chart"></div>
+                            <div id="modalidadeTopResumo" class="page-subtitle"></div>
+                        </div>
+                    </section>
+                </section>
+
+                <!-- Abas movidas para o drawer -->
+
+                <section id="tabInscricoes" class="tab-content">
+                    <div class="card">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Modalidade</label>
+                                <select id="filtInscModalidade"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select id="filtInscSexo">
                   <option value="">Todos</option>
                   <option value="M">Masculino</option>
                   <option value="F">Feminino</option>
                 </select>
-              </div>
-              <div class="form-group">
-                <label>Turma</label>
-                <select id="filtInscTurma"></select>
-              </div>
-              <div class="form-group">
-                <label>Campus</label>
-                <select id="filtInscCampus"></select>
-              </div>
-              <div class="form-group" style="align-self:end;">
-                <button class="btn-primary" onclick="loadInscricoesAdmin()">Filtrar</button>
-              </div>
-            </div>
-          </div>
-          <div class="card table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Aluno</th>
-                  <th>Matricula</th>
-                  <th>Turma</th>
-                  <th>Modalidade</th>
-                  <th>Sexo</th>
-                  <th>Data</th>
-                  <th>Acoes</th>
-                </tr>
-              </thead>
-              <tbody id="inscBody"></tbody>
-            </table>
-          </div>
-        </section>
+                            </div>
+                            <div class="form-group">
+                                <label>Turma</label>
+                                <select id="filtInscTurma"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Campus</label>
+                                <select id="filtInscCampus"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Buscar</label>
+                                <input id="filtInscBusca" type="search" placeholder="Nome, matrícula, modalidade..." />
+                            </div>
+                            <div class="form-group" style="align-self:end;">
+                                <button class="btn-primary" onclick="loadInscricoesAdmin()">Filtrar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Aluno</th>
+                                    <th>Matrícula</th>
+                                    <th>Turma</th>
+                                    <th>Modalidade</th>
+                                    <th>Sexo</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inscBody"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-        <section id="tabUsuarios" class="tab-content">
-          <div class="card form-grid">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Buscar usuario</label>
-                <input id="searchUser" type="text" placeholder="Nome ou matricula" />
-              </div>
-              <div class="form-group" style="align-self:end;">
-                <button class="btn-outline" onclick="loadUsuariosAdmin()">Buscar</button>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Matricula</label>
-                <input id="newMatricula" oninput="onMatriculaInput()" />
-                <small id="matriculaStatus" class="page-subtitle"></small>
-              </div>
-              <div class="form-group">
-                <label>Nome</label>
-                <input id="newNome" />
-              </div>
-              <div class="form-group">
-                <label>Campus</label>
-                <input id="newCampus" />
-              </div>
-              <div class="form-group">
-                <label>Curso</label>
-                <input id="newCurso" />
-              </div>
-              <div class="form-group">
-                <label>Turma</label>
-                <input id="newTurma" />
-              </div>
-              <div class="form-group">
-                <label>Nascimento</label>
-                <input id="newNascimento" type="date" />
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input id="newEmail" type="email" />
-              </div>
-              <div class="form-group">
-                <label>Senha</label>
-                <input id="newSenha" type="password" />
-              </div>
-              <div class="form-group">
-                <label>Role</label>
-                <select id="newRole">
-                  <option value="ALUNO">Aluno</option>
-                  <option value="PROFESSOR">Professor</option>
-                  <option value="ADMIN">Admin</option>
+                <section id="tabUsuarios" class="tab-content">
+                    <div class="card form-grid">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Buscar usuário</label>
+                                <input id="searchUser" type="text" placeholder="Nome ou matricula" />
+                            </div>
+                            <div class="form-group" style="align-self:end;">
+                                <button class="btn-outline" onclick="loadUsuariosAdmin()">Buscar</button>
+                            </div>
+                        </div>
+                        <form id="newUserForm" onsubmit="return false;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Matrícula</label>
+                                    <input id="newMatricula" autocomplete="username" oninput="onMatriculaInput()" />
+                                    <small id="matriculaStatus" class="page-subtitle"></small>
+                                </div>
+                                <div class="form-group">
+                                    <label>Nome</label>
+                                    <input id="newNome" autocomplete="name" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Campus</label>
+                                    <input id="newCampus" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Curso</label>
+                                    <input id="newCurso" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Turma</label>
+                                    <input id="newTurma" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Nascimento</label>
+                                    <input id="newNascimento" type="date" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input id="newEmail" type="email" autocomplete="email" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Senha</label>
+                                    <input id="newSenha" type="password" autocomplete="new-password" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Role</label>
+                                    <select id="newRole">
+                    <option value="ALUNO">Aluno</option>
+                    <option value="PROFESSOR">Professor</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                                </div>
+                            </div>
+                            <button class="btn-primary" type="button" onclick="addUser(event)">Cadastrar usuário</button>
+                        </form>
+                    </div>
+                    <div class="card table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Matrícula</th>
+                                    <th>Turma</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tabNoticias" class="tab-content">
+                    <div class="card form-grid">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Titulo</label>
+                                <input id="newsTitulo" />
+                            </div>
+                            <div class="form-group">
+                                <label>Autor</label>
+                                <input id="newsAutor" />
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input id="newsData" type="date" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Descricao</label>
+                            <textarea id="newsDescricao" rows="4"></textarea>
+                        </div>
+                        <button class="btn-primary" onclick="saveNews(event)">Publicar noticia</button>
+                    </div>
+                    <div class="card table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Titulo</th>
+                                    <th>Autor</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="newsBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="tabModalidades" class="tab-content">
+                    <div class="admin-modalidades-layout">
+                        <div class="card form-grid">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nome da modalidade</label>
+                                    <input id="modNome" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Horário</label>
+                                    <input id="modHorario" />
+                                </div>
+                            </div>
+                            <button class="btn-primary" onclick="saveMod(event)">Salvar modalidade</button>
+                        </div>
+                        <div class="card table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Modalidade</th>
+                                        <th>Horário</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="tabSorteio" class="tab-content">
+                    <div class="card form-grid">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Evento</label>
+                                <select id="sorteioEvento">
+                  <option value="">Evento</option>
                 </select>
-              </div>
-            </div>
-            <button class="btn-primary" onclick="addUser(event)">Cadastrar usuario</button>
-          </div>
-          <div class="card table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Matricula</th>
-                  <th>Turma</th>
-                  <th>Acoes</th>
-                </tr>
-              </thead>
-              <tbody id="usersBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="tabNoticias" class="tab-content">
-          <div class="card form-grid">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Titulo</label>
-                <input id="newsTitulo" />
-              </div>
-              <div class="form-group">
-                <label>Autor</label>
-                <input id="newsAutor" />
-              </div>
-              <div class="form-group">
-                <label>Data</label>
-                <input id="newsData" type="date" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Descricao</label>
-              <textarea id="newsDescricao" rows="4"></textarea>
-            </div>
-            <button class="btn-primary" onclick="saveNews(event)">Publicar noticia</button>
-          </div>
-          <div class="card table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Titulo</th>
-                  <th>Autor</th>
-                  <th>Data</th>
-                  <th>Acoes</th>
-                </tr>
-              </thead>
-              <tbody id="newsBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="tabModalidades" class="tab-content">
-          <div class="card form-grid">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Nome da modalidade</label>
-                <input id="modNome" />
-              </div>
-              <div class="form-group">
-                <label>Horario</label>
-                <input id="modHorario" />
-              </div>
-            </div>
-            <button class="btn-primary" onclick="saveMod(event)">Salvar modalidade</button>
-          </div>
-          <div class="card table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Modalidade</th>
-                  <th>Horario</th>
-                  <th>Acoes</th>
-                </tr>
-              </thead>
-              <tbody id="modsBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <section id="tabSorteio" class="tab-content">
-          <div class="card form-grid">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Modalidade</label>
-                <select id="sorteioModalidade"></select>
-              </div>
-              <div class="form-group">
-                <label>Sexo</label>
-                <select id="sorteioSexo">
+                            </div>
+                            <div class="form-group">
+                                <label>Modalidade</label>
+                                <select id="sorteioModalidade"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select id="sorteioSexo">
                   <option value="M">Masculino</option>
                   <option value="F">Feminino</option>
                 </select>
-              </div>
-              <div class="form-group">
-                <label>Chave</label>
-                <select id="sorteioChave">
+                            </div>
+                            <div class="form-group">
+                                <label>Chave</label>
+                                <select id="sorteioChave">
                   <option value="">Todas</option>
                   <option value="CH A">CH A</option>
                   <option value="CH B">CH B</option>
                   <option value="CH C">CH C</option>
                   <option value="CH D">CH D</option>
                 </select>
-              </div>
-              <div class="form-group">
-                <label>Local</label>
-                <input id="sorteioLocal" value="Quadra A" />
-              </div>
-              <div class="form-group">
-                <label>Modo</label>
-                <select id="sorteioModo">
+                            </div>
+                            <div class="form-group">
+                                <label>Local</label>
+                                <input id="sorteioLocal" value="Quadra A" />
+                            </div>
+                            <div class="form-group">
+                                <label>Modo</label>
+                                <select id="sorteioModo">
                   <option value="GRUPOS">Grupos</option>
                   <option value="MATA_MATA">Mata-mata</option>
                 </select>
-              </div>
-              <div class="form-group">
-                <label>Hora inicio</label>
-                <input id="sorteioHoraInicio" type="time" value="07:30" />
-              </div>
-              <div class="form-group">
-                <label>Intervalo (min)</label>
-                <input id="sorteioIntervalo" type="number" value="10" />
-              </div>
-            </div>
-            <div class="form-row">
-              <button class="btn-primary" onclick="gerarTabelaSorteio()">Gerar tabela</button>
-              <button class="btn-outline" onclick="aplicarHorariosSorteio()">Aplicar horarios</button>
-              <button class="btn-outline" onclick="limparSorteio()">Limpar</button>
-            </div>
-          </div>
-          <div class="card table-responsive">
-            <div class="page-title" id="sorteioTituloModalidade">Tabela de sorteio</div>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Ordem</th>
-                  <th>Jogo</th>
-                  <th>Hora</th>
-                  <th>Chave</th>
-                  <th>Equipe A</th>
-                  <th>X</th>
-                  <th>Equipe B</th>
-                  <th>Status</th>
-                  <th>Sumula</th>
-                </tr>
-              </thead>
-              <tbody id="sorteioBody"></tbody>
-            </table>
-          </div>
-        </section>
+                            </div>
+                            <div class="form-group">
+                                <label>Hora inicio</label>
+                                <input id="sorteioHoraInicio" type="time" value="07:30" />
+                            </div>
+                            <div class="form-group">
+                                <label>Intervalo (min)</label>
+                                <input id="sorteioIntervalo" type="number" value="10" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <button class="btn-primary" onclick="gerarTabelaSorteio()">Gerar tabela</button>
+                            <button class="btn-outline" onclick="aplicarHorariosSorteio()">Aplicar horários</button>
+                            <button class="btn-outline" onclick="limparSorteio()">Limpar</button>
+                        </div>
+                    </div>
+                    <div class="card table-responsive">
+                        <div class="page-title" id="sorteioTituloModalidade">Tabela de sorteio</div>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Ordem</th>
+                                    <th>Jogo</th>
+                                    <th>Hora</th>
+                                    <th>Chave</th>
+                                    <th>Equipe A</th>
+                                    <th>X</th>
+                                    <th>Equipe B</th>
+                                    <th>Status</th>
+                                    <th>Súmula</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sorteioBody"></tbody>
+                        </table>
+                    </div>
+                </section>
 
-        <section id="tabBuscarAluno" class="tab-content">
-          <div class="card form-grid">
-            <div class="form-row">
-              <div class="form-group">
-                <label>Matricula</label>
-                <input id="buscaMatricula" />
-              </div>
-              <div class="form-group" style="align-self:end;">
-                <button class="btn-primary" onclick="buscarAluno()">Buscar</button>
-              </div>
+                <section id="tabBuscarAluno" class="tab-content">
+                    <div class="card form-grid">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Matrícula</label>
+                                <input id="buscaMatricula" />
+                            </div>
+                            <div class="form-group" style="align-self:end;">
+                                <button class="btn-primary" onclick="buscarAluno()">Buscar</button>
+                            </div>
+                        </div>
+                        <div id="buscaResultado"></div>
+                    </div>
+                </section>
+
+                <section id="tabEventos" class="tab-content">
+                    <section class="page-header admin-header">
+                        <div>
+                            <div class="page-title">Eventos Esportivos</div>
+                            <div class="page-subtitle">Gerencie os eventos ativos do JICS.</div>
+                        </div>
+                        <div class="admin-header-actions">
+                            <button class="btn-outline" type="button" onclick="loadEventosAdmin()">Atualizar lista</button>
+                            <button class="btn-primary" type="button" onclick="document.getElementById('evtNome')?.focus()">Novo evento</button>
+                        </div>
+                    </section>
+
+                    <section class="admin-kpi-grid">
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Total de eventos</div>
+                            <div class="stat-number" id="evtTotal">0</div>
+                            <small class="page-subtitle">Cadastrados no sistema</small>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Abertos</div>
+                            <div class="stat-number" id="evtAbertos">0</div>
+                            <small class="page-subtitle">Inscrições abertas</small>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Em andamento</div>
+                            <div class="stat-number" id="evtAndamento">0</div>
+                            <small class="page-subtitle">Eventos em curso</small>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Encerrados</div>
+                            <div class="stat-number" id="evtEncerrados">0</div>
+                            <small class="page-subtitle">Finalizados</small>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <div class="page-header">
+                            <div>
+                                <div class="page-title">Criar evento esportivo</div>
+                                <div class="page-subtitle">Preencha os dados conforme a tabela eventos.</div>
+                            </div>
+                        </div>
+                        <form id="evtForm" class="form-grid" onsubmit="return false;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>ID (auto)</label>
+                                    <input id="evtId" placeholder="Gerado automaticamente" disabled />
+                                </div>
+                                <div class="form-group">
+                                    <label>Organization ID</label>
+                                    <input id="evtOrgId" type="number" placeholder="organization_id" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Nome</label>
+                                    <input id="evtNome" maxlength="150" placeholder="Nome do evento" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Ano</label>
+                                    <input id="evtAno" type="number" min="2000" max="2100" placeholder="2026" />
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Data inicio</label>
+                                    <input id="evtInicio" type="date" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Data fim</label>
+                                    <input id="evtFim" type="date" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="evtStatus">
+                    <option value="ABERTO">ABERTO</option>
+                    <option value="EM_ANDAMENTO">EM_ANDAMENTO</option>
+                    <option value="ENCERRADO">ENCERRADO</option>
+                  </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Criado em</label>
+                                    <input id="evtCriadoEm" placeholder="Gerado automaticamente" disabled />
+                                </div>
+                            </div>
+                            <div class="form-row" style="align-items:center;">
+                                <button id="evtSubmit" class="btn-primary" type="submit">Salvar evento</button>
+                                <button id="evtReset" class="btn-outline" type="button">Limpar</button>
+                                <span id="evtMsg" class="page-subtitle"></span>
+                            </div>
+                        </form>
+                    </section>
+
+                    <section class="card">
+                        <div class="page-header">
+                            <div>
+                                <div class="page-title">Eventos cadastrados</div>
+                                <div class="page-subtitle">Eventos da sua organização</div>
+                            </div>
+                            <button class="btn-outline" onclick="loadEventosAdmin()">Atualizar</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Ano</th>
+                                        <th>Início</th>
+                                        <th>Fim</th>
+                                        <th>Status</th>
+                                        <th>Criado em</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="evtTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section id="tabOrganizadores" class="tab-content">
+                    <section class="page-header admin-header">
+                        <div>
+                            <div class="page-title">Organizadores</div>
+                            <div class="page-subtitle">Equipe que pode criar e gerenciar eventos.</div>
+                        </div>
+                        <div class="admin-header-actions">
+                            <button id="orgOpenCreate" class="btn-primary">Novo organizador</button>
+                        </div>
+                    </section>
+
+                    <section class="admin-kpi-grid">
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Total de organizadores</div>
+                            <div class="stat-number" id="orgTotal">0</div>
+                            <small class="page-subtitle">Cadastrados</small>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Ativos</div>
+                            <div class="stat-number" id="orgAtivos">0</div>
+                            <small class="page-subtitle">Com acesso liberado</small>
+                        </div>
+                        <div class="card kpi-card">
+                            <div class="kpi-label">Inativos</div>
+                            <div class="stat-number" id="orgInativos">0</div>
+                            <small class="page-subtitle">Bloqueados</small>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <div class="page-header">
+                            <div>
+                                <div class="page-title">Filtros</div>
+                                <div class="page-subtitle">Refine sua busca por nome, email ou status.</div>
+                            </div>
+                            <div class="admin-header-actions">
+                                <button id="orgApplyFilter" class="btn-outline">Aplicar filtros</button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Buscar nome/email</label>
+                                <input id="orgSearchInput" placeholder="Digite nome ou email" />
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select id="orgActiveFilter">
+                  <option value="">Todos</option>
+                  <option value="1">Ativos</option>
+                  <option value="0">Inativos</option>
+                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Email</th>
+                                        <th>Perfil</th>
+                                        <th>Ativo</th>
+                                        <th>Criado em</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="orgTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section id="tabRanking" class="tab-content">
+                    <section class="card">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Evento</label>
+                                <select id="rankEventoSelect">
+                  <option value="">Evento</option>
+                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Modalidade</label>
+                                <select id="rankModalidadeSelect">
+                  <option value="">Modalidade</option>
+                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select id="rankSexoSelect">
+                  <option value="">Sexo</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Feminino</option>
+                </select>
+                            </div>
+                            <div class="form-group" style="align-self:end;">
+                                <button id="rankBtnAtualizar" class="btn-primary">Atualizar</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <div id="rankTabs" class="admin-tabs"></div>
+                        <div id="rankTable"></div>
+                    </section>
+                </section>
+
+                <section id="tabSumula" class="tab-content">
+                    <section class="card form-grid">
+                        <div class="page-title">Atualizar placar rapido</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Jogo</label>
+                                <select id="sumulaJogo"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Placar A</label>
+                                <input id="sumulaPlacarA" type="number" />
+                            </div>
+                            <div class="form-group">
+                                <label>Placar B</label>
+                                <input id="sumulaPlacarB" type="number" />
+                            </div>
+                            <div class="form-group" style="align-self:end;">
+                                <button class="btn-primary" onclick="salvarSumulaResultado()">Salvar placar</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card form-grid">
+                        <div class="page-title">Formulario de sumula</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Modalidade</label>
+                                <select id="sumulaModalidade"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <input id="sumulaSexo" />
+                            </div>
+                            <div class="form-group">
+                                <label>Etapa</label>
+                                <input id="sumulaEtapa" />
+                            </div>
+                            <div class="form-group">
+                                <label>Fase</label>
+                                <input id="sumulaFase" />
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input id="sumulaData" type="date" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Equipe A</label>
+                                <input id="sumulaEquipeA" />
+                            </div>
+                            <div class="form-group">
+                                <label>Pontos A</label>
+                                <input id="sumulaPontosA" type="number" />
+                            </div>
+                            <div class="form-group">
+                                <label>Equipe B</label>
+                                <input id="sumulaEquipeB" />
+                            </div>
+                            <div class="form-group">
+                                <label>Pontos B</label>
+                                <input id="sumulaPontosB" type="number" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Arbitro</label>
+                                <input id="sumulaArbitro" />
+                            </div>
+                            <div class="form-group">
+                                <label>Cartoes</label>
+                                <input id="sumulaCartoes" />
+                            </div>
+                            <div class="form-group">
+                                <label>Mesarios</label>
+                                <input id="sumulaMesarios" />
+                            </div>
+                            <div class="form-group">
+                                <label>Horário início</label>
+                                <input id="sumulaHorarioInicio" type="time" />
+                            </div>
+                            <div class="form-group">
+                                <label>Horário fim</label>
+                                <input id="sumulaHorarioFim" type="time" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <button class="btn-primary" onclick="gerarSumulaPreview(false)">Gerar previa</button>
+                            <button class="btn-outline" onclick="gerarSumulaPreview(true)">Baixar HTML</button>
+                        </div>
+                    </section>
+                </section>
+
+                <section id="tabAdmins" class="tab-content">
+                    <section class="card">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Buscar nome/email</label>
+                                <input id="admSearchInput" placeholder="Digite nome ou email" />
+                            </div>
+                            <div class="form-group">
+                                <label>Role</label>
+                                <select id="admRoleFilter">
+                  <option value="">Todos</option>
+                  <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="STAFF">STAFF</option>
+                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select id="admActiveFilter">
+                  <option value="">Todos</option>
+                  <option value="1">Ativos</option>
+                  <option value="0">Inativos</option>
+                </select>
+                            </div>
+                            <div class="form-group" style="align-self:end;">
+                                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                    <button id="admApplyFilter" class="btn-primary">Aplicar</button>
+                                    <button id="admOpenCreate" class="btn-outline">Novo admin</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Ativo</th>
+                                        <th>Criado em</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </section>
+
+                <section id="tabLogs" class="tab-content">
+                    <section class="card">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>De</label>
+                                <input id="logsFromDate" type="date" />
+                            </div>
+                            <div class="form-group">
+                                <label>Ate</label>
+                                <input id="logsToDate" type="date" />
+                            </div>
+                            <div class="form-group">
+                                <label>Admin</label>
+                                <select id="logsAdminFilter">
+                  <option value="">Todos</option>
+                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Entidade</label>
+                                <input id="logsEntityFilter" placeholder="Entidade" />
+                            </div>
+                            <div class="form-group">
+                                <label>Buscar na ação</label>
+                                <input id="logsQueryFilter" placeholder="Ex: cadastro" />
+                            </div>
+                            <div class="form-group" style="align-self:end;">
+                                <button id="logsApplyFilter" class="btn-primary">Aplicar filtros</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="card">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Admin</th>
+                                        <th>Acao</th>
+                                        <th>Entidade</th>
+                                        <th>ID</th>
+                                        <th>IP</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logsTable"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="page-header" style="align-items:center;">
+                        <button id="logsPrev" class="btn-outline">Anterior</button>
+                        <span id="logsPageInfo" class="page-subtitle">Pagina 1</span>
+                        <button id="logsNext" class="btn-outline">Proximo</button>
+                    </section>
+                </section>
+            </main>
+        </div>
+
+        <div id="sideOverlay" class="overlay"></div>
+        <div id="drawerOverlay" class="overlay"></div>
+        <div id="userDrawer" class="user-drawer"></div>
+        <div id="globalModals"></div>
+
+        <div id="orgCreateModal" class="modal hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>Novo organizador</h3>
+                    <button class="icon-btn" type="button" onclick="orgCloseModal('orgCreateModal')"><span class="material-symbols-outlined">close</span></button>
+                </div>
+                <form id="orgCreateForm" onsubmit="return false;">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input id="orgCreateNome" autocomplete="name" />
+                            <small id="orgCreateNomeHelp" class="muted"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input id="orgCreateEmail" type="email" autocomplete="email" />
+                            <small id="orgCreateEmailHelp" class="muted"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Senha</label>
+                            <input id="orgCreateSenha" type="password" autocomplete="new-password" />
+                            <small id="orgCreateSenhaHelp" class="muted"></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-outline" type="button" onclick="orgCloseModal('orgCreateModal')">Cancelar</button>
+                        <button class="btn-primary" type="button" onclick="createOrganizadorAdmin()">Criar</button>
+                    </div>
+                </form>
             </div>
-            <div id="buscaResultado"></div>
-          </div>
-        </section>
-      </main>
+        </div>
+
+        <div id="orgEditModal" class="modal hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>Editar organizador</h3>
+                    <button class="icon-btn" type="button" onclick="orgCloseModal('orgEditModal')"><span class="material-symbols-outlined">close</span></button>
+                </div>
+                <form id="orgEditForm" onsubmit="return false;">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input id="orgEditNome" autocomplete="name" />
+                            <small id="orgEditNomeHelp" class="muted"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input id="orgEditEmail" disabled autocomplete="email" />
+                        </div>
+                        <div class="form-group">
+                            <label>Ativo</label>
+                            <select id="orgEditAtivo">
+                <option value="1">Ativo</option>
+                <option value="0">Inativo</option>
+              </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nova senha (opcional)</label>
+                            <div class="form-row" style="grid-template-columns: 1fr auto; align-items:center;">
+                                <input id="orgEditSenha" type="password" autocomplete="new-password" />
+                                <button class="btn-outline" type="button" onclick="orgResetTempPassword()">Resetar senha</button>
+                            </div>
+                            <small id="orgEditSenhaHelp" class="muted"></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-outline" type="button" onclick="orgCloseModal('orgEditModal')">Cancelar</button>
+                        <button class="btn-primary" type="button" onclick="saveEditOrganizadorAdmin()">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="admCreateModal" class="modal hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>Novo administrador</h3>
+                    <button class="icon-btn" type="button" onclick="admCloseModal('admCreateModal')"><span class="material-symbols-outlined">close</span></button>
+                </div>
+                <form id="admCreateForm" onsubmit="return false;">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input id="admCreateNome" autocomplete="name" />
+                            <small id="admCreateNomeHelp" class="muted"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input id="admCreateEmail" type="email" autocomplete="email" />
+                            <small id="admCreateEmailHelp" class="muted"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Senha</label>
+                            <input id="admCreateSenha" type="password" autocomplete="new-password" />
+                            <small id="admCreateSenhaHelp" class="muted"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select id="admCreateRole">
+                <option value="STAFF">STAFF</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+              </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-outline" type="button" onclick="admCloseModal('admCreateModal')">Cancelar</button>
+                        <button class="btn-primary" type="button" onclick="createAdminUser()">Criar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="admEditModal" class="modal hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>Editar administrador</h3>
+                    <button class="icon-btn" type="button" onclick="admCloseModal('admEditModal')"><span class="material-symbols-outlined">close</span></button>
+                </div>
+                <form id="admEditForm" onsubmit="return false;">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input id="admEditNome" autocomplete="name" />
+                            <small id="admEditNomeHelp" class="muted"></small>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input id="admEditEmail" disabled autocomplete="email" />
+                        </div>
+                        <div class="form-group">
+                            <label>Role</label>
+                            <select id="admEditRole">
+                <option value="STAFF">STAFF</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+              </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Ativo</label>
+                            <select id="admEditAtivo">
+                <option value="1">Ativo</option>
+                <option value="0">Inativo</option>
+              </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Nova senha (opcional)</label>
+                            <div class="form-row" style="grid-template-columns: 1fr auto; align-items:center;">
+                                <input id="admEditSenha" type="password" autocomplete="new-password" />
+                                <button class="btn-outline" type="button" onclick="admResetTempPassword()">Resetar senha</button>
+                            </div>
+                            <small id="admEditSenhaHelp" class="muted"></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-outline" type="button" onclick="admCloseModal('admEditModal')">Cancelar</button>
+                        <button class="btn-primary" type="button" onclick="saveEditAdminUser()">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <div id="sideOverlay" class="overlay"></div>
-    <div id="drawerOverlay" class="overlay"></div>
-    <div id="userDrawer" class="user-drawer"></div>
-    <div id="globalModals"></div>
-  </div>
+    <script src="js/jsdosistema.js"></script>
+    <script src="ui-kit.js"></script>
+    <script src="js/admin-analytics.js"></script>
+    <script src="js/admin-unified.js"></script>
 
-  <script src="js/jsdosistema.js"></script>
+    <script>
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value ?? '--';
+        }
+
+        function renderBarChart(targetId, labels, values) {
+            const target = document.getElementById(targetId);
+            if (!target) return;
+            if (!labels.length) {
+                target.innerHTML = '<p class="muted">Sem dados suficientes.</p>';
+                return;
+            }
+            const max = Math.max(...values, 1);
+            target.innerHTML = labels.map((label, idx) => {
+                const val = values[idx] || 0;
+                const pct = Math.round((val / max) * 100);
+                return `
+          <div class="bar-row">
+            <div>${label}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+            <div class="bar-value">${val}</div>
+          </div>
+        `;
+            }).join('');
+        }
+
+        function renderLineChart(targetId, labels, values) {
+            const target = document.getElementById(targetId);
+            if (!target) return;
+            const max = Math.max(...values, 1);
+            const w = 520;
+            const h = 180;
+            const pad = 24;
+            const step = (w - pad * 2) / (values.length - 1 || 1);
+            const points = values.map((v, i) => {
+                const x = pad + step * i;
+                const y = h - pad - (v / max) * (h - pad * 2);
+                return `${x},${y}`;
+            }).join(' ');
+
+            target.innerHTML = `
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="lineFill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="rgba(0,168,119,0.35)" />
+              <stop offset="100%" stop-color="rgba(0,168,119,0)" />
+            </linearGradient>
+          </defs>
+          <polyline fill="none" stroke="#00a877" stroke-width="3" points="${points}" />
+          <polygon fill="url(#lineFill)" points="${points} ${w - pad},${h - pad} ${pad},${h - pad}" />
+        </svg>
+      `;
+
+            const labelBox = document.getElementById('chartSemanalLabels');
+            if (labelBox) {
+                labelBox.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+            }
+        }
+
+        function renderDonut(targetId, legendId, data) {
+            const target = document.getElementById(targetId);
+            const legend = document.getElementById(legendId);
+            if (!target || !legend) return;
+            const total = data.reduce((sum, item) => sum + item.value, 0);
+            if (!total) {
+                target.style.background = 'conic-gradient(#334155 0 100%)';
+                legend.innerHTML = '<span class="muted">Sem inscrições.</span>';
+                return;
+            }
+            let start = 0;
+            const gradientParts = data.map(item => {
+                const pct = (item.value / total) * 100;
+                const end = start + pct;
+                const part = `${item.color} ${start}% ${end}%`;
+                start = end;
+                return part;
+            });
+            target.style.background = `conic-gradient(${gradientParts.join(',')})`;
+
+            legend.innerHTML = data.map(item => `
+        <div class="legend-item">
+          <span class="legend-swatch" style="background:${item.color}"></span>
+          <span>${item.label}: ${item.value}</span>
+        </div>
+      `).join('');
+        }
+
+        function parseDatePt(value) {
+            if (!value) return null;
+            const parts = String(value).split(' ');
+            const datePart = parts[0];
+            const timePart = parts[1] || '00:00';
+            const [dd, mm, yyyy] = datePart.split('/');
+            if (!dd || !mm || !yyyy) return null;
+            return new Date(`${yyyy}-${mm}-${dd}T${timePart}:00`);
+        }
+
+        function renderAdminList(targetId, items, emptyText) {
+            const target = document.getElementById(targetId);
+            if (!target) return;
+            if (!items || !items.length) {
+                target.innerHTML = `<p class="muted">${emptyText}</p>`;
+                return;
+            }
+            target.innerHTML = items.map(item => `
+        <div class="admin-list-item">
+          <div>
+            <strong>${item.title || item.message || 'Sem título'}</strong>
+            <small>${item.subtitle || item.type || ''}</small>
+          </div>
+          <small>${item.meta || item.createdAt || ''}</small>
+        </div>
+      `).join('');
+        }
+
+        async function loadAdminDashboard() {
+            const stats = await adminFetch('/dashboard/admin/stats', null);
+            if (stats) {
+                setText('kpiUsuarios', stats.alunos ?? stats.usuarios ?? 0);
+                setText('kpiInscricoes', stats.inscricoes ?? 0);
+                setText('kpiModalidades', stats.modalidades ?? 0);
+                setText('kpiComunicados', stats.comunicados ?? 0);
+            }
+
+            const chart = await adminFetch('/dashboard/admin/chart', {
+                labels: [],
+                values: []
+            });
+            renderBarChart('chartModalidades', chart.labels || [], chart.values || []);
+
+            const inscricoes = await adminFetch('/inscricoes/jics', []);
+            const hoje = new Date();
+            const dias = Array.from({
+                length: 7
+            }).map((_, idx) => {
+                const d = new Date(hoje);
+                d.setDate(hoje.getDate() - (6 - idx));
+                return d;
+            });
+            const labels = dias.map(d => d.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit'
+            }));
+            const valores = dias.map(d => {
+                const diaStr = d.toISOString().slice(0, 10);
+                return inscricoes.filter(i => {
+                    const parsed = parseDatePt(i.data);
+                    return parsed && parsed.toISOString().slice(0, 10) === diaStr;
+                }).length;
+            });
+            renderLineChart('chartSemanal', labels, valores);
+
+            const sexoCount = inscricoes.reduce((acc, i) => {
+                const s = String(i.sexo || '').toUpperCase();
+                acc[s] = (acc[s] || 0) + 1;
+                return acc;
+            }, {});
+            renderDonut('chartSexo', 'chartSexoLegend', [{
+                label: 'Masculino',
+                value: sexoCount.M || 0,
+                color: '#00a877'
+            }, {
+                label: 'Feminino',
+                value: sexoCount.F || 0,
+                color: '#38bdf8'
+            }, {
+                label: 'Outros',
+                value: sexoCount.O || 0,
+                color: '#f59e0b'
+            }].filter(i => i.value > 0 || i.label !== 'Outros'));
+
+            const activity = await adminFetch('/dashboard/admin/activity', []);
+            renderAdminList('activityList', activity, 'Nenhuma atividade recente.');
+
+            const latest = await adminFetch('/dashboard/admin/ultimas-inscricoes', []);
+            renderAdminList('latestInscriptions', latest, 'Sem inscrições recentes.');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadAdminDashboard);
+    </script>
 </body>
+
 </html>
+
 

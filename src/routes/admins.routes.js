@@ -16,10 +16,9 @@ router.use(requireAuth);
 router.use(requireOrg);
 
 router.get('/', requireRole(['ADMIN', 'SUPER_ADMIN']), listarAdmins);
-router.post('/', requireRole(['SUPER_ADMIN']), criarAdmin);
+router.post('/', requireRole(['SUPER_ADMIN', 'ADMIN']), criarAdmin);
 router.put('/:id', requireRole(['ADMIN', 'SUPER_ADMIN']), editarAdmin);
 router.patch('/:id/ativar', requireRole(['ADMIN', 'SUPER_ADMIN']), ativarAdmin);
 router.delete('/:id', requireRole(['SUPER_ADMIN']), removerAdmin);
 
 export default router;
-

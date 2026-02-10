@@ -1,647 +1,18 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JICS - Ative sua conta</title>
-  <link rel="icon" type="image/png" href="assets/ifro.png" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/light-override.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      color-scheme: light;
-    }
-
-    body[data-page="primeiro-acesso"] {
-      --pa-primary: #00a877;
-      --pa-dark: #0a5d54;
-      --pa-ink: #0b1f1a;
-      --pa-muted: #47665e;
-      --pa-surface: rgba(255, 255, 255, 0.88);
-      --pa-glass: rgba(255, 255, 255, 0.66);
-      --pa-border: rgba(10, 93, 84, 0.18);
-      --pa-shadow: 0 28px 60px rgba(8, 37, 28, 0.16);
-      margin: 0;
-      min-height: 100vh;
-      font-family: "Manrope", "Space Grotesk", system-ui, -apple-system, sans-serif;
-      color: var(--pa-ink);
-      background:
-        radial-gradient(1200px 600px at 12% -10%, rgba(0, 168, 119, 0.22), transparent 60%),
-        radial-gradient(900px 500px at 90% 0%, rgba(10, 93, 84, 0.16), transparent 65%),
-        linear-gradient(180deg, #f6fbf9 0%, #eef7f3 56%, #e7f2ed 100%);
-      position: relative;
-      overflow-x: hidden;
-    }
-
-    body[data-page="primeiro-acesso"]::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0, rgba(255, 255, 255, 0.04) 1px, transparent 1px, transparent 3px),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.02) 0, rgba(0, 0, 0, 0.02) 1px, transparent 1px, transparent 3px);
-      background-size: 3px 3px;
-      opacity: 0.16;
-      mix-blend-mode: soft-light;
-      pointer-events: none;
-      z-index: -1;
-    }
-
-    .pa-shell {
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: minmax(280px, 1.1fr) minmax(320px, 1fr);
-      gap: clamp(24px, 4vw, 64px);
-      padding: clamp(24px, 4vw, 64px);
-      align-items: center;
-    }
-
-    .pa-left {
-      display: grid;
-      gap: 22px;
-      align-content: center;
-    }
-
-    .pa-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .pa-logo {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      background: linear-gradient(140deg, var(--pa-primary), var(--pa-dark));
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      color: #ffffff;
-      letter-spacing: 0.4px;
-      box-shadow: 0 16px 30px rgba(0, 168, 119, 0.28);
-    }
-
-    .pa-brand strong {
-      display: block;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-    }
-
-    .pa-brand span {
-      color: var(--pa-muted);
-      font-size: 0.88rem;
-    }
-
-    .pa-title {
-      font-family: "Space Grotesk", "Manrope", sans-serif;
-      font-weight: 800;
-      font-size: clamp(32px, 3.2vw, 48px);
-      letter-spacing: -0.02em;
-      margin: 0;
-    }
-
-    .pa-subtitle {
-      margin: 0;
-      color: var(--pa-muted);
-      font-size: 1.05rem;
-      max-width: 520px;
-    }
-    .pa-steps {
-      display: grid;
-      gap: 14px;
-    }
-
-    .pa-step-card {
-      display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: 14px;
-      padding: 16px;
-      border-radius: 18px;
-      background: var(--pa-glass);
-      border: 1px solid rgba(0, 168, 119, 0.18);
-      box-shadow: 0 18px 36px rgba(10, 44, 34, 0.08);
-      backdrop-filter: blur(10px);
-    }
-
-    .pa-step-index {
-      width: 40px;
-      height: 40px;
-      border-radius: 14px;
-      background: rgba(0, 168, 119, 0.18);
-      color: var(--pa-dark);
-      font-weight: 700;
-      display: grid;
-      place-items: center;
-    }
-
-    .pa-step-card h3 {
-      margin: 0;
-      font-size: 1.02rem;
-      font-weight: 700;
-    }
-
-    .pa-step-card p {
-      margin: 4px 0 0;
-      color: #4b6a61;
-      font-size: 0.95rem;
-    }
-
-    .pa-tip {
-      display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: 12px;
-      padding: 16px;
-      border-radius: 18px;
-      border: 1px dashed rgba(0, 168, 119, 0.24);
-      background: rgba(255, 255, 255, 0.72);
-    }
-
-    .pa-tip-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 14px;
-      background: rgba(0, 168, 119, 0.15);
-      display: grid;
-      place-items: center;
-      color: var(--pa-dark);
-    }
-
-    .pa-tip strong {
-      display: block;
-      font-size: 0.95rem;
-      margin-bottom: 6px;
-    }
-
-    .pa-tip ul {
-      margin: 0;
-      padding-left: 18px;
-      display: grid;
-      gap: 6px;
-      color: #46645b;
-      font-size: 0.92rem;
-    }
-    .pa-card {
-      position: relative;
-      background: var(--pa-surface);
-      border-radius: 24px;
-      padding: 28px;
-      border: 1px solid var(--pa-border);
-      box-shadow: var(--pa-shadow);
-      display: grid;
-      gap: 18px;
-      align-content: start;
-      overflow: hidden;
-    }
-
-    .pa-card::before {
-      content: "";
-      position: absolute;
-      inset: 20% 15% auto 15%;
-      height: 180px;
-      background: radial-gradient(circle, rgba(0, 168, 119, 0.18), transparent 70%);
-      filter: blur(10px);
-      z-index: 0;
-    }
-
-    .pa-card > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    .pa-card-head {
-      display: grid;
-      gap: 6px;
-    }
-
-    .pa-kicker {
-      font-size: 0.72rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--pa-dark);
-      font-weight: 700;
-    }
-
-    .pa-card-title {
-      margin: 0;
-      font-size: 1.45rem;
-      font-weight: 700;
-    }
-
-    .pa-card-subtitle {
-      margin: 0;
-      color: var(--pa-muted);
-      font-size: 0.95rem;
-    }
-
-    .stepper {
-      position: relative;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 4px;
-    }
-
-    .stepper-bar {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      right: 14px;
-      height: 2px;
-      background: rgba(10, 93, 84, 0.1);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .stepper-progress {
-      display: block;
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--pa-primary), var(--pa-dark));
-      transition: width 0.25s ease;
-    }
-
-    .stepper-item {
-      display: grid;
-      gap: 6px;
-      justify-items: center;
-      text-align: center;
-      font-size: 0.82rem;
-      color: #6a8379;
-    }
-
-    .stepper-dot {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 1px solid rgba(0, 168, 119, 0.3);
-      background: #ffffff;
-      display: grid;
-      place-items: center;
-      transition: all 0.25s ease;
-      position: relative;
-    }
-
-    .stepper-dot::after {
-      content: "\2022";
-      font-size: 1.2rem;
-      color: #9bb7ad;
-      transition: all 0.25s ease;
-    }
-
-    .stepper-item.is-active {
-      color: var(--pa-dark);
-      font-weight: 600;
-    }
-
-    .stepper-item.is-active .stepper-dot {
-      border-color: var(--pa-primary);
-      box-shadow: 0 0 0 6px rgba(0, 168, 119, 0.12);
-    }
-
-    .stepper-item.is-active .stepper-dot::after {
-      content: "\2022";
-      color: var(--pa-primary);
-    }
-
-    .stepper-item.is-done .stepper-dot {
-      background: var(--pa-primary);
-      border-color: var(--pa-primary);
-    }
-
-    .stepper-item.is-done .stepper-dot::after {
-      content: "\2713";
-      color: #ffffff;
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-    .step-content {
-      display: grid;
-      gap: 14px;
-      opacity: 0;
-      transform: translateY(10px);
-      max-height: 0;
-      overflow: hidden;
-      pointer-events: none;
-      transition: opacity 0.22s ease, transform 0.22s ease, max-height 0.22s ease;
-    }
-
-    .step-content.is-active {
-      opacity: 1;
-      transform: translateY(0);
-      max-height: 1200px;
-      pointer-events: auto;
-    }
-
-    .field {
-      display: grid;
-      gap: 8px;
-    }
-
-    label {
-      font-size: 0.86rem;
-      font-weight: 600;
-      color: #3e5a52;
-    }
-
-    .field input {
-      border-radius: 14px;
-      border: 1px solid rgba(10, 93, 84, 0.2);
-      padding: 12px 14px;
-      font-size: 0.95rem;
-      background: #f7fbf9;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .field input:focus {
-      outline: none;
-      border-color: var(--pa-primary);
-      box-shadow: 0 0 0 4px rgba(0, 168, 119, 0.15);
-    }
-
-    .field.is-error input {
-      border-color: rgba(239, 68, 68, 0.7);
-      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
-    }
-
-    .field-hint {
-      min-height: 16px;
-      font-size: 0.78rem;
-      color: #a23c3c;
-    }
-
-    .btn {
-      border-radius: 14px;
-      padding: 12px 16px;
-      border: none;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--pa-primary), var(--pa-dark));
-      color: #ffffff;
-      box-shadow: 0 14px 30px rgba(0, 168, 119, 0.25);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.02);
-      box-shadow: 0 18px 34px rgba(0, 168, 119, 0.32);
-    }
-
-    .btn.is-loading {
-      pointer-events: none;
-      opacity: 0.8;
-    }
-
-    .btn-spinner {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.4);
-      border-top-color: #ffffff;
-      display: none;
-      animation: spin 0.8s linear infinite;
-    }
-
-    .btn.is-loading .btn-spinner {
-      display: inline-block;
-    }
-    .otp-grid {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .otp-input {
-      text-align: center;
-      font-size: 1.1rem;
-      font-weight: 700;
-      padding: 12px 0;
-      border-radius: 12px;
-      border: 1px solid rgba(10, 93, 84, 0.2);
-      background: #ffffff;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .otp-input:focus {
-      outline: none;
-      border-color: var(--pa-primary);
-      box-shadow: 0 0 0 4px rgba(0, 168, 119, 0.15);
-    }
-
-    .otp-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      font-size: 0.85rem;
-      color: #55746c;
-    }
-
-    .link-button {
-      background: transparent;
-      border: none;
-      color: var(--pa-dark);
-      font-weight: 600;
-      cursor: pointer;
-      padding: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .link-button.is-disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .strength {
-      display: grid;
-      gap: 8px;
-    }
-
-    .strength-bar {
-      height: 8px;
-      background: rgba(10, 93, 84, 0.1);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .strength-fill {
-      height: 100%;
-      width: 0%;
-      display: block;
-      background: #ef4444;
-      transition: width 0.2s ease, background 0.2s ease;
-    }
-
-    .strength-text {
-      font-size: 0.82rem;
-      color: #55746c;
-      font-weight: 600;
-    }
-
-    .rules {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 8px;
-      font-size: 0.86rem;
-      color: #4c6a61;
-    }
-
-    .rules li {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .rules li::before {
-      content: "\2022";
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: rgba(10, 93, 84, 0.12);
-      color: #6a8379;
-      display: grid;
-      place-items: center;
-      font-size: 0.8rem;
-      font-weight: 700;
-    }
-
-    .rules li.is-ok {
-      color: #0a6a57;
-    }
-
-    .rules li.is-ok::before {
-      content: "\2713";
-      background: rgba(0, 168, 119, 0.18);
-      color: var(--pa-dark);
-    }
-
-    .security-hint {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(0, 168, 119, 0.08);
-      color: #2f564c;
-      font-size: 0.85rem;
-      border: 1px solid rgba(0, 168, 119, 0.18);
-    }
-
-    .security-hint svg {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
-
-    .pa-card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: #637b72;
-    }
-
-    .pa-card-footer a {
-      color: var(--pa-dark);
-      font-weight: 600;
-      text-decoration: none;
-    }
-
-    .toast-root {
-      position: fixed;
-      right: 24px;
-      top: 24px;
-      display: grid;
-      gap: 12px;
-      z-index: 9999;
-      pointer-events: none;
-    }
-
-    .toast {
-      min-width: 240px;
-      max-width: 320px;
-      background: #ffffff;
-      border-radius: 14px;
-      border: 1px solid rgba(10, 93, 84, 0.15);
-      box-shadow: 0 16px 28px rgba(0, 0, 0, 0.12);
-      padding: 12px 14px;
-      display: grid;
-      gap: 4px;
-      opacity: 0;
-      transform: translateY(-8px);
-      animation: toast-in 0.25s ease forwards;
-      pointer-events: auto;
-    }
-
-    .toast.success { border-left: 4px solid var(--pa-primary); }
-    .toast.error { border-left: 4px solid #ef4444; }
-    .toast.info { border-left: 4px solid #38bdf8; }
-
-    .toast-title {
-      font-weight: 700;
-      font-size: 0.9rem;
-    }
-
-    .toast-message {
-      color: #5b746b;
-      font-size: 0.85rem;
-    }
-
-    @keyframes toast-in {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 980px) {
-      .pa-shell { grid-template-columns: 1fr; }
-      .pa-left { order: 2; }
-      .pa-card { order: 1; }
-    }
-
-    @media (max-width: 640px) {
-      .pa-card { padding: 22px; }
-      .pa-step-card { grid-template-columns: 1fr; }
-      .pa-step-index { width: 36px; height: 36px; }
-      .otp-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .pa-card-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-      }
-    }
-  </style>
+  <link rel="icon" type="image/png" href="/assets/ifro.png" />
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="/assets/success-feedback.css" />
+  <script defer src="/assets/success-feedback.js"></script>
 </head>
-<body data-theme="light" data-page="primeiro-acesso">
+<body class="auth-page" data-theme="light" data-page="primeiro-acesso">
   <main class="pa-shell">
     <section class="pa-left">
       <header class="pa-header">
@@ -653,28 +24,28 @@
       </header>
 
       <h1 class="pa-title">Ative sua conta</h1>
-      <p class="pa-subtitle">Crie sua senha e libere o acesso ao portal com seguranca.</p>
+      <p class="pa-subtitle">Crie sua senha e libere o acesso ao portal com segurança.</p>
 
       <div class="pa-steps">
         <article class="pa-step-card">
           <div class="pa-step-index">1</div>
           <div>
             <h3>Informe seus dados</h3>
-            <p>Matricula e email pessoal cadastrado.</p>
+            <p>Matrícula e email pessoal cadastrado.</p>
           </div>
         </article>
         <article class="pa-step-card">
           <div class="pa-step-index">2</div>
           <div>
-            <h3>Digite o codigo</h3>
-            <p>Receba um codigo de 6 digitos por email.</p>
+            <h3>Digite o código</h3>
+            <p>Receba um código de 6 dígitos por email.</p>
           </div>
         </article>
         <article class="pa-step-card">
           <div class="pa-step-index">3</div>
           <div>
             <h3>Crie uma nova senha</h3>
-            <p>Reforce a seguranca com uma senha forte.</p>
+            <p>Reforce a segurança com uma senha forte.</p>
           </div>
         </article>
       </div>
@@ -687,20 +58,20 @@
           </svg>
         </div>
         <div>
-          <strong>Dicas rapidas</strong>
+          <strong>Dicas rápidas</strong>
           <ul>
             <li>Confira a caixa de spam antes de solicitar novamente.</li>
-            <li>O codigo expira em 10 minutos.</li>
+            <li>O código expira em 10 minutos.</li>
             <li>Precisa de ajuda? Procure a equipe do seu campus.</li>
           </ul>
         </div>
       </div>
     </section>
-    <section class="pa-card" aria-label="Formulario de ativacao">
+    <section class="pa-card" aria-label="Formulário de ativação">
       <div class="pa-card-head">
-        <span class="pa-kicker">RECUPERACAO / ATIVACAO</span>
+        <span class="pa-kicker">RECUPERAÇÃO / ATIVAÇÃO</span>
         <h2 class="pa-card-title">Ative sua conta em 3 etapas</h2>
-        <p class="pa-card-subtitle">Siga o passo a passo e conclua sua ativacao.</p>
+        <p class="pa-card-subtitle">Siga o passo a passo e conclua sua ativação.</p>
       </div>
 
       <div class="stepper" role="list">
@@ -711,7 +82,7 @@
         </div>
         <div class="stepper-item" data-step="2" role="listitem">
           <div class="stepper-dot"></div>
-          <div>Codigo</div>
+          <div>Código</div>
         </div>
         <div class="stepper-item" data-step="3" role="listitem">
           <div class="stepper-dot"></div>
@@ -722,8 +93,8 @@
       <form id="activationForm" novalidate>
         <div class="step-content is-active" data-step="1">
           <div class="field" id="fieldMatricula">
-            <label for="paMatricula">Matricula</label>
-            <input id="paMatricula" name="matricula" inputmode="numeric" autocomplete="username" maxlength="13" placeholder="Digite sua matricula" />
+            <label for="paMatricula">Matrícula</label>
+            <input id="paMatricula" name="matricula" inputmode="numeric" autocomplete="username" maxlength="13" placeholder="Digite sua matrícula" />
             <small class="field-hint" data-hint-for="paMatricula"></small>
           </div>
           <div class="field" id="fieldEmail">
@@ -732,13 +103,13 @@
             <small class="field-hint" data-hint-for="paEmail"></small>
           </div>
           <button id="btnEnviarOtp" class="btn btn-primary" type="submit">
-            <span class="btn-label">Enviar codigo</span>
+            <span class="btn-label">Enviar código</span>
             <span class="btn-spinner" aria-hidden="true"></span>
           </button>
         </div>
         <div class="step-content" data-step="2">
           <div class="field" id="fieldOtp">
-            <label for="otp-0">Codigo de 6 digitos</label>
+            <label for="otp-0">Código de 6 dígitos</label>
             <div class="otp-grid" id="otpInputs">
               <input class="otp-input" id="otp-0" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
               <input class="otp-input" id="otp-1" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
@@ -752,12 +123,12 @@
           <div class="otp-meta">
             <span id="otpExpire">Expira em 10:00</span>
             <button id="btnResendOtp" type="button" class="link-button">
-              Reenviar codigo
+              Reenviar código
               <span id="resendTimer">60s</span>
             </button>
           </div>
           <button id="btnValidarOtp" class="btn btn-primary" type="submit">
-            <span class="btn-label">Verificar codigo</span>
+            <span class="btn-label">Verificar código</span>
             <span class="btn-spinner" aria-hidden="true"></span>
           </button>
         </div>
@@ -775,14 +146,14 @@
 
           <div class="strength">
             <div class="strength-bar"><span id="strengthFill" class="strength-fill"></span></div>
-            <div id="strengthText" class="strength-text">Forca: fraca</div>
+            <div id="strengthText" class="strength-text">Força: fraca</div>
           </div>
 
           <ul class="rules" id="passwordRules">
-            <li data-rule="length">minimo 8 caracteres</li>
-            <li data-rule="upper">pelo menos 1 letra maiuscula</li>
-            <li data-rule="number">pelo menos 1 numero</li>
-            <li data-rule="symbol">pelo menos 1 simbolo</li>
+            <li data-rule="length">mínimo 8 caracteres</li>
+            <li data-rule="upper">pelo menos 1 letra maiúscula</li>
+            <li data-rule="number">pelo menos 1 número</li>
+            <li data-rule="symbol">pelo menos 1 símbolo</li>
             <li data-rule="match">senhas conferem</li>
           </ul>
 
@@ -791,7 +162,7 @@
               <path d="M12 3l7 4v5c0 5-3 8-7 9-4-1-7-4-7-9V7l7-4z" />
               <path d="M9.5 12.5l1.8 1.8 3.2-3.2" />
             </svg>
-            <span>Seus dados sao protegidos e criptografados.</span>
+            <span>Seus dados são protegidos e criptografados.</span>
           </div>
 
           <button id="btnSalvar" class="btn btn-primary" type="submit" disabled>
@@ -834,6 +205,10 @@
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     function showToast({ type = 'info', title, message }) {
+      if (type === 'success' && window.SuccessFeedback && typeof window.SuccessFeedback.show === 'function') {
+        window.SuccessFeedback.show({ title: title || 'Concluído!', message: message || '' });
+        return;
+      }
       const root = document.getElementById('toastRoot');
       if (!root) return;
       const toast = document.createElement('div');
@@ -947,8 +322,8 @@
         remaining -= 1;
         if (remaining <= 0) {
           clearInterval(expireInterval);
-          otpExpire.textContent = 'Codigo expirado';
-          showToast({ type: 'error', title: 'Codigo expirado', message: 'Solicite um novo codigo para continuar.' });
+          otpExpire.textContent = 'Código expirado';
+          showToast({ type: 'error', title: 'Código expirado', message: 'Solicite um novo código para continuar.' });
           return;
         }
         update();
@@ -1006,7 +381,7 @@
       const percent = Math.round((score / 4) * 100);
       strengthFill.style.width = `${percent}%`;
       strengthFill.style.background = score >= 3 ? '#16a34a' : score >= 2 ? '#f59e0b' : '#ef4444';
-      strengthText.textContent = `Forca: ${score >= 3 ? 'forte' : score >= 2 ? 'ok' : 'fraca'}`;
+      strengthText.textContent = `Força: ${score >= 3 ? 'forte' : score >= 2 ? 'ok' : 'fraca'}`;
 
       const isValid = score === 4 && rules.match;
       document.getElementById('btnSalvar').disabled = !isValid;
@@ -1019,8 +394,8 @@
     async function handleSendOtp() {
       const matricula = matriculaInput.value.trim();
       const email = emailInput.value.trim();
-      setFieldError(matriculaInput, matricula ? '' : 'Matricula obrigatoria.');
-      setFieldError(emailInput, EMAIL_REGEX.test(email) ? '' : 'Email invalido.');
+      setFieldError(matriculaInput, matricula ? '' : 'Matrícula obrigatória.');
+      setFieldError(emailInput, EMAIL_REGEX.test(email) ? '' : 'Email inválido.');
       if (!matricula || !EMAIL_REGEX.test(email)) return;
 
       try {
@@ -1032,7 +407,7 @@
 
         localStorage.setItem('pa_matricula', matricula);
         localStorage.setItem('pa_email', email);
-        showToast({ type: 'success', title: 'Codigo enviado', message: 'Verifique seu email.' });
+        showToast({ type: 'success', title: 'Código enviado', message: 'Verifique seu email.' });
         setStep(2);
         startResendCooldown(60);
         startExpireCountdown(10);
@@ -1044,7 +419,7 @@
 
     async function handleValidateOtp() {
       const otp = getOtpValue();
-      setOtpError(otp.length === 6 ? '' : 'Informe o codigo completo.');
+      setOtpError(otp.length === 6 ? '' : 'Informe o código completo.');
       if (otp.length !== 6) return;
 
       try {
@@ -1056,12 +431,12 @@
         }, document.getElementById('btnValidarOtp'), 'Verificando...');
 
         localStorage.setItem('pa_reset_token', data.reset_token || data.resetToken || '');
-        showToast({ type: 'success', title: 'Codigo validado', message: 'Crie sua nova senha.' });
+        showToast({ type: 'success', title: 'Código validado', message: 'Crie sua nova senha.' });
         setStep(3);
         updatePasswordState();
         senhaInput.focus();
       } catch (err) {
-        showToast({ type: 'error', title: 'Erro', message: err.message || 'Codigo invalido ou expirado.' });
+        showToast({ type: 'error', title: 'Erro', message: err.message || 'Código inválido ou expirado.' });
       }
     }
 
@@ -1076,7 +451,7 @@
       const senha = senhaInput.value;
 
       if (!matricula || !resetToken) {
-        showToast({ type: 'error', title: 'Sessao expirada', message: 'Reinicie o processo.' });
+        showToast({ type: 'error', title: 'Sessão expirada', message: 'Reinicie o processo.' });
         setStep(1);
         return;
       }
@@ -1127,3 +502,7 @@
   </script>
 </body>
 </html>
+
+
+
+

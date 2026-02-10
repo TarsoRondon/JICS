@@ -1,6 +1,10 @@
-﻿function toast(message, type = 'ok') {
+function toast(message, type = 'ok') {
   if (typeof window !== 'undefined') {
     window.toast = window.toast || toast;
+  }
+  if ((type === 'ok' || type === 'success') && window.SuccessFeedback && typeof window.SuccessFeedback.show === 'function') {
+    window.SuccessFeedback.show({ title: 'Concluido!', message });
+    return;
   }
   const el = document.createElement('div');
   el.className = 'toast';
@@ -17,4 +21,5 @@
 if (typeof window !== 'undefined') {
   window.toast = window.toast || toast;
 }
+
 

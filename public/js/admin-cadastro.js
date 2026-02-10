@@ -9,6 +9,16 @@
   const senha = document.getElementById('senha');
   const role = document.getElementById('role');
   const criadoPor = document.getElementById('criadoPor');
+  const formMsg = document.getElementById('adminFormMsg');
+
+  function setFormMessage(text, type = 'error') {
+    if (!formMsg) return;
+    formMsg.textContent = text || '';
+    formMsg.classList.remove('success', 'error', 'show');
+    if (text) {
+      formMsg.classList.add('show', type === 'success' ? 'success' : 'error');
+    }
+  }
 
   function setError(input, msg) {
     const field = input.closest('.field');
@@ -24,17 +34,32 @@
     if (hint) hint.textContent = '';
   }
 
+  function bindClearOnInput(input) {
+    if (!input) return;
+    input.addEventListener('input', () => {
+      clearError(input);
+      setFormMessage('');
+    });
+  }
+
+  bindClearOnInput(matricula);
+  bindClearOnInput(senha);
+  bindClearOnInput(criadoPor);
+
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    setFormMessage('');
     clearError(matricula);
     clearError(senha);
 
     if (!matricula.value.trim()) {
       setError(matricula, 'Matrícula obrigatória.');
+      setFormMessage('Preencha os campos obrigatórios.');
       return;
     }
     if (!senha.value.trim()) {
       setError(senha, 'Senha obrigatória.');
+      setFormMessage('Preencha os campos obrigatórios.');
       return;
     }
 
@@ -45,6 +70,7 @@
       const res = await fetch('/admin/cadastrar-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           matricula: matricula.value.trim(),
           senha: senha.value,
@@ -53,13 +79,16 @@
         })
       });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
       if (!res.ok || data.sucesso === false) {
         throw new Error(data.mensagem || 'Erro ao cadastrar admin.');
       }
-      window.toast?.('Admin cadastrado com sucesso!', 'ok');
+      setFormMessage('Admin cadastrado com sucesso.', 'success');
       form.reset();
     } catch (err) {
-      window.toast?.(err.message, 'err');
+      setFormMessage(err.message || 'Não foi possível cadastrar.', 'error');
     } finally {
       btn.classList.remove('loading');
       btn.disabled = false;

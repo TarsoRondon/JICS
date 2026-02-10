@@ -34,6 +34,10 @@
   }
 
   function showToast({ type = 'info', title, message }) {
+    if ((type === 'success' || type === 'info') && window.SuccessFeedback && typeof window.SuccessFeedback.show === 'function') {
+      window.SuccessFeedback.show({ title: title || 'Concluido!', message: message || '' });
+      return;
+    }
     createToastStack();
     const stack = document.getElementById('toast-stack');
     const toast = document.createElement('div');

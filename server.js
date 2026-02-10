@@ -14,11 +14,20 @@ import logsRoutes from './src/routes/logs.routes.js';
 import sorteioRoutes from './src/routes/sorteio.routes.js';
 import jogosRoutes from './src/routes/jogos.routes.js';
 import rankingRoutes from './src/routes/ranking.routes.js';
+import eventosRoutes from './src/routes/eventos.routes.js';
+import organizationsRoutes from './src/routes/organizations.routes.js';
 import publicRoutes from './src/routes/public.routes.js';
 import govRoutes from './src/routes/gov.routes.js';
+import recoveryRoutes from './src/routes/recovery.routes.js';
+import smsRoutes from './src/routes/sms.routes.js';
+import twilioStatusRoutes from './src/routes/twilioStatus.routes.js';
+import { attachUserSession, setUserSessionCookie } from './src/middlewares/userSession.js';
+import { createUserSession } from './src/services/userSession.service.js';
+import { signAdminToken, setAuthCookie } from './src/utils/jwt.js';
 
 const app = express();
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(
+    import.meta.url);
 const __dirname = path.dirname(__filename);
 const httpServer = http.createServer(app);
 const io = new SocketIOServer(httpServer, {
@@ -32,11 +41,18 @@ io.on('connection', (socket) => {
     });
 });
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(attachUserSession);
 app.use(express.static('public'));
 app.use('/auth', authRoutes);
+app.use('/auth', recoveryRoutes);
+app.use('/', smsRoutes);
+app.use('/api', twilioStatusRoutes);
 app.use('/admins', adminsRoutes);
 app.use('/logs', logsRoutes);
+app.use('/eventos', eventosRoutes);
+app.use('/organizations', organizationsRoutes);
 app.use('/sorteio', sorteioRoutes);
 app.use('/jogos', jogosRoutes);
 app.use('/ranking', rankingRoutes);
@@ -44,10 +60,10 @@ app.use('/public', publicRoutes);
 app.use('/auth/govbr', govRoutes);
 
 app.get('/', (_req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('/login.html', (_req, res) => {
+app.get('index.html', (_req, res) => {
     res.redirect('/');
 });
 
@@ -68,6 +84,87 @@ async function ensureAlunosRoleColumn() {
     }
 }
 
+async function ensureAdminsSchema() {
+    const conexao = await conectar();
+    try {
+        await conexao.query(`
+            CREATE TABLE IF NOT EXISTS admins (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              organization_id INT NULL,
+              matricula VARCHAR(20) NOT NULL,
+              nome VARCHAR(120) NULL,
+              email VARCHAR(190) NULL,
+              senha_hash VARCHAR(255) NOT NULL,
+              role VARCHAR(20) NOT NULL DEFAULT 'ADMIN',
+              ativo TINYINT(1) NOT NULL DEFAULT 1,
+              ultimo_login DATETIME NULL,
+              criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              criado_por VARCHAR(20) NULL,
+              UNIQUE KEY uq_admins_matricula (matricula)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+
+        await conexao.query(`
+            CREATE TABLE IF NOT EXISTS organizations (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              nome VARCHAR(120) NOT NULL,
+              sigla VARCHAR(20) NOT NULL,
+              criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              UNIQUE KEY uq_organizations_sigla (sigla)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+
+        let orgId = null;
+        const [orgRows] = await conexao.query('SELECT id FROM organizations ORDER BY id LIMIT 1');
+        if (orgRows.length === 0) {
+            const [orgRes] = await conexao.query(
+                'INSERT INTO organizations (nome, sigla) VALUES (?, ?)',
+                ['IFRO', 'IFRO']
+            );
+            orgId = orgRes.insertId;
+        } else {
+            orgId = orgRows[0].id;
+        }
+
+        const [cols] = await conexao.query('SHOW COLUMNS FROM admins');
+        const colSet = new Set(cols.map(c => c.Field));
+
+        if (!colSet.has('id')) {
+            await conexao.query('ALTER TABLE admins ADD COLUMN id INT NOT NULL AUTO_INCREMENT UNIQUE');
+        }
+        if (!colSet.has('organization_id')) {
+            await conexao.query('ALTER TABLE admins ADD COLUMN organization_id INT NULL');
+        }
+        if (!colSet.has('nome')) {
+            await conexao.query('ALTER TABLE admins ADD COLUMN nome VARCHAR(120) NULL');
+        }
+        if (!colSet.has('email')) {
+            await conexao.query('ALTER TABLE admins ADD COLUMN email VARCHAR(190) NULL');
+        }
+        if (!colSet.has('ativo')) {
+            await conexao.query('ALTER TABLE admins ADD COLUMN ativo TINYINT(1) NOT NULL DEFAULT 1');
+        }
+
+        if (orgId) {
+            await conexao.query(
+                'UPDATE admins SET organization_id = ? WHERE organization_id IS NULL',
+                [orgId]
+            );
+        }
+        await conexao.query(
+            "UPDATE admins SET nome = COALESCE(nome, matricula) WHERE nome IS NULL OR nome = ''"
+        );
+        await conexao.query(
+            "UPDATE admins SET email = COALESCE(email, CONCAT(matricula, '@ifro.local')) WHERE email IS NULL OR email = ''"
+        );
+        await conexao.query(
+            "UPDATE admins SET role = 'STAFF' WHERE role NOT IN ('SUPER_ADMIN','ADMIN','STAFF')"
+        );
+    } finally {
+        await conexao.end();
+    }
+}
+
 function getCursoCodigo(descricao) {
     const cursosCodigo = {
         'Técnico em Informática Integrado ao Ensino Médio': 606,
@@ -82,8 +179,7 @@ async function logAudit(userId, entidade, entidadeId, acao, payload = null) {
     try {
         const conexao = await conectar();
         await conexao.query(
-            'INSERT INTO audit_logs (user_id, entidade, entidade_id, acao, payload) VALUES (?,?,?,?,?)',
-            [userId || null, entidade, entidadeId || null, acao, payload ? JSON.stringify(payload) : null]
+            'INSERT INTO audit_logs (user_id, entidade, entidade_id, acao, payload) VALUES (?,?,?,?,?)', [userId || null, entidade, entidadeId || null, acao, payload ? JSON.stringify(payload) : null]
         );
         await conexao.end();
     } catch (err) {
@@ -91,21 +187,24 @@ async function logAudit(userId, entidade, entidadeId, acao, payload = null) {
     }
 }
 
-app.post('/login', async (req, res) => {
+app.post('/login', async(req, res) => {
     const { usuario, senha } = req.body;
 
     try {
         const conexao = await conectar();
         // 1) Admin login (tabela admins)
         const [adminRows] = await conexao.query(
-            `SELECT matricula, senha_hash, role, ultimo_login, criado_por
+            `SELECT id, organization_id, matricula, nome, email, senha_hash, role, ativo, ultimo_login, criado_por
              FROM admins
              WHERE matricula = ?
-             LIMIT 1`,
-            [usuario]
+             LIMIT 1`, [usuario]
         );
         if (adminRows.length > 0) {
             const admin = adminRows[0];
+            if (admin.ativo === 0) {
+                await conexao.end();
+                return res.json({ sucesso: false, motivo: 'inativo' });
+            }
             const senhaPlain = String(senha || '');
             let ok = await bcrypt.compare(senhaPlain, admin.senha_hash || '');
             // fallback: admins antigos com SHA2(256) em hex
@@ -122,19 +221,33 @@ app.post('/login', async (req, res) => {
                 return res.json({ sucesso: false, motivo: 'senha' });
             }
             await conexao.query(
-                'UPDATE admins SET ultimo_login = NOW() WHERE matricula = ?',
-                [admin.matricula]
+                'UPDATE admins SET ultimo_login = NOW() WHERE matricula = ?', [admin.matricula]
             );
             await conexao.end();
-            return res.json({ sucesso: true, user: { matricula: admin.matricula, role: admin.role } });
+            const token = signAdminToken({
+                id: admin.id,
+                organization_id: admin.organization_id,
+                role: admin.role,
+                nome: admin.nome,
+                email: admin.email
+            });
+            setAuthCookie(res, token);
+            return res.json({
+                sucesso: true,
+                user: {
+                    matricula: admin.matricula,
+                    nome: admin.nome,
+                    role: admin.role,
+                    email: admin.email
+                }
+            });
         }
 
         const [found] = await conexao.query(
             `SELECT id, matricula, nome, campus, turma, email_academico, email_pessoal,
                     descricao_curso, data_nascimento, telefone, sexo, role
              FROM alunos
-             WHERE matricula = ?`,
-            [usuario]
+             WHERE matricula = ?`, [usuario]
         );
 
         if (found.length === 0) {
@@ -143,8 +256,7 @@ app.post('/login', async (req, res) => {
         }
 
         const [valid] = await conexao.query(
-            `SELECT 1 FROM alunos WHERE matricula = ? AND senha = SHA2(?, 256)`,
-            [usuario, senha]
+            `SELECT 1 FROM alunos WHERE matricula = ? AND senha = SHA2(?, 256)`, [usuario, senha]
         );
 
         if (valid.length === 0) {
@@ -157,6 +269,13 @@ app.post('/login', async (req, res) => {
             user.role = user.matricula === 'ADMIN' ? 'ADMIN' : 'ALUNO';
         }
 
+        try {
+            const sessionId = createUserSession({ matricula: user.matricula, role: user.role, id: user.id });
+            setUserSessionCookie(res, sessionId);
+        } catch (_) {
+            // evita quebrar login se session falhar
+        }
+
         await conexao.end();
         res.json({ sucesso: true, user });
     } catch (err) {
@@ -165,14 +284,14 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.post('/admin/cadastrar-admin', async (req, res) => {
+app.post('/admin/cadastrar-admin', async(req, res) => {
     const { matricula, senha, role, criado_por, criado_por_matricula } = req.body || {};
     if (!matricula || !senha) {
         return res.status(400).json({ sucesso: false, mensagem: 'Dados inválidos' });
     }
-    const roleValue = ['SUPER_ADMIN', 'ADMIN'].includes(String(role || '').toUpperCase())
-        ? String(role).toUpperCase()
-        : 'ADMIN';
+    const roleValue = ['SUPER_ADMIN', 'ADMIN'].includes(String(role || '').toUpperCase()) ?
+        String(role).toUpperCase() :
+        'ADMIN';
     try {
         const conexao = await conectar();
         const [exists] = await conexao.query('SELECT matricula FROM admins WHERE matricula = ?', [matricula]);
@@ -187,8 +306,7 @@ app.post('/admin/cadastrar-admin', async (req, res) => {
         const hash = await bcrypt.hash(String(senha), 10);
         await conexao.query(
             `INSERT INTO admins (matricula, senha_hash, role, criado_por)
-             VALUES (?, ?, ?, ?)`,
-            [matricula, hash, roleValue, createdBy]
+             VALUES (?, ?, ?, ?)`, [matricula, hash, roleValue, createdBy]
         );
         await conexao.end();
         res.json({ sucesso: true });
@@ -198,7 +316,7 @@ app.post('/admin/cadastrar-admin', async (req, res) => {
     }
 });
 
-app.post('/buscar-aluno', async (req, res) => {
+app.post('/buscar-aluno', async(req, res) => {
     const { matricula } = req.body;
 
     try {
@@ -218,7 +336,7 @@ app.post('/buscar-aluno', async (req, res) => {
     }
 });
 
-app.post('/admin/buscar-aluno', async (req, res) => {
+app.post('/admin/buscar-aluno', async(req, res) => {
     const { nome, data_nascimento } = req.body;
 
     if (!nome || !data_nascimento) {
@@ -236,8 +354,7 @@ app.post('/admin/buscar-aluno', async (req, res) => {
                  data_nascimento = ?
                  OR DATE(data_nascimento) = ?
                  OR STR_TO_DATE(data_nascimento, '%d/%m/%Y') = ?
-               )`,
-            [`%${nome}%`, data, data, data]
+               )`, [`%${nome}%`, data, data, data]
         );
         await conexao.end();
         res.json(rows);
@@ -247,14 +364,24 @@ app.post('/admin/buscar-aluno', async (req, res) => {
     }
 });
 
-app.get('/admin/metrics', async (req, res) => {
+app.get('/admin/metrics', async(req, res) => {
     try {
         const conexao = await conectar();
-        const [[{ total: alunos }]] = await conexao.query('SELECT COUNT(*) AS total FROM alunos');
-        const [[{ total: inscricoes }]] = await conexao.query('SELECT COUNT(*) AS total FROM inscricoes');
-        const [[{ total: modalidades }]] = await conexao.query('SELECT COUNT(*) AS total FROM modalidades');
-        const [[{ total: noticias }]] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
-        const [[{ total: jogos }]] = await conexao.query('SELECT COUNT(*) AS total FROM jogos');
+        const [
+            [{ total: alunos }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM alunos');
+        const [
+            [{ total: inscricoes }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM inscricoes');
+        const [
+            [{ total: modalidades }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM modalidades');
+        const [
+            [{ total: noticias }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
+        const [
+            [{ total: jogos }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM jogos');
         await conexao.end();
         res.json({ alunos, inscricoes, modalidades, noticias, jogos });
     } catch (erro) {
@@ -263,7 +390,7 @@ app.get('/admin/metrics', async (req, res) => {
     }
 });
 
-app.get('/admin/aluno/:matricula', async (req, res) => {
+app.get('/admin/aluno/:matricula', async(req, res) => {
     const { matricula } = req.params;
     if (!matricula) return res.status(400).json({ erro: 'Matrícula inválida' });
     try {
@@ -271,8 +398,7 @@ app.get('/admin/aluno/:matricula', async (req, res) => {
         const [rows] = await conexao.query(
             `SELECT id, matricula, nome, campus, turma, email_academico, email_pessoal,
                     descricao_curso, data_nascimento, telefone, sexo, role
-             FROM alunos WHERE matricula = ?`,
-            [matricula]
+             FROM alunos WHERE matricula = ?`, [matricula]
         );
         await conexao.end();
         if (rows.length === 0) return res.status(404).json({ erro: 'Aluno não encontrado' });
@@ -283,7 +409,7 @@ app.get('/admin/aluno/:matricula', async (req, res) => {
     }
 });
 
-app.put('/admin/aluno/:matricula', async (req, res) => {
+app.put('/admin/aluno/:matricula', async(req, res) => {
     const { matricula } = req.params;
     const {
         nome,
@@ -301,24 +427,51 @@ app.put('/admin/aluno/:matricula', async (req, res) => {
     const updates = [];
     const params = [];
 
-    if (nome !== undefined) { updates.push('nome = ?'); params.push(nome); }
-    if (campus !== undefined) { updates.push('campus = ?'); params.push(campus); }
+    if (nome !== undefined) {
+        updates.push('nome = ?');
+        params.push(nome);
+    }
+    if (campus !== undefined) {
+        updates.push('campus = ?');
+        params.push(campus);
+    }
     if (descricao_curso !== undefined) {
         updates.push('descricao_curso = ?');
         params.push(descricao_curso);
         const codigo = getCursoCodigo(descricao_curso);
-        if (codigo) { updates.push('codigo_curso = ?'); params.push(codigo); }
+        if (codigo) {
+            updates.push('codigo_curso = ?');
+            params.push(codigo);
+        }
     }
-    if (turma !== undefined) { updates.push('turma = ?'); params.push(turma); }
-    if (data_nascimento !== undefined) { updates.push('data_nascimento = ?'); params.push(data_nascimento); }
-    if (email_academico !== undefined) { updates.push('email_academico = ?'); params.push(email_academico); }
-    if (email_pessoal !== undefined) { updates.push('email_pessoal = ?'); params.push(email_pessoal); }
-    if (telefone !== undefined) { updates.push('telefone = ?'); params.push(telefone); }
-    if (sexo !== undefined) { updates.push('sexo = ?'); params.push(sexo); }
+    if (turma !== undefined) {
+        updates.push('turma = ?');
+        params.push(turma);
+    }
+    if (data_nascimento !== undefined) {
+        updates.push('data_nascimento = ?');
+        params.push(data_nascimento);
+    }
+    if (email_academico !== undefined) {
+        updates.push('email_academico = ?');
+        params.push(email_academico);
+    }
+    if (email_pessoal !== undefined) {
+        updates.push('email_pessoal = ?');
+        params.push(email_pessoal);
+    }
+    if (telefone !== undefined) {
+        updates.push('telefone = ?');
+        params.push(telefone);
+    }
+    if (sexo !== undefined) {
+        updates.push('sexo = ?');
+        params.push(sexo);
+    }
     if (role !== undefined) {
-        const roleValue = ['ADMIN', 'PROFESSOR', 'ALUNO'].includes(String(role).toUpperCase())
-            ? String(role).toUpperCase()
-            : 'ALUNO';
+        const roleValue = ['ADMIN', 'PROFESSOR', 'ALUNO'].includes(String(role).toUpperCase()) ?
+            String(role).toUpperCase() :
+            'ALUNO';
         updates.push('role = ?');
         params.push(roleValue);
     }
@@ -339,7 +492,7 @@ app.put('/admin/aluno/:matricula', async (req, res) => {
     }
 });
 
-app.post('/alterar-senha', async (req, res) => {
+app.post('/alterar-senha', async(req, res) => {
     const { matricula, senhaAtual, novaSenha } = req.body;
 
     try {
@@ -382,7 +535,7 @@ app.post('/alterar-senha', async (req, res) => {
     }
 });
 
-app.post('/admin/add-aluno', async (req, res) => {
+app.post('/admin/add-aluno', async(req, res) => {
     const {
         matricula,
         nome,
@@ -396,9 +549,9 @@ app.post('/admin/add-aluno', async (req, res) => {
     } = req.body;
 
     const codigo_curso = getCursoCodigo(descricao_curso);
-    const roleValue = ['ADMIN', 'PROFESSOR'].includes(String(role || '').toUpperCase())
-        ? String(role).toUpperCase()
-        : 'ALUNO';
+    const roleValue = ['ADMIN', 'PROFESSOR'].includes(String(role || '').toUpperCase()) ?
+        String(role).toUpperCase() :
+        'ALUNO';
 
     if (!codigo_curso) {
         return res.json({ sucesso: false, mensagem: 'Curso inválido' });
@@ -442,7 +595,7 @@ app.post('/admin/add-aluno', async (req, res) => {
     }
 });
 
-app.get('/admin/verificar-matricula/:matricula', async (req, res) => {
+app.get('/admin/verificar-matricula/:matricula', async(req, res) => {
     const { matricula } = req.params;
 
     if (!matricula) {
@@ -452,8 +605,7 @@ app.get('/admin/verificar-matricula/:matricula', async (req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query(
-            'SELECT matricula FROM alunos WHERE matricula = ?',
-            [matricula]
+            'SELECT matricula FROM alunos WHERE matricula = ?', [matricula]
         );
         await conexao.end();
 
@@ -464,7 +616,7 @@ app.get('/admin/verificar-matricula/:matricula', async (req, res) => {
     }
 });
 
-app.post('/admin/noticias', async (req, res) => {
+app.post('/admin/noticias', async(req, res) => {
     const { titulo, descricao } = req.body;
 
     if (!titulo || !descricao) {
@@ -485,7 +637,7 @@ app.post('/admin/noticias', async (req, res) => {
     }
 });
 
-app.get('/noticias', async (req, res) => {
+app.get('/noticias', async(req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query(
@@ -500,7 +652,7 @@ app.get('/noticias', async (req, res) => {
     }
 });
 
-app.put('/noticias/:id', async (req, res) => {
+app.put('/noticias/:id', async(req, res) => {
     const { titulo, descricao } = req.body;
     const { id } = req.params;
 
@@ -525,7 +677,7 @@ app.put('/noticias/:id', async (req, res) => {
     }
 });
 
-app.delete('/noticias/:id', async (req, res) => {
+app.delete('/noticias/:id', async(req, res) => {
     const { id } = req.params;
 
     try {
@@ -540,7 +692,7 @@ app.delete('/noticias/:id', async (req, res) => {
     }
 });
 
-app.post('/admin/modalidades', async (req, res) => {
+app.post('/admin/modalidades', async(req, res) => {
     const { titulo, descricao, professor, hora_inicio, hora_fim } = req.body;
 
     if (!titulo || !descricao || !professor || !hora_inicio || !hora_fim) {
@@ -563,7 +715,7 @@ app.post('/admin/modalidades', async (req, res) => {
     }
 });
 
-app.put('/admin/modalidades/:id', async (req, res) => {
+app.put('/admin/modalidades/:id', async(req, res) => {
     const { id } = req.params;
     const { titulo, descricao, professor, hora_inicio, hora_fim } = req.body;
 
@@ -576,8 +728,7 @@ app.put('/admin/modalidades/:id', async (req, res) => {
         await conexao.query(
             `UPDATE modalidades
              SET titulo = ?, descricao = ?, professor = ?, hora_inicio = ?, hora_fim = ?
-             WHERE id = ?`,
-            [titulo, descricao, professor, hora_inicio, hora_fim, id]
+             WHERE id = ?`, [titulo, descricao, professor, hora_inicio, hora_fim, id]
         );
         await conexao.end();
         res.json({ sucesso: true });
@@ -587,7 +738,7 @@ app.put('/admin/modalidades/:id', async (req, res) => {
     }
 });
 
-app.delete('/admin/modalidades/:id', async (req, res) => {
+app.delete('/admin/modalidades/:id', async(req, res) => {
     const { id } = req.params;
     try {
         const conexao = await conectar();
@@ -600,7 +751,7 @@ app.delete('/admin/modalidades/:id', async (req, res) => {
     }
 });
 
-app.get('/modalidades', async (req, res) => {
+app.get('/modalidades', async(req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query('SELECT * FROM modalidades');
@@ -612,7 +763,7 @@ app.get('/modalidades', async (req, res) => {
     }
 });
 
-app.get('/modalidades', async (req, res) => {
+app.get('/modalidades', async(req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query('SELECT * FROM modalidades ORDER BY titulo');
@@ -625,7 +776,7 @@ app.get('/modalidades', async (req, res) => {
     }
 });
 
-app.post('/inscricoes/jics', async (req, res) => {
+app.post('/inscricoes/jics', async(req, res) => {
     const { aluno_id, modalidade_id } = req.body;
 
     if (!aluno_id || !modalidade_id) {
@@ -658,10 +809,10 @@ app.post('/inscricoes/jics', async (req, res) => {
     }
 });
 
-app.post('/inscricoes/jics/cancelar', async (req, res) => {
-    const { inscricao_id, aluno_id, matricula, modalidade_id } = req.body || {};
+app.post('/inscricoes/jics/cancelar', async(req, res) => {
+    const { inscricao_id, aluno_id, matricula, modalidade_id, modalidade_nome } = req.body || {};
 
-    if (!inscricao_id && (!modalidade_id || (!aluno_id && !matricula))) {
+    if (!inscricao_id && (!modalidade_id && !modalidade_nome) && (!aluno_id && !matricula)) {
         return res.status(400).json({ sucesso: false, mensagem: 'Dados inválidos' });
     }
 
@@ -677,13 +828,22 @@ app.post('/inscricoes/jics/cancelar', async (req, res) => {
             alvoId = rows[0].id;
         }
 
+        let modId = modalidade_id;
+        if (!modId && modalidade_nome) {
+            const [mods] = await conexao.query('SELECT id FROM modalidades WHERE titulo = ? LIMIT 1', [modalidade_nome]);
+            if (mods.length) modId = mods[0].id;
+        }
+
         let result;
         if (inscricao_id) {
             [result] = await conexao.query('DELETE FROM inscricoes WHERE id = ?', [inscricao_id]);
         } else {
+            if (!alvoId || !modId) {
+                await conexao.end();
+                return res.json({ sucesso: false, mensagem: 'Inscrição não encontrada' });
+            }
             [result] = await conexao.query(
-                'DELETE FROM inscricoes WHERE aluno_id = ? AND modalidade_id = ?',
-                [alvoId, modalidade_id]
+                'DELETE FROM inscricoes WHERE aluno_id = ? AND modalidade_id = ?', [alvoId, modId]
             );
         }
 
@@ -698,7 +858,7 @@ app.post('/inscricoes/jics/cancelar', async (req, res) => {
     }
 });
 
-app.get('/inscricoes/jics', async (req, res) => {
+app.get('/inscricoes/jics', async(req, res) => {
     const { aluno_id, matricula } = req.query;
     let where = '';
     const params = [];
@@ -740,7 +900,7 @@ app.get('/inscricoes/jics', async (req, res) => {
 });
 
 // --- Sorteio -> Jogos ---
-app.post('/admin/sorteio/jogos', async (req, res) => {
+app.post('/admin/sorteio/jogos', async(req, res) => {
     const { modalidade, sexo, chave, jogos } = req.body || {};
     if (!modalidade || !sexo || !Array.isArray(jogos) || !jogos.length) {
         return res.status(400).json({ sucesso: false, mensagem: 'Dados inválidos' });
@@ -758,8 +918,7 @@ app.post('/admin/sorteio/jogos', async (req, res) => {
         for (const j of jogos) {
             await conexao.query(
                 `INSERT INTO jogos (modalidade_id, sexo, chave, jogo_label, ordem, hora_oficial, equipe_a, equipe_b, status)
-                 VALUES (?,?,?,?,?,?,?,?, 'agendado')`,
-                [modalidadeId, sexo, j.chave || chave || null, j.jogo, j.ordem, j.hora || null, j.equipeA, j.equipeB]
+                 VALUES (?,?,?,?,?,?,?,?, 'agendado')`, [modalidadeId, sexo, j.chave || chave || null, j.jogo, j.ordem, j.hora || null, j.equipeA, j.equipeB]
             );
         }
         const [rows] = await conexao.query(
@@ -767,8 +926,7 @@ app.post('/admin/sorteio/jogos', async (req, res) => {
                     equipe_a AS equipeA, equipe_b AS equipeB, status
              FROM jogos
              WHERE modalidade_id = ? AND sexo = ?
-             ORDER BY ordem`,
-            [modalidadeId, sexo]
+             ORDER BY ordem`, [modalidadeId, sexo]
         );
         await conexao.commit();
         await conexao.end();
@@ -780,7 +938,7 @@ app.post('/admin/sorteio/jogos', async (req, res) => {
     }
 });
 
-app.get('/admin/jogos', async (req, res) => {
+app.get('/admin/jogos', async(req, res) => {
     const { modalidade, sexo, status, chave } = req.query;
     try {
         const conexao = await conectar();
@@ -789,10 +947,22 @@ app.get('/admin/jogos', async (req, res) => {
                    JOIN modalidades m ON m.id = j.modalidade_id
                    WHERE 1=1`;
         const params = [];
-        if (modalidade) { sql += ' AND m.titulo = ?'; params.push(modalidade); }
-        if (sexo) { sql += ' AND j.sexo = ?'; params.push(sexo); }
-        if (status) { sql += ' AND j.status = ?'; params.push(status); }
-        if (chave) { sql += ' AND j.chave = ?'; params.push(chave); }
+        if (modalidade) {
+            sql += ' AND m.titulo = ?';
+            params.push(modalidade);
+        }
+        if (sexo) {
+            sql += ' AND j.sexo = ?';
+            params.push(sexo);
+        }
+        if (status) {
+            sql += ' AND j.status = ?';
+            params.push(status);
+        }
+        if (chave) {
+            sql += ' AND j.chave = ?';
+            params.push(chave);
+        }
         sql += ' ORDER BY j.ordem';
         const [rows] = await conexao.query(sql, params);
         await conexao.end();
@@ -803,10 +973,10 @@ app.get('/admin/jogos', async (req, res) => {
     }
 });
 
-app.put('/admin/jogos/:id/status', async (req, res) => {
+app.put('/admin/jogos/:id/status', async(req, res) => {
     const { status } = req.body || {};
     const { id } = req.params;
-    if (!['agendado','em_andamento','finalizado'].includes(status)) {
+    if (!['agendado', 'em_andamento', 'finalizado'].includes(status)) {
         return res.status(400).json({ sucesso: false, mensagem: 'Status inválido' });
     }
     try {
@@ -822,10 +992,23 @@ app.put('/admin/jogos/:id/status', async (req, res) => {
 });
 
 // --- Súmulas ---
-app.post('/admin/sumulas', async (req, res) => {
+app.post('/admin/sumulas', async(req, res) => {
     const {
-        jogo_id, modalidade, sexo, fase, etapa, data, arbitro, mesarios,
-        inicio, fim, equipeA, equipeB, placarA, placarB, cartoes
+        jogo_id,
+        modalidade,
+        sexo,
+        fase,
+        etapa,
+        data,
+        arbitro,
+        mesarios,
+        inicio,
+        fim,
+        equipeA,
+        equipeB,
+        placarA,
+        placarB,
+        cartoes
     } = req.body || {};
     if (!modalidade || !equipeA || !equipeB) {
         return res.status(400).json({ sucesso: false, mensagem: 'Dados insuficientes' });
@@ -837,14 +1020,13 @@ app.post('/admin/sumulas', async (req, res) => {
         const [result] = await conexao.query(
             `INSERT INTO sumulas (jogo_id, modalidade_id, sexo, fase, etapa, data, arbitro, mesarios, inicio, fim,
                                   equipe_a, equipe_b, placar_a, placar_b, cartoes)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-            [jogo_id || null, modalidadeId, sexo || null, fase || null, etapa || null, data || null, arbitro || null,
-                mesarios || null, inicio || null, fim || null, equipeA, equipeB, placarA || 0, placarB || 0, cartoes || null]
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [jogo_id || null, modalidadeId, sexo || null, fase || null, etapa || null, data || null, arbitro || null,
+                mesarios || null, inicio || null, fim || null, equipeA, equipeB, placarA || 0, placarB || 0, cartoes || null
+            ]
         );
         if (jogo_id) {
             await conexao.query(
-                'UPDATE jogos SET placar_a = ?, placar_b = ?, status = ? WHERE id = ?',
-                [placarA || 0, placarB || 0, 'finalizado', jogo_id]
+                'UPDATE jogos SET placar_a = ?, placar_b = ?, status = ? WHERE id = ?', [placarA || 0, placarB || 0, 'finalizado', jogo_id]
             );
         }
         await conexao.end();
@@ -856,17 +1038,22 @@ app.post('/admin/sumulas', async (req, res) => {
     }
 });
 
-app.put('/admin/sumulas/:id', async (req, res) => {
+app.put('/admin/sumulas/:id', async(req, res) => {
     const { id } = req.params;
     const {
-        placarA, placarB, arbitro, mesarios, inicio, fim, cartoes
+        placarA,
+        placarB,
+        arbitro,
+        mesarios,
+        inicio,
+        fim,
+        cartoes
     } = req.body || {};
     try {
         const conexao = await conectar();
         await conexao.query(
             `UPDATE sumulas SET placar_a = ?, placar_b = ?, arbitro = ?, mesarios = ?, inicio = ?, fim = ?, cartoes = ?
-             WHERE id = ?`,
-            [placarA || 0, placarB || 0, arbitro || null, mesarios || null, inicio || null, fim || null, cartoes || null, id]
+             WHERE id = ?`, [placarA || 0, placarB || 0, arbitro || null, mesarios || null, inicio || null, fim || null, cartoes || null, id]
         );
         await conexao.end();
         logAudit(null, 'sumula', id, 'update', { placarA, placarB });
@@ -878,13 +1065,21 @@ app.put('/admin/sumulas/:id', async (req, res) => {
 });
 
 // ===================== API para o painel admin (consumida pelo JS) =====================
-app.get('/api/admin/metrics', async (req, res) => {
+app.get('/api/admin/metrics', async(req, res) => {
     try {
         const conexao = await conectar();
-        const [[{ total: usuarios }]] = await conexao.query('SELECT COUNT(*) AS total FROM alunos');
-        const [[{ total: inscricoes }]] = await conexao.query('SELECT COUNT(*) AS total FROM inscricoes');
-        const [[{ total: modalidades }]] = await conexao.query('SELECT COUNT(*) AS total FROM modalidades');
-        const [[{ total: comunicados }]] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
+        const [
+            [{ total: usuarios }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM alunos');
+        const [
+            [{ total: inscricoes }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM inscricoes');
+        const [
+            [{ total: modalidades }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM modalidades');
+        const [
+            [{ total: comunicados }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
         await conexao.end();
         res.json({ usuarios, inscricoes, modalidades, comunicados });
     } catch (erro) {
@@ -893,7 +1088,7 @@ app.get('/api/admin/metrics', async (req, res) => {
     }
 });
 
-app.get('/api/inscricoes', async (req, res) => {
+app.get('/api/inscricoes', async(req, res) => {
     const { modalidade, sexo, turma, campus } = req.query;
     try {
         const conexao = await conectar();
@@ -902,6 +1097,7 @@ app.get('/api/inscricoes', async (req, res) => {
                 a.nome AS aluno,
                 a.matricula,
                 a.turma,
+                a.descricao_curso AS curso,
                 a.sexo,
                 a.campus,
                 m.titulo AS modalidade,
@@ -911,10 +1107,22 @@ app.get('/api/inscricoes', async (req, res) => {
             JOIN modalidades m ON m.id = i.modalidade_id
             WHERE 1=1`;
         const params = [];
-        if (modalidade) { sql += ' AND m.titulo = ?'; params.push(modalidade); }
-        if (sexo) { sql += ' AND a.sexo = ?'; params.push(sexo); }
-        if (turma) { sql += ' AND a.turma = ?'; params.push(turma); }
-        if (campus) { sql += ' AND a.campus = ?'; params.push(campus); }
+        if (modalidade) {
+            sql += ' AND m.titulo = ?';
+            params.push(modalidade);
+        }
+        if (sexo) {
+            sql += ' AND a.sexo = ?';
+            params.push(sexo);
+        }
+        if (turma) {
+            sql += ' AND a.turma = ?';
+            params.push(turma);
+        }
+        if (campus) {
+            sql += ' AND a.campus = ?';
+            params.push(campus);
+        }
         sql += ' ORDER BY i.data_inscricao DESC';
         const [rows] = await conexao.query(sql, params);
         await conexao.end();
@@ -925,7 +1133,7 @@ app.get('/api/inscricoes', async (req, res) => {
     }
 });
 
-app.get('/api/usuarios', async (req, res) => {
+app.get('/api/usuarios', async(req, res) => {
     const { busca } = req.query;
     try {
         const conexao = await conectar();
@@ -948,7 +1156,7 @@ app.get('/api/usuarios', async (req, res) => {
     }
 });
 
-app.get('/api/noticias', async (req, res) => {
+app.get('/api/noticias', async(req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query(`
@@ -971,7 +1179,7 @@ app.get('/api/noticias', async (req, res) => {
     }
 });
 
-app.get('/api/modalidades', async (req, res) => {
+app.get('/api/modalidades', async(req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query(`
@@ -994,13 +1202,21 @@ app.get('/api/modalidades', async (req, res) => {
 });
 
 // ===================== Dashboards SaaS =====================
-app.get('/dashboard/admin/stats', async (_req, res) => {
+app.get('/dashboard/admin/stats', async(_req, res) => {
     try {
         const conexao = await conectar();
-        const [[{ total: alunos }]] = await conexao.query('SELECT COUNT(*) AS total FROM alunos');
-        const [[{ total: inscricoes }]] = await conexao.query('SELECT COUNT(*) AS total FROM inscricoes');
-        const [[{ total: modalidades }]] = await conexao.query('SELECT COUNT(*) AS total FROM modalidades');
-        const [[{ total: comunicados }]] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
+        const [
+            [{ total: alunos }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM alunos');
+        const [
+            [{ total: inscricoes }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM inscricoes');
+        const [
+            [{ total: modalidades }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM modalidades');
+        const [
+            [{ total: comunicados }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
         await conexao.end();
         res.json({ alunos, inscricoes, modalidades, pendencias: 0, comunicados });
     } catch (err) {
@@ -1009,7 +1225,7 @@ app.get('/dashboard/admin/stats', async (_req, res) => {
     }
 });
 
-app.get('/dashboard/admin/ultimas-inscricoes', async (_req, res) => {
+app.get('/dashboard/admin/ultimas-inscricoes', async(_req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query(`
@@ -1032,7 +1248,7 @@ app.get('/dashboard/admin/ultimas-inscricoes', async (_req, res) => {
     }
 });
 
-app.get('/dashboard/admin/chart', async (_req, res) => {
+app.get('/dashboard/admin/chart', async(_req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query(`
@@ -1054,7 +1270,7 @@ app.get('/dashboard/admin/chart', async (_req, res) => {
     }
 });
 
-app.get('/dashboard/admin/activity', async (_req, res) => {
+app.get('/dashboard/admin/activity', async(_req, res) => {
     try {
         const conexao = await conectar();
         const [insc] = await conexao.query(`
@@ -1091,18 +1307,22 @@ app.get('/dashboard/admin/activity', async (_req, res) => {
     }
 });
 
-app.get('/dashboard/aluno/summary', async (req, res) => {
+app.get('/dashboard/aluno/summary', async(req, res) => {
     const { matricula } = req.query;
     if (!matricula) return res.status(400).json({ status: 'Pendente', inscricoesCount: 0, avisosCount: 0, nextGames: [] });
     try {
         const conexao = await conectar();
-        const [[{ total: inscricoesCount }]] = await conexao.query(`
+        const [
+            [{ total: inscricoesCount }]
+        ] = await conexao.query(`
             SELECT COUNT(*) AS total
             FROM inscricoes i
             JOIN alunos a ON a.id = i.aluno_id
             WHERE a.matricula = ?
         `, [matricula]);
-        const [[{ total: avisosCount }]] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
+        const [
+            [{ total: avisosCount }]
+        ] = await conexao.query('SELECT COUNT(*) AS total FROM noticias');
         await conexao.end();
         res.json({
             status: inscricoesCount > 0 ? 'Inscrito' : 'Pendente',
@@ -1116,7 +1336,7 @@ app.get('/dashboard/aluno/summary', async (req, res) => {
     }
 });
 
-app.get('/dashboard/aluno/inscricoes', async (req, res) => {
+app.get('/dashboard/aluno/inscricoes', async(req, res) => {
     const { matricula } = req.query;
     if (!matricula) return res.json([]);
     try {
@@ -1141,7 +1361,7 @@ app.get('/dashboard/aluno/inscricoes', async (req, res) => {
     }
 });
 
-app.get('/dashboard/aluno/avisos', async (_req, res) => {
+app.get('/dashboard/aluno/avisos', async(_req, res) => {
     try {
         const conexao = await conectar();
         const [rows] = await conexao.query(`
@@ -1162,6 +1382,7 @@ app.get('/dashboard/aluno/avisos', async (_req, res) => {
 });
 
 ensureAlunosRoleColumn()
+    .then(ensureAdminsSchema)
     .then(() => {
         httpServer.listen(3000, () => {
             console.log('Servidor rodando em http://localhost:3000');

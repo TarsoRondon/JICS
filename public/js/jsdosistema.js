@@ -9,7 +9,7 @@ let passwordUxModal = null;
 let modalidadeEditId = null;
 let sorteioRows = [];
 let adminDataLoaded = false;
-let adminActiveTab = localStorage.getItem('adminActiveTab') || 'tabInscricoes';
+let adminActiveTab = localStorage.getItem('adminTab') || 'tabDashboard';
 let adminCache = {
   inscricoes: [],
   usuarios: [],
@@ -17,6 +17,62 @@ let adminCache = {
   modalidades: [],
   jogos: []
 };
+
+function getPhotoStorageKey(matricula) {
+  const key = String(matricula || '').trim();
+  if (!key) return null;
+  return `userPhoto:${key}`;
+}
+
+function applyStoredPhoto(user) {
+  if (!user || user.foto) return;
+  const key = getPhotoStorageKey(user.matricula);
+  if (!key) return;
+  const stored = localStorage.getItem(key);
+  if (stored) user.foto = stored;
+}
+
+function formatPhoneMask(value) {
+  let digits = String(value || '').replace(/\D/g, '');
+  if (digits.startsWith('55') && digits.length > 11) {
+    digits = digits.slice(2);
+  }
+  digits = digits.slice(0, 11);
+  if (!digits) return '';
+  if (digits.length < 3) return `(${digits}`;
+  const ddd = digits.slice(0, 2);
+  const rest = digits.slice(2);
+  const mobile = digits.length > 10;
+  const part1Len = mobile ? 5 : 4;
+  const part1 = rest.slice(0, part1Len);
+  const part2 = rest.slice(part1Len, part1Len + 4);
+  if (!part2) return `(${ddd}) ${part1}`;
+  return `(${ddd}) ${part1}-${part2}`;
+}
+
+function shouldMaskPhone(input) {
+  if (!input || input.dataset.phoneMask === '1') return false;
+  if (input.dataset.mask === 'phone') return true;
+  if (input.type === 'tel') return true;
+  const key = `${input.id || ''} ${input.name || ''}`.toLowerCase();
+  return ['telefone', 'celular', 'fone', 'tel'].some((term) => key.includes(term));
+}
+
+function bindPhoneMaskInput(input) {
+  if (!shouldMaskPhone(input)) return;
+  input.dataset.phoneMask = '1';
+  input.addEventListener('input', () => {
+    input.value = formatPhoneMask(input.value);
+  });
+  input.addEventListener('blur', () => {
+    input.value = formatPhoneMask(input.value);
+  });
+}
+
+function bindPhoneMasks(root = document) {
+  if (!root || !root.querySelectorAll) return;
+  root.querySelectorAll('input').forEach(bindPhoneMaskInput);
+}
 
 function renderGridSkeleton(target, count = 3) {
     if (!target) return;
@@ -49,7 +105,44 @@ function renderTableSkeleton(tbody, rows = 4, cols = 4) {
     `).join('');
         return `<tr>${cells}</tr>`;
     }).join('');
-    tbody.innerHTML = lines;
+  tbody.innerHTML = lines;
+}
+
+function sanitizeFilename(value, fallback = 'arquivo') {
+  const raw = String(value || fallback || 'arquivo');
+  const cleaned = raw
+    .replace(/[\\/:*?"<>|]+/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return cleaned || fallback || 'arquivo';
+}
+
+function escapeCsvValue(value) {
+  const text = String(value ?? '');
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function buildCsvContent(rows, header) {
+  const data = header ? [header, ...rows] : rows;
+  const lines = data.map(row => row.map(escapeCsvValue).join(';')).join('\n');
+  return `\uFEFF${lines}`;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function downloadTextFile(content, filename, type) {
+  const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8;' });
+  downloadBlob(blob, filename);
 }
 
 function setSelectOptions(select, values, placeholder) {
@@ -68,9 +161,17 @@ function getModalidadeIdSelecionada() {
     return mod ? mod.id : value;
 }
 
+function resolveModalidadeNome(value) {
+    if (!value) return '';
+    const mod = (adminCache.modalidades || []).find(m =>
+        String(m.id) === String(value) || m.nome === value || m.titulo === value
+    );
+    return mod ? (mod.nome || mod.titulo) : String(value);
+}
+
 function normalizeRole(role) {
     const value = String(role || '').toUpperCase();
-    if (value === 'ADMIN' || value === 'ADMINISTRADOR') return 'ADMIN';
+    if (value === 'ADMIN' || value === 'ADMINISTRADOR' || value === 'SUPER_ADMIN') return 'ADMIN';
     if (value === 'PROFESSOR') return 'PROFESSOR';
     return 'ALUNO';
 }
@@ -87,6 +188,7 @@ function isStaffUser() {
 function ensureSideNavLinks() {
     const sideNav = document.getElementById('sideNav');
     if (!sideNav) return;
+    if (document.body.classList.contains('admin-ui')) return;
 
     const addLink = (href, label, className) => {
         if (sideNav.querySelector(`a[href='${href}']`)) return;
@@ -97,12 +199,12 @@ function ensureSideNavLinks() {
         sideNav.appendChild(link);
     };
 
-    addLink('minhas-inscricoes.html', 'Minhas modalidades', 'user-only');
+    addLink('inscricoes.html', 'Minhas inscrições', 'user-only');
     addLink('admin.html', 'Administração', 'staff-only');
 
     sideNav.querySelectorAll('.side-link').forEach((link) => {
         const href = link.getAttribute('href') || '';
-        if (href.includes('inscricoes.html') || href.includes('modalidades.html') || href.includes('minhas-inscricoes.html')) {
+        if (href.includes('inscricoes.html') || href.includes('modalidades.html')) {
             link.classList.add('user-only');
         }
         if (href.includes('admin.html')) {
@@ -147,9 +249,11 @@ function applyRoleVisibility() {
         el.classList.toggle('hidden', isStaffUser());
     });
 
-    document.querySelectorAll('a[href="admin.html"]').forEach((link) => {
-        link.textContent = isAdminUser() ? 'Editar' : 'Administrações';
-    });
+    if (!document.body.classList.contains('admin-ui')) {
+        document.querySelectorAll('a[href="admin.html"]').forEach((link) => {
+            link.textContent = 'Administração';
+        });
+    }
 }
 
 const modalSelectors = {
@@ -181,7 +285,7 @@ const tourSteps = {
     ],
     foto: [
         { selector: '.user-trigger', title: 'Menu do usuário', text: 'Abra o menu lateral do usuário.' },
-        { selector: '.drawer-sub-btn', title: 'Alterar foto', text: 'Clique em â€œAlterar fotoâ€ para abrir o modal.' },
+        { selector: '.drawer-sub-btn', title: 'Alterar foto', text: 'Clique em "Alterar foto" para abrir o modal.' },
         { selector: '#photoInput', title: 'Prévia', text: 'Envie a foto e ajuste com zoom e posição.' },
     ],
     resultados: [
@@ -201,6 +305,8 @@ function loadUserFromStorage() {
     const saved = sessionStorage.getItem('usuarioLogado');
     if (saved) {
         currentUser = JSON.parse(saved);
+        applyStoredPhoto(currentUser);
+        sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
         return;
     }
     if (localStorage.getItem('usuarioLogado')) {
@@ -217,6 +323,7 @@ async function ensureUserFromApi() {
         if (!res.ok) return;
         const data = await res.json();
         currentUser = { ...currentUser, ...data };
+        applyStoredPhoto(currentUser);
         sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
     } catch (_) {
         // silencioso para não quebrar UX se offline
@@ -427,7 +534,7 @@ function attachPasswordRecoveryLinks() {
 function renderDrawer() {
     const drawer = document.getElementById('userDrawer');
     if (!drawer) return;
-    const adminLabel = isAdminUser() ? 'Editar' : 'Administração';
+    const adminLabel = 'Administração';
     const modalidadesGroup = isStaffUser() ?
         '' :
         `
@@ -436,17 +543,18 @@ function renderDrawer() {
         <span class="material-symbols-outlined">expand_more</span>
       </button>
       <div id="drawerModalidades" class="drawer-sub">
-        <button class="drawer-sub-btn" onclick="openMinhasInscricoes()">Minhas modalidades</button>
-        <button class="drawer-sub-btn" onclick="location.href='modalidades.html'">Inscrições</button>
+        <button class="drawer-sub-btn" onclick="openMinhasInscricoes()">Minhas inscrições</button>
+        <button class="drawer-sub-btn" onclick="location.href='modalidades.html'">Ver modalidades</button>
       </div>
     `;
 
     drawer.innerHTML = `
-    <button class="icon-btn drawer-close" onclick="toggleUserDrawer()" aria-label="Fechar">
+    <button class="icon-btn drawer-close" onclick="toggleUserDrawer()">
       <span class="material-symbols-outlined">close</span>
+      <span class="drawer-close-text">Fechar</span>
     </button>
     <div class="drawer-user">
-      <img id="drawerAvatar" class="drawer-avatar" src="${currentUser?.foto || 'assets/avatar-default.png'}" alt="Avatar" />
+      <img id="drawerAvatar" class="drawer-avatar" src="${currentUser?.foto || '/assets/avatar-default.png'}" alt="Avatar" onerror="this.src='/assets/avatar-default.png'" />
       <div>
         <p id="drawerUserName">${currentUser?.nome || 'Usuário'}</p>
         <small id="drawerUserMatricula">${currentUser?.matricula || ''}</small>
@@ -469,9 +577,10 @@ function renderDrawer() {
       </button>
       <div id="drawerConfig" class="drawer-sub">
         <button class="drawer-sub-btn" onclick="openPhotoModal()">Alterar foto</button>
-        <a class="drawer-sub-btn password-recovery-link" href="solicitar-otp.html">Recuperar senha</a>
+        <a class="drawer-sub-btn" href="recuperacao.html#reset">Recuperar senha</a>
         <a class="drawer-sub-btn" href="recuperar-matricula.html">Recuperar matrícula</a>
         <button class="drawer-sub-btn" onclick="editarSenha()">Alterar senha</button>
+        <a class="drawer-sub-btn" href="conta.html">Alterar telefone</a>
         <button class="drawer-sub-btn" onclick="toggleHelpPanel()">FAQ / Ajuda</button>
         <a class="drawer-sub-btn" href="suporte.html">Suporte</a>
         <a class="drawer-sub-btn" href="privacidade.html">Privacidade</a>
@@ -489,7 +598,7 @@ function renderDrawer() {
   `;
 
   const avatar = document.getElementById('userAvatar');
-  if (avatar) avatar.src = currentUser?.foto || 'assets/avatar-default.png';
+  if (avatar) avatar.src = currentUser?.foto || '/assets/avatar-default.png';
   const name = document.getElementById('userNameNavbar');
   if (name) animateUserName(currentUser?.nome || '');
   const userMenu = document.querySelector('.user-menu');
@@ -504,7 +613,7 @@ function setNavbarGuest() {
   const name = document.getElementById('userNameNavbar');
   if (name) name.textContent = '';
   const avatar = document.getElementById('userAvatar');
-  if (avatar) avatar.src = 'assets/avatar-default.png';
+  if (avatar) avatar.src = '/assets/avatar-default.png';
 }
 
 let nameTypeTimer = null;
@@ -622,6 +731,7 @@ function handleLogin(event) {
       }
       currentUser = data.user;
       currentUser.role = normalizeRole(currentUser.role);
+      applyStoredPhoto(currentUser);
       sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
       localStorage.removeItem('tourActive');
       localStorage.removeItem('tourType');
@@ -665,6 +775,8 @@ function bindLoginUX() {
 function logout() {
   sessionStorage.removeItem('usuarioLogado');
   sessionStorage.removeItem('tema');
+  sessionStorage.removeItem('adminSessionExpired');
+  window.__adminSessionExpired = false;
   location.href = 'index.html';
 }
 
@@ -719,7 +831,7 @@ function carregarModalidades() {
 }
 
 function formatarHorario(inicio, fim) {
-  if (!inicio || !fim) return 'â€”';
+  if (!inicio || !fim) return '-';
   const hi = inicio.slice(0, 5).replace(':', 'h');
   const hf = fim.slice(0, 5).replace(':', 'h');
   return `${hi} às ${hf}`;
@@ -764,20 +876,51 @@ function renderModalities() {
     return;
   }
 
-  const html = modalidades.map(m => `
-    <div class="card" onclick="showModalDetails('${m.id}')">
+  const getMeta = (name) => {
+    const n = String(name || '').toLowerCase();
+    const rules = [
+      { keys: ['futebol', 'futsal'], icon: 'sports_soccer', category: 'coletiva' },
+      { keys: ['basquete', 'basket'], icon: 'sports_basketball', category: 'coletiva' },
+      { keys: ['volei', 'vôlei', 'volley'], icon: 'sports_volleyball', category: 'coletiva' },
+      { keys: ['handebol'], icon: 'sports_handball', category: 'coletiva' },
+      { keys: ['tenis', 'tênis'], icon: 'sports_tennis', category: 'individual' },
+      { keys: ['atletismo', 'corrida', 'caminhada'], icon: 'directions_run', category: 'individual' },
+      { keys: ['natacao', 'natação'], icon: 'pool', category: 'individual' },
+      { keys: ['xadrez'], icon: 'chess', category: 'individual' },
+      { keys: ['judo', 'judô', 'karate', 'karatê', 'jiu', 'capoeira'], icon: 'sports_kabaddi', category: 'individual' },
+      { keys: ['academia', 'musculacao', 'musculação', 'fitness'], icon: 'fitness_center', category: 'individual' },
+    ];
+    for (const rule of rules) {
+      if (rule.keys.some(k => n.includes(k))) return rule;
+    }
+    return { icon: 'sports', category: 'coletiva' };
+  };
+
+  const html = modalidades.map(m => {
+    const meta = getMeta(m.nome);
+    const categoryLabel = meta.category === 'coletiva' ? 'Coletiva' : 'Individual';
+    return `
+    <div class="card" data-name="${m.nome}" data-category="${meta.category}" data-professor="${m.professor || ''}" data-horario="${m.horario || ''}" data-icon="${meta.icon}" onclick="showModalDetails('${m.id}')">
       <div class="card-header">
-        <div class="card-icon"><span class="material-symbols-outlined">sports</span></div>
-        <div class="card-title">${m.nome}</div>
+        <div class="card-icon modalidade-icon"><span class="material-symbols-outlined">${meta.icon}</span></div>
+        <div>
+          <div class="card-title">${m.nome}</div>
+          <span class="modalidade-badge ${meta.category}">${categoryLabel}</span>
+        </div>
       </div>
       <div class="card-body">
-        <strong>Professor:</strong>
-        <p>${m.professor}</p>
-        <strong>Horário:</strong>
-        <p>${m.horario}</p>
+        <div class="modalidade-meta">
+          <span class="material-symbols-outlined">person</span>
+          <span>${m.professor || 'Professor a definir'}</span>
+        </div>
+        <div class="modalidade-meta">
+          <span class="material-symbols-outlined">schedule</span>
+          <span>${m.horario || 'Horario a definir'}</span>
+        </div>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   if (grid) grid.innerHTML = html;
   if (allGrid) allGrid.innerHTML = html;
@@ -986,26 +1129,62 @@ function exportarInscricoesCsv() {
     return;
   }
   const header = ['Nome', 'Matricula', 'Turma', 'Modalidade', 'Sexo', 'Tipo', 'Data'];
-  const csv = [header, ...rows.map(i => [
+  const csvRows = rows.map(i => [
     i.nome, i.matricula, i.turma, i.modalidade, i.sexo, i.tipo, i.data
-  ])].map(row => row.map(val => `"${String(val || '').replace(/\"/g, '""')}"`).join(';')).join('\n');
+  ]);
+  const csv = buildCsvContent(csvRows, header);
+  const filename = `inscricoes_${new Date().toISOString().slice(0,10)}.csv`;
+  downloadTextFile(csv, filename, 'text/csv;charset=utf-8;');
+}
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `inscricoes_${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+function exportarModalidadesCsv() {
+  const raw = modalidades && modalidades.length ? modalidades : (adminCache.modalidades || []);
+  const normalized = raw.map(m => ({
+    nome: m.nome || m.titulo || '',
+    professor: m.professor || '',
+    dias: m.dias || '',
+    horario: m.horario || (m.hora_inicio && m.hora_fim ? formatarHorario(m.hora_inicio, m.hora_fim) : '')
+  }));
+  if (!normalized.length) {
+    showToastErro('Não há modalidades para exportar.');
+    return;
+  }
+  const header = ['Modalidade', 'Professor', 'Dias', 'Horario'];
+  const rows = normalized.map(m => [m.nome, m.professor, m.dias, m.horario]);
+  const csv = buildCsvContent(rows, header);
+  const filename = `modalidades_${new Date().toISOString().slice(0,10)}.csv`;
+  downloadTextFile(csv, filename, 'text/csv;charset=utf-8;');
+}
+
+function bindAdminDownloads() {
+  document.querySelectorAll('.admin-download').forEach(btn => {
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.export;
+      if (type === 'modalidades') {
+        exportarModalidadesCsv();
+      } else {
+        showToastErro('Tipo de exportação não reconhecido.');
+      }
+    });
+  });
 }
 
 function initAdminFilters() {
   const busca = document.getElementById('filtroBuscaInscricoes');
-  if (!busca) return;
+  if (busca) {
+    const handler = () => applyInscricoesFilters();
+    busca.addEventListener('input', handler);
+    applyInscricoesFilters();
+  }
 
-  const handler = () => applyInscricoesFilters();
-  busca.addEventListener('input', handler);
-  applyInscricoesFilters();
+  const buscaAdmin = document.getElementById('filtInscBusca');
+  if (buscaAdmin && buscaAdmin.dataset.bound !== '1') {
+    buscaAdmin.dataset.bound = '1';
+    buscaAdmin.addEventListener('input', () => applyAdminInscricoesSearch());
+  }
+  if (buscaAdmin) applyAdminInscricoesSearch();
 }
 
 function loadAdminMetrics() {
@@ -1035,7 +1214,7 @@ function openMinhasInscricoes() {
     showToastErro('Acesso restrito.');
     return;
   }
-  location.href = 'minhas-inscricoes.html';
+  location.href = 'inscricoes.html';
 }
 
 function atualizarDashboard() {
@@ -1123,7 +1302,7 @@ function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modali
     const resolved = resolveModalidadeIdByName(modalidadeLabel);
     if (resolved) modalidadeId = resolved;
   }
-  if (!inscricaoId && !modalidadeId) {
+  if (!inscricaoId && !modalidadeId && !modalidadeLabel) {
     showToastErro('Não foi possível identificar a inscrição.');
     return;
   }
@@ -1135,6 +1314,7 @@ function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modali
       const payload = {};
       if (inscricaoId) payload.inscricao_id = inscricaoId;
       if (modalidadeId) payload.modalidade_id = modalidadeId;
+      if (!modalidadeId && modalidadeLabel) payload.modalidade_nome = modalidadeLabel;
       if (currentUser.id) payload.aluno_id = currentUser.id;
       else if (matricula) payload.matricula = matricula;
 
@@ -1143,13 +1323,14 @@ function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modali
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data.sucesso) {
+        .then(async res => {
+          let data = null;
+          try { data = await res.json(); } catch (_) { data = null; }
+          if (res.ok && data && data.sucesso) {
             showToastSucesso('Inscrição cancelada.');
             carregarInscricoes();
           } else {
-            showToastErro(data.mensagem || 'Não foi possível cancelar.');
+            showToastErro(data?.mensagem || 'Não foi possível cancelar.');
           }
         })
         .catch(() => showToastErro('Erro ao cancelar inscrição.'));
@@ -1268,8 +1449,17 @@ function switchAdminTab(tabId, btn) {
     if (targetBtn.classList.contains('pill-tab')) targetBtn.classList.add('pill-tab-active');
   }
   const crumb = document.getElementById('adminCrumb');
-  if (crumb) crumb.textContent = targetBtn ? targetBtn.textContent : 'Admin';
+  const sideLink = document.querySelector(`.side-link[data-tab="${tabId}"]`);
+  if (crumb) crumb.textContent = (targetBtn || sideLink) ? (targetBtn || sideLink).textContent : 'Admin';
   localStorage.setItem('adminTab', tabId);
+  adminActiveTab = tabId;
+  if (typeof window.handleAdminTabSwitch === 'function') {
+    window.handleAdminTabSwitch(tabId);
+  }
+
+  document.querySelectorAll('.side-link[data-tab]').forEach(link => {
+    link.classList.toggle('active', link.dataset.tab === tabId);
+  });
 }
 
 function applyAdminTabVisibility() {
@@ -1290,6 +1480,10 @@ function applyAdminTabVisibility() {
 function openAdminTab(tabId) {
   if (!isStaffUser()) {
     showToastErro('Acesso restrito.');
+    return;
+  }
+  if (document.body.dataset.page === 'admin') {
+    switchAdminTab(tabId);
     return;
   }
   localStorage.setItem('adminTab', tabId);
@@ -1471,11 +1665,7 @@ function verificarMatriculaAutomatica(matricula) {
 }
 
 function editarSenha() {
-  const usernameField = document.getElementById('senhaUsernameInput');
-  if (usernameField) {
-    usernameField.value = currentUser?.matricula || currentUser?.email || '';
-  }
-  openModal('modalSenha');
+  location.href = 'recuperacao.html#reset';
 }
 
 function closeModalSenha() {
@@ -1719,6 +1909,10 @@ function savePhoto() {
     if (currentUser) {
       currentUser.foto = dataUrl;
       sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
+      const key = getPhotoStorageKey(currentUser.matricula);
+      if (key) {
+        localStorage.setItem(key, dataUrl);
+      }
     }
     const avatar = document.getElementById('userAvatar');
     const drawerAvatar = document.getElementById('drawerAvatar');
@@ -1730,6 +1924,10 @@ function savePhoto() {
 }
 
 function showToastSucesso(msg) {
+  if (window.SuccessFeedback && typeof window.SuccessFeedback.show === 'function') {
+    window.SuccessFeedback.show({ title: 'Concluido!', message: msg });
+    return;
+  }
   const toast = document.getElementById('toastSucesso');
   if (!toast) return;
   document.getElementById('toastSucessoMsg').textContent = msg;
@@ -1808,9 +2006,26 @@ function salvarSumula(event, fromMobile = false) {
 }
 
 // ------------------ ADMIN DATA LOADERS --------------------
+function handleAdminSessionExpired(message) {
+  if (window.__adminSessionExpired) return;
+  window.__adminSessionExpired = true;
+  try {
+    sessionStorage.setItem('adminSessionExpired', '1');
+  } catch (_) {}
+  const banner = document.getElementById('sessionBanner');
+  const text = document.getElementById('sessionBannerText');
+  if (text) text.textContent = message || 'Sessão expirada. Faça login novamente.';
+  if (banner) banner.classList.remove('hidden');
+}
+
 async function adminFetch(url, fallback = []) {
   try {
-    const r = await fetch(url);
+    if (window.__adminSessionExpired) return fallback;
+    const r = await fetch(url, { credentials: 'include' });
+    if (r.status === 401) {
+      handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
+      return fallback;
+    }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return await r.json();
   } catch (e) {
@@ -1821,6 +2036,10 @@ async function adminFetch(url, fallback = []) {
 
 // Toast simples
 function showToast(msg, type = 'info') {
+  if ((type === 'info' || type === 'success') && window.SuccessFeedback && typeof window.SuccessFeedback.show === 'function') {
+    window.SuccessFeedback.show({ title: 'Concluido!', message: msg });
+    return;
+  }
   let el = document.getElementById('toast');
   if (!el) {
     el = document.createElement('div');
@@ -1874,6 +2093,7 @@ function renderStatusPill(status) {
   const normalized = String(status || '').toUpperCase();
   const map = {
     NAO_INICIADO: { label: 'Não iniciado', cls: 'status-nao_iniciado' },
+    AGENDADO: { label: 'Agendado', cls: 'status-nao_iniciado' },
     EM_ANDAMENTO: { label: 'Em andamento', cls: 'status-em_andamento' },
     FINALIZADO: { label: 'Finalizado', cls: 'status-finalizado' },
   };
@@ -1891,6 +2111,47 @@ async function loadAdminMetrics() {
   m('metricComunicados', safe.comunicados ?? 0);
 }
 
+function renderAdminInscricoesTable(rows) {
+  const tbody = document.getElementById('inscBody');
+  if (!tbody) return;
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma inscrição encontrada.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.aluno || '-'}</td>
+      <td>${r.matricula || '-'}</td>
+      <td>${r.turma || '-'}</td>
+      <td>${r.modalidade || '-'}</td>
+      <td>${r.sexo || '-'}</td>
+      <td>${r.data || '-'}</td>
+      <td><span class="badge-acao">Ver detalhes</span></td>
+    </tr>`).join('');
+}
+
+function applyAdminInscricoesSearch() {
+  const termo = (document.getElementById('filtInscBusca')?.value || '').trim().toLowerCase();
+  const base = Array.isArray(adminCache.inscricoes) ? adminCache.inscricoes : [];
+  if (!termo) {
+    renderAdminInscricoesTable(base);
+    return;
+  }
+  const filtrado = base.filter(r => {
+    const texto = [
+      r.aluno,
+      r.matricula,
+      r.turma,
+      r.modalidade,
+      r.sexo,
+      r.campus,
+      r.data
+    ].filter(Boolean).join(' ').toLowerCase();
+    return texto.includes(termo);
+  });
+  renderAdminInscricoesTable(filtrado);
+}
+
 async function loadInscricoesAdmin() {
   // filtros
   const params = new URLSearchParams();
@@ -1905,16 +2166,7 @@ async function loadInscricoesAdmin() {
 
   const data = await adminFetch('/api/inscricoes' + (params.toString() ? `?${params}` : ''), []);
   adminCache.inscricoes = data;
-  renderTableBody('inscBody', data, r => `
-    <tr>
-      <td>${r.aluno || '-'}</td>
-      <td>${r.matricula || '-'}</td>
-      <td>${r.turma || '-'}</td>
-      <td>${r.modalidade || '-'}</td>
-      <td>${r.sexo || '-'}</td>
-      <td>${r.data || '-'}</td>
-      <td><span class="badge-acao">Ver detalhes</span></td>
-    </tr>`, 7);
+  applyAdminInscricoesSearch();
   preencherSelectsAdmin();
 }
 
@@ -1924,16 +2176,16 @@ async function loadUsuariosAdmin() {
   const data = await adminFetch(url, []);
   adminCache.usuarios = data;
   renderTableBody('usersBody', data, r => `
-    <tr>
-      <td>${r.nome || '-'}</td>
-      <td>${r.matricula || '-'}</td>
-      <td>${r.turma || '-'}</td>
-      <td>
-        <span class="badge-acao" onclick="editUser('${r.id||''}')">Editar</span>
-        <span class="badge-acao" onclick="deleteUser('${r.id||''}')">Excluir</span>
-        <span class="badge-acao" onclick="resetPassUser('${r.id||''}')">Resetar senha</span>
-      </td>
-    </tr>`, 4);
+      <tr>
+        <td>${r.nome || '-'}</td>
+        <td>${r.matricula || '-'}</td>
+        <td>${r.turma || '-'}</td>
+        <td>
+          <span class="badge-acao" onclick="editUser('${r.matricula||''}')">Editar</span>
+          <span class="badge-acao" onclick="deleteUser('${r.matricula||''}')">Excluir</span>
+          <span class="badge-acao" onclick="resetPassUser('${r.matricula||''}')">Resetar senha</span>
+        </td>
+      </tr>`, 4);
 }
 
 async function loadNoticiasAdmin() {
@@ -1966,11 +2218,12 @@ function initAdminPage() {
   const body = document.body;
   if (body && body.classList.contains('admin-shell')) {
     adminDataLoaded = true;
+    if (window.__adminSessionExpired) return;
     // tema
     const t = localStorage.getItem('themeAdmin');
     if (t) body.dataset.theme = t;
     // tab ativa
-    const tabId = adminActiveTab || 'tabInscricoes';
+    const tabId = localStorage.getItem('adminTab') || adminActiveTab || 'tabDashboard';
     switchAdminTab(tabId);
     // dados
     loadAdminMetrics();
@@ -1987,17 +2240,42 @@ document.addEventListener('DOMContentLoaded', initAdminPage);
 
 // ------ Ações rápidas de botões (CRUD simples) ------
 async function adminPost(url, body) {
-  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body||{}) });
+  if (window.__adminSessionExpired) throw new Error('Sessão expirada.');
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body||{})
+  });
+  if (r.status === 401) {
+    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
+    throw new Error('Sessão expirada.');
+  }
   if (!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
 async function adminPut(url, body) {
-  const r = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body||{}) });
+  if (window.__adminSessionExpired) throw new Error('Sessão expirada.');
+  const r = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body||{})
+  });
+  if (r.status === 401) {
+    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
+    throw new Error('Sessão expirada.');
+  }
   if (!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
 async function adminDelete(url) {
-  const r = await fetch(url, { method: 'DELETE' });
+  if (window.__adminSessionExpired) throw new Error('Sessão expirada.');
+  const r = await fetch(url, { method: 'DELETE', credentials: 'include' });
+  if (r.status === 401) {
+    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
+    throw new Error('Sessão expirada.');
+  }
   if (!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
@@ -2015,31 +2293,31 @@ async function createUser() {
   } catch(e){ showToast('Erro ao criar usuário','error'); }
 }
 
-async function editUser(id) {
-  if (!id) return;
+async function editUser(matricula) {
+  if (!matricula) return;
   const nome = prompt('Novo nome (deixe vazio para manter):');
   const turma = prompt('Nova turma (opcional):');
   try {
-    await adminPut(`/admin/aluno/${id}`, { nome: nome||undefined, turma: turma||undefined });
+    await adminPut(`/admin/aluno/${encodeURIComponent(matricula)}`, { nome: nome||undefined, turma: turma||undefined });
     showToast('Usuário atualizado','info');
     loadUsuariosAdmin();
   } catch(e){ showToast('Erro ao atualizar','error'); }
 }
 
-async function deleteUser(id) {
-  if (!id) return;
+async function deleteUser(matricula) {
+  if (!matricula) return;
   if (!confirm('Excluir este usuário?')) return;
   try {
-    await adminDelete(`/admin/aluno/${id}`);
+    await adminDelete(`/admin/aluno/${encodeURIComponent(matricula)}`);
     showToast('Usuário removido','info');
     loadUsuariosAdmin();
   } catch(e){ showToast('Erro ao remover','error'); }
 }
 
-async function resetPassUser(id) {
-  if (!id) return;
+async function resetPassUser(matricula) {
+  if (!matricula) return;
   try {
-    await adminPost(`/admin/aluno/${id}/reset-senha`, {});
+    await adminPost(`/admin/aluno/${encodeURIComponent(matricula)}/reset-senha`, {});
     showToast('Senha resetada (token enviado)','info');
   } catch(e){ showToast('Erro ao resetar','error'); }
 }
@@ -2180,12 +2458,12 @@ function renderSorteioTabela() {
       <td>${j.ordem ?? '-'}</td>
       <td>${j.jogo || j.numero_jogo || '-'}</td>
       <td>${j.hora || 'A seguir'}</td>
-      <td>${renderStatusPill(j.status || 'NAO_INICIADO')}</td>
       <td>${j.chave || '-'}</td>
       <td>${j.equipeA || '-'}</td>
       <td class="placar">X</td>
       <td>${j.equipeB || '-'}</td>
-      <td><button class="btn ghost btn-compact" onclick="preencherSumulaFromSorteio(${idx})">Súmula</button></td>
+      <td>${renderStatusPill(j.status || 'NAO_INICIADO')}</td>
+      <td><button class="btn-outline btn-sm" onclick="preencherSumulaFromSorteio(${idx})">Súmula</button></td>
     </tr>
   `).join('');
 }
@@ -2279,15 +2557,10 @@ function gerarSumulaPreview(download = false) {
   `;
 
   if (download) {
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sumula_${d.equipeA}_vs_${d.equipeB}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const aName = sanitizeFilename(d.equipeA, 'equipeA');
+    const bName = sanitizeFilename(d.equipeB, 'equipeB');
+    const filename = `sumula_${aName}_vs_${bName}.html`;
+    downloadTextFile(html, filename, 'text/html;charset=utf-8;');
   } else {
     const w = window.open('', '_blank');
     if (w) {
@@ -2367,17 +2640,15 @@ function filtrarResultados() {
 
 function baixarResultados() {
   const lista = filtrarLista(getResultados());
-  if (lista.length === 0) return;
+  if (lista.length === 0) {
+    showToastErro('Não há resultados para exportar.');
+    return;
+  }
   const header = ['Modalidade', 'Fase', 'Sexo', 'Etapa', 'Equipe A', 'Pontos A', 'Equipe B', 'Pontos B', 'Data', 'Árbitro'];
   const rows = lista.map(r => [r.modalidade, r.fase, r.sexo, r.etapa, r.equipeA, r.pontosA, r.equipeB, r.pontosB, r.data, r.arbitro]);
-  const csv = [header, ...rows].map(row => row.join(';')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'resultados.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+  const csv = buildCsvContent(rows, header);
+  const filename = `resultados_${new Date().toISOString().slice(0,10)}.csv`;
+  downloadTextFile(csv, filename, 'text/csv;charset=utf-8;');
 }
 
 function renderClassification() {
@@ -2493,6 +2764,23 @@ function checkTour() {
 function initPage() {
   loadUserFromStorage();
   initTheme();
+  bindPhoneMasks();
+  if (!window.__phoneMaskObserver) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType !== 1) return;
+          if (node.matches && node.matches('input')) {
+            bindPhoneMaskInput(node);
+          } else {
+            bindPhoneMasks(node);
+          }
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.__phoneMaskObserver = observer;
+  }
   const page = document.body.dataset.page || '';
   const publicPages = ['login', 'termos', 'privacidade', 'suporte', 'solicitar-otp', 'validar-otp', 'redefinir-senha', 'recuperar-matricula', 'gov-callback'];
   const isPublicPage = !page || publicPages.includes(page);
@@ -2521,7 +2809,12 @@ function initPage() {
   applyHeroGreeting();
   ensureUserFromApi().then(applyHeroGreeting);
   const avatar = document.getElementById('userAvatar');
-  if (avatar) avatar.src = currentUser.foto || 'assets/avatar-default.png';
+  if (avatar) avatar.src = currentUser.foto || '/assets/avatar-default.png';
+
+  if (page === 'admin' && sessionStorage.getItem('adminSessionExpired') === '1') {
+    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
+    return;
+  }
 
   if ((page === 'sumula' || page === 'sumula-mobile') && !isAdminUser()) {
     location.href = 'dashboard.html';
@@ -2553,6 +2846,7 @@ function initPage() {
   }
 
   ensureSiteFooter();
+  bindAdminDownloads();
   checkTour();
 
   window.addEventListener('resize', () => {
@@ -2682,7 +2976,8 @@ function preencherSelectSorteio() {
 async function carregarEquipesTurmas(modId, sexo) {
   let base = inscriptions;
   if (modId) {
-    base = base.filter(i => i.modalidade_id === Number(modId) || i.modalidade === getModalidadeNome(modId));
+    const modName = resolveModalidadeNome(modId);
+    base = base.filter(i => String(i.modalidade_id) === String(modId) || i.modalidade === modName);
   }
   if (sexo) base = base.filter(i => String(i.sexo || '').toUpperCase() === sexo.toUpperCase());
   const equipes = Array.from(new Set(base.map(i => i.turma || '').filter(Boolean)));
@@ -2690,39 +2985,50 @@ async function carregarEquipesTurmas(modId, sexo) {
 }
 
 async function gerarTabelaSorteio() {
-  const modId = getModalidadeIdSelecionada();
+  const modNome = document.getElementById('sorteioModalidade')?.value || '';
   const sexo = document.getElementById('sorteioSexo')?.value || '';
-  const local = document.getElementById('sorteioLocal')?.value || 'Quadra A';
-  const modo = document.getElementById('sorteioModo')?.value || 'GRUPOS';
   const horaInicio = document.getElementById('sorteioHoraInicio')?.value || '07:30';
   const intervaloMin = Number(document.getElementById('sorteioIntervalo')?.value || 0);
 
-  if (!modId || !sexo) { showToastErro('Escolha modalidade e sexo'); return; }
+  if (!modNome || !sexo) { showToastErro('Escolha modalidade e sexo'); return; }
 
-  const equipes = await carregarEquipesTurmas(modId, sexo);
+  const equipes = await carregarEquipesTurmas(modNome, sexo);
   if (!equipes.length) { showToastErro('Sem turmas inscritas'); return; }
 
   let jogosBase = gerarRoundRobinTurmas(equipes);
-  jogosBase = aplicarNumeracaoEHorarios(jogosBase, horaInicio, intervaloMin);
+  jogosBase = aplicarNumeracaoEHorarios(jogosBase, horaInicio, intervaloMin).map((j, idx) => ({
+    ...j,
+    jogo: j.jogo || `Jogo ${j.ordem || idx + 1}`
+  }));
 
-  await fetch('/sorteio/gerar', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      modalidade_id: modId,
+  const payloadJogos = jogosBase.map((j, idx) => ({
+    chave: j.chave || null,
+    jogo: j.jogo || `Jogo ${j.ordem || idx + 1}`,
+    ordem: j.ordem || idx + 1,
+    hora: j.hora || null,
+    equipeA: j.equipeA,
+    equipeB: j.equipeB
+  }));
+
+  try {
+    const res = await adminPost('/admin/sorteio/jogos', {
+      modalidade: modNome,
       sexo,
-      modo,
-      local_jogos: local,
-      hora_inicio: horaInicio,
-      intervalo_min: intervaloMin,
-      chaves_qtd: calcularQtdChaves(equipes.length),
-      jogos: jogosBase
-    })
-  });
-
-  sorteioRows = jogosBase;
-  renderTabelaSorteio(local);
-  showToastSucesso('Tabela gerada e salva.');
+      chave: '',
+      jogos: payloadJogos
+    });
+    sorteioRows = (res?.jogos || payloadJogos).map(j => ({
+      ...j,
+      equipeA: j.equipeA || j.equipe_a,
+      equipeB: j.equipeB || j.equipe_b,
+      hora: j.hora || j.hora_oficial
+    }));
+    adminCache.jogos = sorteioRows;
+    renderSorteioTabela();
+    showToastSucesso('Tabela gerada e salva.');
+  } catch (e) {
+    showToastErro('Erro ao gerar tabela.');
+  }
 }
 
 async function gerarHorariosSorteio() {
@@ -2732,98 +3038,71 @@ async function gerarHorariosSorteio() {
 
   aplicarNumeracaoEHorarios(sorteioRows, horaInicio, intervaloMin);
 
-  const modId = getModalidadeIdSelecionada();
+  const modNome = document.getElementById('sorteioModalidade')?.value || '';
   const sexo = document.getElementById('sorteioSexo')?.value || '';
-  const local = document.getElementById('sorteioLocal')?.value || 'Quadra A';
-  const modo = document.getElementById('sorteioModo')?.value || 'GRUPOS';
 
-  await fetch('/sorteio/gerar', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      modalidade_id: modId,
+  const payloadJogos = sorteioRows.map((j, idx) => ({
+    chave: j.chave || null,
+    jogo: j.jogo || j.jogo_label || `Jogo ${j.ordem || idx + 1}`,
+    ordem: j.ordem || idx + 1,
+    hora: j.hora || null,
+    equipeA: j.equipeA || j.equipe_a,
+    equipeB: j.equipeB || j.equipe_b
+  }));
+
+  try {
+    const res = await adminPost('/admin/sorteio/jogos', {
+      modalidade: modNome,
       sexo,
-      modo,
-      local_jogos: local,
-      hora_inicio: horaInicio,
-      intervalo_min: intervaloMin,
-      chaves_qtd: calcularQtdChaves(sorteioRows.length),
-      jogos: sorteioRows
-    })
-  });
+      chave: '',
+      jogos: payloadJogos
+    });
+    sorteioRows = (res?.jogos || payloadJogos).map(j => ({
+      ...j,
+      equipeA: j.equipeA || j.equipe_a,
+      equipeB: j.equipeB || j.equipe_b,
+      hora: j.hora || j.hora_oficial
+    }));
+    adminCache.jogos = sorteioRows;
+    renderSorteioTabela();
+    showToastSucesso('Horários aplicados e salvos.');
+  } catch (e) {
+    showToastErro('Erro ao aplicar horários.');
+  }
+}
 
-  renderTabelaSorteio(local);
-  showToastSucesso('Horários aplicados e salvos.');
+function aplicarHorariosSorteio() {
+  return gerarHorariosSorteio();
 }
 
 async function carregarTabelaSorteio() {
-  const modId = getModalidadeIdSelecionada();
+  const modNome = document.getElementById('sorteioModalidade')?.value || '';
   const sexo = document.getElementById('sorteioSexo')?.value || '';
-  if (!modId || !sexo) return;
-
-  const res = await fetch(`/sorteio/${modId}/${sexo}`);
-  const data = await res.json();
-  sorteioRows = (data.jogos || []).map(j => ({
+  const chave = document.getElementById('sorteioChave')?.value || '';
+  if (!modNome || !sexo) {
+    renderSorteioTabela();
+    return;
+  }
+  renderSkeletonTable('sorteioBody', 6, 9);
+  const params = new URLSearchParams({ modalidade: modNome, sexo });
+  if (chave) params.append('chave', chave);
+  const data = await adminFetch('/admin/jogos?' + params.toString(), []);
+  adminCache.jogos = data;
+  sorteioRows = (data || []).map(j => ({
     ...j,
     equipeA: j.equipeA || j.equipe_a,
     equipeB: j.equipeB || j.equipe_b,
-    hora: j.hora || j.hora_texto
+    hora: j.hora || j.hora_oficial
   }));
-  const local = data.meta?.local_jogos || 'Quadra A';
-  renderTabelaSorteio(local);
+  renderSorteioTabela();
 }
 
-function renderTabelaSorteio(local = 'Quadra A') {
-  const tbody = document.getElementById('sorteioBody');
-  const titulo = document.getElementById('sorteioTituloModalidade');
-  if (!tbody) return;
-
-  if (!sorteioRows.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="muted center px-4 py-3">Escolha filtros e clique em "Gerar tabela".</td></tr>';
-    return;
-  }
-
-  const modName = document.getElementById('sorteioModalidade')?.value || 'Modalidade';
-  if (titulo) titulo.textContent = modName.toUpperCase();
-  const sexoSel = document.getElementById('sorteioSexo')?.value || 'F';
-  const labelSexo = sexoSel === 'M' ? 'MASCULINO' : sexoSel === 'F' ? 'FEMININO' : 'MISTO';
-
-  const porChave = sorteioRows.reduce((acc, j) => {
-    const key = j.chave || 'CH A';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(j);
-    return acc;
-  }, {});
-
-  const linhas = [];
-  linhas.push(`<tr class="sorteio-local"><td colspan="8">Local: ${local}</td></tr>`);
-  linhas.push(`<tr class="sorteio-banner"><td colspan="8">${modName.toUpperCase()}</td></tr>`);
-  linhas.push(`<tr class="sorteio-secao"><td colspan="8">${labelSexo}</td></tr>`);
-
-  Object.keys(porChave).sort().forEach(ch => {
-    linhas.push(`<tr class="sorteio-chave"><td colspan="8">${ch}</td></tr>`);
-    porChave[ch].forEach((j) => {
-      const idx = sorteioRows.indexOf(j);
-      linhas.push(`
-        <tr>
-          <td>${j.ordem}º</td>
-          <td>Jogo ${j.numero_jogo}</td>
-          <td>${j.hora || 'A seguir'}</td>
-          <td>${j.chave || ''}</td>
-          <td>${j.equipeA || ''}</td>
-          <td class="placar">X</td>
-          <td>${j.equipeB || ''}</td>
-          <td><button class="btn-ghost no-print" onclick="preencherSumulaFromSorteio(${idx})">Súmula</button></td>
-        </tr>
-      `);
-    });
-  });
-
-  tbody.innerHTML = linhas.join('');
+function renderTabelaSorteio() {
+  renderSorteioTabela();
 }
 
 function limparSorteio() {
-  ['sorteioModalidade','sorteioSexo','sorteioLocal','sorteioModo','sorteioHoraInicio','sorteioIntervalo'].forEach(id => {
+  ['sorteioModalidade','sorteioSexo','sorteioChave','sorteioLocal','sorteioModo','sorteioHoraInicio','sorteioIntervalo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });

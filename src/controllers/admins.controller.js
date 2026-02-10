@@ -38,6 +38,9 @@ export async function criarAdmin(req, res) {
 
   const roleNorm = normalizeRole(role || 'STAFF');
   if (!roleNorm) return jsonErro(res, 400, 'Role invalida.');
+  if (req.admin?.role !== 'SUPER_ADMIN' && roleNorm !== 'STAFF') {
+    return jsonErro(res, 403, 'Permissao negada.');
+  }
 
   const orgId = req.organizationId;
   const existente = await findAdminByEmail(orgId, email);
@@ -152,4 +155,3 @@ export async function removerAdmin(req, res) {
 
   return jsonOk(res, { id });
 }
-

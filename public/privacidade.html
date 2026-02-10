@@ -1,16 +1,15 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>IFRO Esportes - Privacidade</title>
-  <link rel="icon" type="image/png" href="assets/ifro.png" />
+  <link rel="icon" type="image/png" href="/assets/ifro.png" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/light-override.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
 </head>
 <body data-page="privacidade" data-theme="light">
   <div id="appShell">
@@ -22,7 +21,7 @@
         <div class="user-menu">
           <button class="user-trigger" onclick="toggleUserDrawer()">
             <span id="userNameNavbar" class="user-name"></span>
-            <img id="userAvatar" class="user-avatar" src="assets/avatar-default.png" alt="Avatar" />
+            <img id="userAvatar" class="user-avatar" src="/assets/avatar-default.png" alt="Avatar" onerror="this.src='/assets/avatar-default.png'">
           </button>
         </div>
       </div>
@@ -49,4 +48,7 @@
   <script src="js/jsdosistema.js"></script>
 </body>
 </html>
+
+
+
 

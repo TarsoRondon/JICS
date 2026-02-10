@@ -94,6 +94,7 @@
       if (data?.user) {
         try {
           sessionStorage.setItem("usuarioLogado", JSON.stringify(data.user));
+          sessionStorage.removeItem("adminSessionExpired");
         } catch (_) {}
       }
       window.toast?.("Login realizado!", "ok");

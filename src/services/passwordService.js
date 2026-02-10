@@ -38,7 +38,7 @@ export async function requestOtp({ matricula, email }) {
     const cleanEmail = String(email || '').trim().toLowerCase();
 
     if (!isValidMatricula(cleanMatricula)) {
-        return { ok: false, status: 400, message: 'Dados invÃ¡lidos.' };
+        return { ok: false, status: 400, message: 'Dados inválidos.' };
     }
 
     const emailValidation = await validateEmail(cleanEmail);
@@ -134,18 +134,18 @@ export async function resetPassword({ matricula, resetToken, novaSenha }) {
     const senha = String(novaSenha || '');
 
     if (!isValidMatricula(cleanMatricula) || !token || !isValidPassword(senha)) {
-        return { ok: false, status: 400, message: 'Dados invÃ¡lidos.' };
+        return { ok: false, status: 400, message: 'Dados inválidos.' };
     }
 
     const tokenHash = hashSha256(token);
     const registro = await getValidResetToken(cleanMatricula, tokenHash);
     if (!registro) {
-        return { ok: false, status: 400, message: 'Token invÃ¡lido ou expirado.' };
+        return { ok: false, status: 400, message: 'Token inválido ou expirado.' };
     }
 
     if (new Date(registro.expira_em) < new Date()) {
         await markResetTokenUsed(registro.id);
-        return { ok: false, status: 400, message: 'Token invÃ¡lido ou expirado.' };
+        return { ok: false, status: 400, message: 'Token inválido ou expirado.' };
     }
 
     await updateSenha(cleanMatricula, senha);
