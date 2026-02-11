@@ -17,72 +17,99 @@
 
 <body class="admin-ui admin-cadastro auth-page" data-theme="light">
     <main class="cadastro-shell">
-        <div class="cadastro-grid">
-            <section class="cadastro-hero">
-                <div class="brand">
-                    <div class="brand-badge">J</div>
-                    <div class="brand-text">
-                        <strong>JICS - IFRO Esportes</strong>
-                        <span>Cadastro de administradores</span>
+        <section class="cadastro-hero">
+            <div class="brand">
+                <img class="brand-logo" src="/assets/ifro.png" alt="IFRO" />
+                <div class="brand-text">
+                    <strong>JICS - IFRO Esportes</strong>
+                    <span>Administração do sistema</span>
+                </div>
+            </div>
+
+            <div class="cadastro-title-block">
+                <span class="cadastro-kicker">Cadastro</span>
+                <h1>Novo administrador</h1>
+                <p>Crie um perfil com permissão para gerenciar o sistema e acompanhar atividades críticas.</p>
+            </div>
+
+            <div class="cadastro-highlights">
+                <div class="highlight-card">
+                    <strong>Permissões</strong>
+                    <span>Defina o nível de acesso conforme a função.</span>
+                </div>
+                <div class="highlight-card">
+                    <strong>Segurança</strong>
+                    <span>Use senha forte com pelo menos 8 caracteres.</span>
+                </div>
+                <div class="highlight-card">
+                    <strong>Auditoria</strong>
+                    <span>Todas as ações ficam registradas nos logs.</span>
+                </div>
+            </div>
+
+            <div class="cadastro-note">
+                <strong>Dica:</strong> mantenha as permissões mínimas necessárias para cada administrador.
+            </div>
+        </section>
+
+        <section class="card cadastro-card">
+            <header class="card-head">
+                <h2>Dados do administrador</h2>
+                <p>Preencha as informações abaixo para concluir o cadastro.</p>
+            </header>
+
+            <form id="adminForm" novalidate>
+                <div id="adminFormMsg" class="form-msg" role="status" aria-live="polite"></div>
+
+                <div class="field">
+                    <label for="nome">Nome completo</label>
+                    <div class="control">
+                        <input id="nome" name="nome" type="text" placeholder="Digite o nome completo" autocomplete="name" required />
+                    </div>
+                    <small class="hint" data-hint="nome"></small>
+                </div>
+
+                <div class="field">
+                    <label for="email">E-mail</label>
+                    <div class="control">
+                        <input id="email" name="email" type="email" placeholder="email@exemplo.com" autocomplete="email" required />
+                    </div>
+                    <small class="hint" data-hint="email"></small>
+                </div>
+
+                <div class="field">
+                    <label for="senha">Senha</label>
+                    <div class="control">
+                        <input id="senha" name="senha" type="password" placeholder="Crie uma senha segura" autocomplete="new-password" required />
+                    </div>
+                    <small class="hint" data-hint="senha"></small>
+                </div>
+
+                <div class="field">
+                    <label for="role">Nível de acesso</label>
+                    <div class="control">
+                        <select id="role" name="role">
+                            <option value="ADMIN">ADMIN</option>
+                            <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+                            <option value="STAFF">STAFF</option>
+                        </select>
                     </div>
                 </div>
-                <h1>Novo administrador</h1>
-                <p>Crie um novo administrador para acessar o painel e gerenciar o sistema.</p>
-                <ul class="cadastro-tips">
-                    <li>Use uma senha forte com pelo menos 8 caracteres.</li>
-                    <li>Escolha o nível de acesso adequado.</li>
-                    <li>O campo "Criado por" é opcional e serve para auditoria.</li>
-                </ul>
-            </section>
 
-            <section class="card cadastro-card">
-                <header class="card-head">
-                    <h2>Dados do administrador</h2>
-                    <p>Preencha as informações abaixo para concluir o cadastro.</p>
-                </header>
-
-                <form id="adminForm" novalidate>
-                    <div id="adminFormMsg" class="form-msg" role="status" aria-live="polite"></div>
-                    <div class="field">
-                        <label for="matricula">Matrícula</label>
-                        <div class="control">
-                            <input id="matricula" name="matricula" type="text" placeholder="Digite a matrícula" required />
-                        </div>
-                        <small class="hint" data-hint="matricula"></small>
+                <div class="field">
+                    <label for="orgId">Organização (ID)</label>
+                    <div class="control">
+                        <input id="orgId" name="orgId" type="text" placeholder="Preenchido automaticamente" />
                     </div>
+                    <small class="hint">Este campo será preenchido automaticamente quando disponível.</small>
+                </div>
 
-                    <div class="field">
-                        <label for="senha">Senha</label>
-                        <div class="control">
-                            <input id="senha" name="senha" type="password" placeholder="Crie uma senha segura" required />
-                        </div>
-                        <small class="hint" data-hint="senha"></small>
-                    </div>
-
-                    <div class="field">
-                        <label for="role">Nível de acesso</label>
-                        <div class="control">
-                            <select id="role" name="role">
-                  <option value="ADMIN">ADMIN</option>
-                  <option value="SUPER_ADMIN">SUPER_ADMIN</option>
-                </select>
-                        </div>
-                    </div>
-
-                    <div class="field">
-                        <label for="criadoPor">Criado por (matrícula do admin)</label>
-                        <div class="control">
-                            <input id="criadoPor" name="criadoPor" type="text" placeholder="Opcional" />
-                        </div>
-                    </div>
-
-                    <div class="actions-row">
-                        <button class="btn-primary" id="btnSalvar" type="submit">Salvar admin</button>
-                        <a class="back-link" href="admin.html">Voltar ao painel</a>
-                    </div>
-                </form>
-            </section>
-        </div>
+                <div class="actions-row">
+                    <button class="btn-primary" id="btnSalvar" type="submit">Salvar administrador</button>
+                    <a class="back-link" href="admin.html">Voltar ao painel</a>
+                </div>
+            </form>
+        </section>
     </main>
 </body>
 

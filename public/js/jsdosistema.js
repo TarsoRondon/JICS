@@ -1,4 +1,4 @@
-﻿let currentUser = null;
+let currentUser = null;
 let modalidades = [];
 let noticias = [];
 let inscriptions = [];
@@ -1599,20 +1599,105 @@ function addUser(event) {
     showToastErro('Acesso restrito.');
     return;
   }
+
+  const form = document.getElementById('newUserForm');
+  const msg = document.getElementById('newUserMsg');
   const matriculaInput = document.getElementById('newMatricula');
+  const nomeInput = document.getElementById('newNome');
+  const campusInput = document.getElementById('newCampus');
+  const cursoInput = document.getElementById('newCurso');
+  const turmaInput = document.getElementById('newTurma');
+  const nascimentoInput = document.getElementById('newNascimento');
+  const emailInput = document.getElementById('newEmail');
+  const senhaInput = document.getElementById('newSenha');
+
+  const setMsg = (text, type = 'error') => {
+    if (!msg) return;
+    msg.textContent = text || '';
+    msg.classList.remove('show', 'success', 'error');
+    if (text) msg.classList.add('show', type === 'success' ? 'success' : 'error');
+  };
+
+  const clearError = (input) => {
+    if (input) input.classList.remove('input-erro');
+  };
+
+  const setError = (input) => {
+    if (input) input.classList.add('input-erro');
+  };
+
+  const bindClear = (input) => {
+    if (!input || input.dataset.bound) return;
+    input.dataset.bound = '1';
+    input.addEventListener('input', () => {
+      clearError(input);
+      setMsg('');
+    });
+  };
+
+  [matriculaInput, nomeInput, campusInput, cursoInput, turmaInput, nascimentoInput, emailInput, senhaInput]
+    .forEach(bindClear);
+
+  setMsg('');
+  [matriculaInput, nomeInput, campusInput, cursoInput, turmaInput, nascimentoInput, emailInput, senhaInput]
+    .forEach(clearError);
+
   if (matriculaInput.classList.contains('input-erro')) {
-    showToastErro('Corrija a matrícula antes de cadastrar');
+    setMsg('Corrija a matricula antes de cadastrar.');
+    matriculaInput.focus();
     return;
   }
+
+  const matricula = (matriculaInput?.value || '').trim();
+  const nome = (nomeInput?.value || '').trim();
+  const campus = (campusInput?.value || '').trim();
+  const cursoRaw = (cursoInput?.value || '').trim();
+  const turma = (turmaInput?.value || '').trim();
+  const nascimento = (nascimentoInput?.value || '').trim();
+  const email = (emailInput?.value || '').trim();
+  const senha = (senhaInput?.value || '').trim();
+
+  const errors = [];
+  if (!matricula || matricula.length !== 13) { setError(matriculaInput); errors.push(matriculaInput); }
+  if (!nome) { setError(nomeInput); errors.push(nomeInput); }
+  if (!campus) { setError(campusInput); errors.push(campusInput); }
+  if (!cursoRaw) { setError(cursoInput); errors.push(cursoInput); }
+  if (!turma) { setError(turmaInput); errors.push(turmaInput); }
+  if (!nascimento) { setError(nascimentoInput); errors.push(nascimentoInput); }
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!emailOk) { setError(emailInput); errors.push(emailInput); }
+  if (senha.length < 8) { setError(senhaInput); errors.push(senhaInput); }
+
+  if (errors.length) {
+    setMsg('Preencha todos os campos obrigatorios corretamente.');
+    errors[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    errors[0].focus({ preventScroll: true });
+    return;
+  }
+
+  const resolveCursoDescricao = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const normalized = raw
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    if (normalized.includes('informatica')) return 'Tecnico em Informatica Integrado ao Ensino Medio';
+    if (normalized.includes('quimica')) return 'Tecnico em Quimica Integrado ao Ensino Medio';
+    if (normalized.includes('edific')) return 'Tecnico em Edificacoes Integrado ao Ensino Medio';
+    if (normalized.includes('eletro')) return 'Tecnico em Eletrotecnica Integrado ao Ensino Medio';
+    return raw;
+  };
+
   const aluno = {
-    matricula: matriculaInput.value,
-    nome: document.getElementById('newNome').value,
-    campus: document.getElementById('newCampus').value,
-    descricao_curso: document.getElementById('newCurso').value,
-    turma: document.getElementById('newTurma').value,
-    data_nascimento: document.getElementById('newNascimento').value,
-    email_pessoal: document.getElementById('newEmail').value,
-    senha: document.getElementById('newSenha').value
+    matricula,
+    nome,
+    campus,
+    descricao_curso: resolveCursoDescricao(cursoRaw),
+    turma,
+    data_nascimento: nascimento,
+    email_pessoal: email,
+    senha
   };
 
   const roleSelect = document.getElementById('newRole');
@@ -1628,14 +1713,20 @@ function addUser(event) {
     .then(res => res.json())
     .then(data => {
       if (!data.sucesso) {
-        showToastErro(data.mensagem || 'Erro ao cadastrar aluno');
+        if (data.mensagem && String(data.mensagem).toLowerCase().includes('curso')) {
+          setError(cursoInput);
+        }
+        setMsg(data.mensagem || 'Erro ao cadastrar aluno');
         return;
       }
+      setMsg('Aluno cadastrado com sucesso.', 'success');
       showToastSucesso('Aluno cadastrado com sucesso!');
-      event.target.reset();
+      if (form) form.reset();
       if (roleSelect) roleSelect.value = 'ALUNO';
+      const status = document.getElementById('matriculaStatus');
+      if (status) status.textContent = '';
     })
-    .catch(() => showToastErro('Erro ao conectar com o servidor'));
+    .catch(() => setMsg('Erro ao conectar com o servidor'));
 }
 
 function onMatriculaInput() {
@@ -2189,7 +2280,7 @@ async function loadUsuariosAdmin() {
 }
 
 async function loadNoticiasAdmin() {
-  const data = await adminFetch('/api/noticias', []);
+  const data = await adminFetch('/noticias', []);
   adminCache.noticias = data;
   renderTableBody('newsBody', data, r => `
     <tr>
@@ -2201,7 +2292,7 @@ async function loadNoticiasAdmin() {
 }
 
 async function loadModalidadesAdmin() {
-  const data = await adminFetch('/api/modalidades', []);
+  const data = await adminFetch('/modalidades', []);
   adminCache.modalidades = data;
   renderTableBody('modsBody', data, r => `
     <tr>
@@ -2327,7 +2418,7 @@ async function createNews() {
   const descricao = prompt('Descrição:');
   if (!titulo || !descricao) return;
   try {
-    await adminPost('/api/noticias', { titulo, descricao });
+    await adminPost('/admin/noticias', { titulo, descricao });
     showToast('Notícia publicada','info');
     loadNoticiasAdmin();
   } catch(e){ showToast('Erro ao publicar','error'); }
@@ -2340,7 +2431,7 @@ async function saveNews(event) {
   const descricao = document.getElementById('newsDescricao')?.value.trim();
   if (!titulo || !descricao) { showToast('Preencha título e descrição','error'); return; }
   try {
-    await adminPost('/api/noticias', { titulo, descricao, autor, data });
+    await adminPost('/admin/noticias', { titulo, descricao, autor, data });
     showToast('Notícia publicada','info');
     if (event && event.target?.reset) event.target.reset();
     loadNoticiasAdmin();
@@ -2350,7 +2441,7 @@ async function editNews(id) {
   const titulo = prompt('Novo título:');
   const descricao = prompt('Nova descrição:');
   try {
-    await adminPut(`/api/noticias/${id}`, { titulo, descricao });
+    await adminPut(`/noticias/${id}`, { titulo, descricao });
     showToast('Notícia atualizada','info');
     loadNoticiasAdmin();
   } catch(e){ showToast('Erro ao atualizar','error'); }
@@ -2358,7 +2449,7 @@ async function editNews(id) {
 async function deleteNews(id) {
   if (!confirm('Excluir notícia?')) return;
   try {
-    await adminDelete(`/api/noticias/${id}`);
+    await adminDelete(`/noticias/${id}`);
     showToast('Notícia excluída','info');
     loadNoticiasAdmin();
   } catch(e){ showToast('Erro ao excluir','error'); }
@@ -2369,7 +2460,7 @@ async function createMod() {
   const horario = prompt('Dias/horários:');
   if (!nome) return;
   try {
-    await adminPost('/api/modalidades', { nome, horario });
+    await adminPost('/admin/modalidades', { nome, horario });
     showToast('Modalidade criada','info');
     loadModalidadesAdmin();
   } catch(e){ showToast('Erro ao criar modalidade','error'); }
@@ -2380,7 +2471,7 @@ async function saveMod(event) {
   const horario = document.getElementById('modHorario')?.value.trim();
   if (!nome || !horario) { showToast('Preencha modalidade e horário','error'); return; }
   try {
-    await adminPost('/api/modalidades', { nome, horario });
+    await adminPost('/admin/modalidades', { nome, horario });
     showToast('Modalidade salva','info');
     if (event?.target?.reset) event.target.reset();
     loadModalidadesAdmin();
@@ -2390,7 +2481,7 @@ async function editMod(id) {
   const nome = prompt('Novo nome:');
   const horario = prompt('Novo horário:');
   try {
-    await adminPut(`/api/modalidades/${id}`, { nome, horario });
+    await adminPut(`/admin/modalidades/${id}`, { nome, horario });
     showToast('Modalidade atualizada','info');
     loadModalidadesAdmin();
   } catch(e){ showToast('Erro ao atualizar','error'); }
@@ -2398,7 +2489,7 @@ async function editMod(id) {
 async function deleteMod(id) {
   if (!confirm('Excluir modalidade?')) return;
   try {
-    await adminDelete(`/api/modalidades/${id}`);
+    await adminDelete(`/admin/modalidades/${id}`);
     showToast('Modalidade removida','info');
     loadModalidadesAdmin();
   } catch(e){ showToast('Erro ao remover','error'); }
@@ -3120,4 +3211,9 @@ function animateButton(btn) {
 function exportarTabelaSorteioPrint() {
   window.print();
 }
+
+
+
+
+
 

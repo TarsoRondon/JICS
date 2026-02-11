@@ -33,6 +33,16 @@
     } catch (_) {}
   }
 
+  function clearSessionBanner() {
+    const banner = document.getElementById('sessionBanner');
+    if (banner) banner.classList.add('hidden');
+    adminSessionExpired = false;
+    window.__adminSessionExpired = false;
+    try {
+      sessionStorage.removeItem('adminSessionExpired');
+    } catch (_) {}
+  }
+
   function handleUnauthorized(message) {
     showSessionBanner(message || 'Sessão expirada. Faça login novamente.');
   }
@@ -75,6 +85,13 @@
       const res = await fetch('/auth/admin/me', { credentials: 'include' });
       if (res.status === 401) {
         handleUnauthorized('Sessão expirada. Faça login novamente.');
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data?.sucesso) {
+          clearSessionBanner();
+        }
       }
     } catch (_) {}
   }

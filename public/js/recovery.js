@@ -165,6 +165,9 @@
 
   function setMode(mode) {
     state.mode = mode;
+    if (document?.body) {
+      document.body.classList.toggle('is-reset', mode === 'RESET_PASSWORD');
+    }
     modeTabs.forEach(tab => {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });

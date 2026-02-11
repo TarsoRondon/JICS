@@ -165,6 +165,14 @@ async function ensureAdminsSchema() {
     }
 }
 
+function normalizeCursoTexto(texto) {
+    return String(texto || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+}
+
 function getCursoCodigo(descricao) {
     const cursosCodigo = {
         'Técnico em Informática Integrado ao Ensino Médio': 606,
@@ -172,7 +180,15 @@ function getCursoCodigo(descricao) {
         'Técnico em Edificações Integrado ao Ensino Médio': 604,
         'Técnico em Eletrotécnica Integrado ao Ensino Médio': 605
     };
-    return cursosCodigo[descricao];
+    if (!descricao) return null;
+    if (cursosCodigo[descricao]) return cursosCodigo[descricao];
+
+    const normalized = normalizeCursoTexto(descricao);
+    if (normalized.includes('informatica')) return 606;
+    if (normalized.includes('quimica')) return 608;
+    if (normalized.includes('edific')) return 604;
+    if (normalized.includes('eletro')) return 605;
+    return null;
 }
 
 async function logAudit(userId, entidade, entidadeId, acao, payload = null) {
@@ -693,50 +709,64 @@ app.delete('/noticias/:id', async(req, res) => {
 });
 
 app.post('/admin/modalidades', async(req, res) => {
-    const { titulo, descricao, professor, hora_inicio, hora_fim } = req.body;
+        const { titulo, descricao, professor, hora_inicio, hora_fim, nome, horario } = req.body || {};
 
-    if (!titulo || !descricao || !professor || !hora_inicio || !hora_fim) {
-        return res.json({ sucesso: false });
-    }
+        const tituloFinal = String(titulo || nome || '').trim();
+        const descricaoFinal = String(descricao || horario || 'Sem descricao').trim();
+        const professorFinal = String(professor || 'Nao informado').trim();
+        const horaInicioFinal = String(hora_inicio || '00:00').trim();
+        const horaFimFinal = String(hora_fim || '00:00').trim();
 
-    try {
-        const conexao = await conectar();
-        await conexao.query(
-            `INSERT INTO modalidades
-             (titulo, descricao, professor, hora_inicio, hora_fim)
-             VALUES (?, ?, ?, ?, ?)`, [titulo, descricao, professor, hora_inicio, hora_fim]
-        );
-        await conexao.end();
+        if (!tituloFinal) {
+            return res.status(400).json({ sucesso: false, mensagem: 'Titulo obrigatorio.' });
+        }
 
-        res.json({ sucesso: true });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ sucesso: false });
-    }
-});
+        try {
+            const conexao = await conectar();
+            await conexao.query(
+                `INSERT INTO modalidades
+               (titulo, descricao, professor, hora_inicio, hora_fim)
+               VALUES (?, ?, ?, ?, ?)`,
+                [tituloFinal, descricaoFinal, professorFinal, horaInicioFinal, horaFimFinal]
+            );
+            await conexao.end();
+
+            res.json({ sucesso: true });
+        } catch (e) {
+            console.error(e);
+            res.status(500).json({ sucesso: false });
+        }
+    });
 
 app.put('/admin/modalidades/:id', async(req, res) => {
-    const { id } = req.params;
-    const { titulo, descricao, professor, hora_inicio, hora_fim } = req.body;
+        const { id } = req.params;
+        const { titulo, descricao, professor, hora_inicio, hora_fim, nome, horario } = req.body || {};
 
-    if (!titulo || !descricao || !professor || !hora_inicio || !hora_fim) {
-        return res.status(400).json({ sucesso: false });
-    }
+        const tituloFinal = String(titulo || nome || '').trim();
+        const descricaoFinal = String(descricao || horario || 'Sem descricao').trim();
+        const professorFinal = String(professor || 'Nao informado').trim();
+        const horaInicioFinal = String(hora_inicio || '00:00').trim();
+        const horaFimFinal = String(hora_fim || '00:00').trim();
 
-    try {
-        const conexao = await conectar();
-        await conexao.query(
-            `UPDATE modalidades
-             SET titulo = ?, descricao = ?, professor = ?, hora_inicio = ?, hora_fim = ?
-             WHERE id = ?`, [titulo, descricao, professor, hora_inicio, hora_fim, id]
-        );
-        await conexao.end();
-        res.json({ sucesso: true });
-    } catch (erro) {
-        console.error(erro);
-        res.status(500).json({ sucesso: false });
-    }
-});
+        if (!tituloFinal) {
+            return res.status(400).json({ sucesso: false, mensagem: 'Titulo obrigatorio.' });
+        }
+
+        try {
+            const conexao = await conectar();
+            await conexao.query(
+                `UPDATE modalidades
+               SET titulo = ?, descricao = ?, professor = ?, hora_inicio = ?, hora_fim = ?
+               WHERE id = ?`,
+                [tituloFinal, descricaoFinal, professorFinal, horaInicioFinal, horaFimFinal, id]
+            );
+            await conexao.end();
+            res.json({ sucesso: true });
+        } catch (erro) {
+            console.error(erro);
+            res.status(500).json({ sucesso: false });
+        }
+    });
 
 app.delete('/admin/modalidades/:id', async(req, res) => {
     const { id } = req.params;

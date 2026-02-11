@@ -173,21 +173,43 @@ export async function gerarPdfSorteioController(req, res) {
     const { eventoId, modalidadeId, sexo } = req.params;
     const orgId = req.organizationId;
 
-    const jogosFinalizados = await dbQuery(
-      `SELECT * FROM jogos
-       WHERE organization_id = :organization_id
-         AND evento_id = :evento_id
-         AND modalidade_id = :modalidade_id
-         AND sexo = :sexo
-         AND status = 'FINALIZADO'`,
-      { organization_id: orgId, evento_id: eventoId, modalidade_id: modalidadeId, sexo }
-    );
+    let jogosFinalizados;
+    try {
+      jogosFinalizados = await dbQuery(
+        `SELECT * FROM jogos
+         WHERE organization_id = :organization_id
+           AND evento_id = :evento_id
+           AND modalidade_id = :modalidade_id
+           AND sexo = :sexo
+           AND status = 'FINALIZADO'`,
+        { organization_id: orgId, evento_id: eventoId, modalidade_id: modalidadeId, sexo }
+      );
+    } catch (err) {
+      if (err?.code !== 'ER_BAD_FIELD_ERROR') throw err;
+      jogosFinalizados = await dbQuery(
+        `SELECT * FROM jogos
+         WHERE evento_id = :evento_id
+           AND modalidade_id = :modalidade_id
+           AND sexo = :sexo
+           AND status = 'FINALIZADO'`,
+        { evento_id: eventoId, modalidade_id: modalidadeId, sexo }
+      );
+    }
     const ranking = calcularRanking(jogosFinalizados);
 
-    const evento = (await dbQuery(
-      'SELECT id, nome, ano FROM eventos WHERE id = :id AND organization_id = :orgId LIMIT 1',
-      { id: eventoId, orgId }
-    ))[0];
+    let evento;
+    try {
+      evento = (await dbQuery(
+        'SELECT id, nome, ano FROM eventos WHERE id = :id AND organization_id = :orgId LIMIT 1',
+        { id: eventoId, orgId }
+      ))[0];
+    } catch (err) {
+      if (err?.code !== 'ER_BAD_FIELD_ERROR') throw err;
+      evento = (await dbQuery(
+        'SELECT id, nome, ano FROM eventos WHERE id = :id LIMIT 1',
+        { id: eventoId }
+      ))[0];
+    }
 
     const modalidade = (await dbQuery(
       'SELECT id, titulo FROM modalidades WHERE id = :id LIMIT 1',

@@ -358,6 +358,7 @@
                             </div>
                         </div>
                         <form id="newUserForm" onsubmit="return false;">
+                            <div id="newUserMsg" class="form-msg" role="status" aria-live="polite"></div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Matrícula</label>
@@ -374,7 +375,17 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Curso</label>
-                                    <input id="newCurso" />
+                                    <input id="newCurso" list="cursoOptions" placeholder="Ex: Informática" />
+                                    <datalist id="cursoOptions">
+                                        <option value="Técnico em Informática Integrado ao Ensino Médio"></option>
+                                        <option value="Técnico em Química Integrado ao Ensino Médio"></option>
+                                        <option value="Técnico em Edificações Integrado ao Ensino Médio"></option>
+                                        <option value="Técnico em Eletrotécnica Integrado ao Ensino Médio"></option>
+                                        <option value="Informática"></option>
+                                        <option value="Química"></option>
+                                        <option value="Edificações"></option>
+                                        <option value="Eletrotécnica"></option>
+                                    </datalist>
                                 </div>
                                 <div class="form-group">
                                     <label>Turma</label>

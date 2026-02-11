@@ -1,6 +1,7 @@
 import { pool, dbQuery } from '../db/conn.js';
 
 let cachedJogosColumns = null;
+let cachedSorteioMetaColumns = null;
 
 async function getJogosColumns() {
   if (cachedJogosColumns) return cachedJogosColumns;
@@ -12,6 +13,19 @@ async function getJogosColumns() {
   );
   const cols = new Set(rows.map(r => r.COLUMN_NAME));
   cachedJogosColumns = cols;
+  return cols;
+}
+
+async function getSorteioMetaColumns() {
+  if (cachedSorteioMetaColumns) return cachedSorteioMetaColumns;
+  const rows = await dbQuery(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'sorteio_meta'`
+  );
+  const cols = new Set(rows.map(r => r.COLUMN_NAME));
+  cachedSorteioMetaColumns = cols;
   return cols;
 }
 
@@ -171,24 +185,41 @@ export function calcularRanking(jogosFinalizados) {
 }
 
 export async function buscarSorteio({ organization_id, evento_id, modalidade_id, sexo }) {
+  const jogosCols = await getJogosColumns();
+  const hasOrg = jogosCols.has('organization_id');
+  const hasEvento = jogosCols.has('evento_id');
+  const hasModalidade = jogosCols.has('modalidade_id');
+  const hasSexo = jogosCols.has('sexo');
+  const jogosParams = {};
+  const jogosWhere = [];
+  if (hasOrg) { jogosParams.organization_id = organization_id; jogosWhere.push('organization_id = :organization_id'); }
+  if (hasEvento) { jogosParams.evento_id = evento_id; jogosWhere.push('evento_id = :evento_id'); }
+  if (hasModalidade) { jogosParams.modalidade_id = modalidade_id; jogosWhere.push('modalidade_id = :modalidade_id'); }
+  if (hasSexo) { jogosParams.sexo = sexo; jogosWhere.push('sexo = :sexo'); }
+  const hasOrdem = jogosCols.has('ordem');
   const rows = await dbQuery(
     `SELECT * FROM jogos
-     WHERE organization_id = :organization_id
-       AND evento_id = :evento_id
-       AND modalidade_id = :modalidade_id
-       AND sexo = :sexo
-     ORDER BY ordem ASC, id ASC`,
-    { organization_id, evento_id, modalidade_id, sexo }
+     ${jogosWhere.length ? `WHERE ${jogosWhere.join(' AND ')}` : ''}
+     ORDER BY ${hasOrdem ? 'ordem ASC,' : ''} id ASC`,
+    jogosParams
   );
 
+  const metaCols = await getSorteioMetaColumns();
+  const metaHasOrg = metaCols.has('organization_id');
+  const metaHasEvento = metaCols.has('evento_id');
+  const metaHasModalidade = metaCols.has('modalidade_id');
+  const metaHasSexo = metaCols.has('sexo');
+  const metaParams = {};
+  const metaWhere = [];
+  if (metaHasOrg) { metaParams.organization_id = organization_id; metaWhere.push('organization_id = :organization_id'); }
+  if (metaHasEvento) { metaParams.evento_id = evento_id; metaWhere.push('evento_id = :evento_id'); }
+  if (metaHasModalidade) { metaParams.modalidade_id = modalidade_id; metaWhere.push('modalidade_id = :modalidade_id'); }
+  if (metaHasSexo) { metaParams.sexo = sexo; metaWhere.push('sexo = :sexo'); }
   const meta = await dbQuery(
     `SELECT * FROM sorteio_meta
-     WHERE organization_id = :organization_id
-       AND evento_id = :evento_id
-       AND modalidade_id = :modalidade_id
-       AND sexo = :sexo
+     ${metaWhere.length ? `WHERE ${metaWhere.join(' AND ')}` : ''}
      LIMIT 1`,
-    { organization_id, evento_id, modalidade_id, sexo }
+    metaParams
   );
 
   return { jogos: rows, meta: meta[0] || null };
@@ -209,8 +240,22 @@ export async function salvarSorteio({
   const cols = await getJogosColumns();
   const timeCol = pickTimeColumn(cols);
   const labelCol = pickLabelColumn(cols);
+  const hasOrg = cols.has('organization_id');
+  const hasEvento = cols.has('evento_id');
+  const hasModalidade = cols.has('modalidade_id');
+  const hasSexo = cols.has('sexo');
 
-  const baseCols = ['organization_id', 'evento_id', 'modalidade_id', 'sexo', 'chave', 'equipe_a', 'equipe_b', 'status'];
+  const baseCols = [
+    hasOrg ? 'organization_id' : null,
+    hasEvento ? 'evento_id' : null,
+    hasModalidade ? 'modalidade_id' : null,
+    hasSexo ? 'sexo' : null,
+    'chave',
+    'equipe_a',
+    'equipe_b',
+    'status'
+  ]
+    .filter(Boolean);
   if (cols.has('ordem')) baseCols.push('ordem');
   if (labelCol) baseCols.push(labelCol);
   if (timeCol) baseCols.push(timeCol);
@@ -220,11 +265,24 @@ export async function salvarSorteio({
   try {
     await conn.beginTransaction();
 
-    await conn.query(
-      `DELETE FROM jogos
-       WHERE organization_id = ? AND evento_id = ? AND modalidade_id = ? AND sexo = ?`,
-      [organization_id, evento_id, modalidade_id, sexo]
-    );
+    if (hasOrg || hasEvento || hasModalidade || hasSexo) {
+      const whereParts = [];
+      const whereParams = [];
+      if (hasOrg) { whereParts.push('organization_id = ?'); whereParams.push(organization_id); }
+      if (hasEvento) { whereParts.push('evento_id = ?'); whereParams.push(evento_id); }
+      if (hasModalidade) { whereParts.push('modalidade_id = ?'); whereParams.push(modalidade_id); }
+      if (hasSexo) { whereParts.push('sexo = ?'); whereParams.push(sexo); }
+      await conn.query(
+        `DELETE FROM jogos
+         WHERE ${whereParts.join(' AND ')}`,
+        whereParams
+      );
+    } else {
+      await conn.query(
+        `DELETE FROM jogos`,
+        []
+      );
+    }
 
     if (jogos && jogos.length) {
       const values = jogos.map((j, idx) => {
@@ -254,27 +312,45 @@ export async function salvarSorteio({
       );
     }
 
+    const metaCols = await getSorteioMetaColumns();
+    const metaHasOrg = metaCols.has('organization_id');
+    const metaHasEvento = metaCols.has('evento_id');
+    const metaHasModalidade = metaCols.has('modalidade_id');
+    const metaHasSexo = metaCols.has('sexo');
+    const metaFields = [
+      metaHasOrg ? 'organization_id' : null,
+      metaHasEvento ? 'evento_id' : null,
+      metaHasModalidade ? 'modalidade_id' : null,
+      metaHasSexo ? 'sexo' : null,
+      'modo',
+      'local_jogos',
+      'hora_inicio',
+      'intervalo_min',
+      'chaves_qtd',
+    ].filter(Boolean);
+    const metaValues = [
+      metaHasOrg ? organization_id : null,
+      metaHasEvento ? evento_id : null,
+      metaHasModalidade ? modalidade_id : null,
+      metaHasSexo ? sexo : null,
+      modo || 'GRUPOS',
+      local_jogos || 'Quadra A',
+      hora_inicio || '07:30',
+      intervalo_min || 10,
+      chaves_qtd || 1,
+    ].filter(v => v !== null);
+    const placeholders = metaFields.map(() => '?').join(',');
     await conn.query(
       `INSERT INTO sorteio_meta
-        (organization_id, evento_id, modalidade_id, sexo, modo, local_jogos, hora_inicio, intervalo_min, chaves_qtd)
-       VALUES (?,?,?,?,?,?,?,?,?)
+        (${metaFields.join(', ')})
+       VALUES (${placeholders})
        ON DUPLICATE KEY UPDATE
         modo = VALUES(modo),
         local_jogos = VALUES(local_jogos),
         hora_inicio = VALUES(hora_inicio),
         intervalo_min = VALUES(intervalo_min),
         chaves_qtd = VALUES(chaves_qtd)`,
-      [
-        organization_id,
-        evento_id,
-        modalidade_id,
-        sexo,
-        modo || 'GRUPOS',
-        local_jogos || 'Quadra A',
-        hora_inicio || '07:30',
-        intervalo_min || 10,
-        chaves_qtd || 1,
-      ]
+      metaValues
     );
 
     await conn.commit();
@@ -290,16 +366,23 @@ export async function aplicarHorariosEmJogos({ organization_id, evento_id, modal
   const cols = await getJogosColumns();
   const timeCol = pickTimeColumn(cols);
   if (!timeCol) return;
+  const hasOrg = cols.has('organization_id');
+  const hasEvento = cols.has('evento_id');
+  const hasModalidade = cols.has('modalidade_id');
+  const hasSexo = cols.has('sexo');
 
+  const jogosParams = {};
+  const jogosWhere = [];
+  if (hasOrg) { jogosParams.organization_id = organization_id; jogosWhere.push('organization_id = :organization_id'); }
+  if (hasEvento) { jogosParams.evento_id = evento_id; jogosWhere.push('evento_id = :evento_id'); }
+  if (hasModalidade) { jogosParams.modalidade_id = modalidade_id; jogosWhere.push('modalidade_id = :modalidade_id'); }
+  if (hasSexo) { jogosParams.sexo = sexo; jogosWhere.push('sexo = :sexo'); }
   const jogos = await dbQuery(
     `SELECT id
      FROM jogos
-     WHERE organization_id = :organization_id
-       AND evento_id = :evento_id
-       AND modalidade_id = :modalidade_id
-       AND sexo = :sexo
-     ORDER BY ordem ASC, id ASC`,
-    { organization_id, evento_id, modalidade_id, sexo }
+     ${jogosWhere.length ? `WHERE ${jogosWhere.join(' AND ')}` : ''}
+     ORDER BY ${cols.has('ordem') ? 'ordem ASC,' : ''} id ASC`,
+    jogosParams
   );
 
   const atualizados = aplicarHorarios(
@@ -324,32 +407,76 @@ export async function aplicarHorariosEmJogos({ organization_id, evento_id, modal
     [...params, ...ids]
   );
 
+  const metaCols = await getSorteioMetaColumns();
+  const metaHasOrg = metaCols.has('organization_id');
+  const metaHasEvento = metaCols.has('evento_id');
+  const metaHasModalidade = metaCols.has('modalidade_id');
+  const metaHasSexo = metaCols.has('sexo');
+  const metaParams = { hora_inicio, intervalo_min };
+  const metaWhere = [];
+  if (metaHasOrg) { metaParams.organization_id = organization_id; metaWhere.push('organization_id = :organization_id'); }
+  if (metaHasEvento) { metaParams.evento_id = evento_id; metaWhere.push('evento_id = :evento_id'); }
+  if (metaHasModalidade) { metaParams.modalidade_id = modalidade_id; metaWhere.push('modalidade_id = :modalidade_id'); }
+  if (metaHasSexo) { metaParams.sexo = sexo; metaWhere.push('sexo = :sexo'); }
   await dbQuery(
     `UPDATE sorteio_meta
      SET hora_inicio = :hora_inicio,
          intervalo_min = :intervalo_min
-     WHERE organization_id = :organization_id
-       AND evento_id = :evento_id
-       AND modalidade_id = :modalidade_id
-       AND sexo = :sexo`,
-    { organization_id, evento_id, modalidade_id, sexo, hora_inicio, intervalo_min }
+     ${metaWhere.length ? `WHERE ${metaWhere.join(' AND ')}` : ''}`,
+    metaParams
   );
 }
 
 export async function limparSorteio({ organization_id, evento_id, modalidade_id, sexo }) {
   const conn = await pool.getConnection();
+  const cols = await getJogosColumns();
+  const hasOrg = cols.has('organization_id');
+  const hasEvento = cols.has('evento_id');
+  const hasModalidade = cols.has('modalidade_id');
+  const hasSexo = cols.has('sexo');
+  const metaCols = await getSorteioMetaColumns();
+  const metaHasOrg = metaCols.has('organization_id');
+  const metaHasEvento = metaCols.has('evento_id');
+  const metaHasModalidade = metaCols.has('modalidade_id');
+  const metaHasSexo = metaCols.has('sexo');
   try {
     await conn.beginTransaction();
-    await conn.query(
-      `DELETE FROM jogos
-       WHERE organization_id = ? AND evento_id = ? AND modalidade_id = ? AND sexo = ?`,
-      [organization_id, evento_id, modalidade_id, sexo]
-    );
-    await conn.query(
-      `DELETE FROM sorteio_meta
-       WHERE organization_id = ? AND evento_id = ? AND modalidade_id = ? AND sexo = ?`,
-      [organization_id, evento_id, modalidade_id, sexo]
-    );
+    if (hasOrg || hasEvento || hasModalidade || hasSexo) {
+      const whereParts = [];
+      const whereParams = [];
+      if (hasOrg) { whereParts.push('organization_id = ?'); whereParams.push(organization_id); }
+      if (hasEvento) { whereParts.push('evento_id = ?'); whereParams.push(evento_id); }
+      if (hasModalidade) { whereParts.push('modalidade_id = ?'); whereParams.push(modalidade_id); }
+      if (hasSexo) { whereParts.push('sexo = ?'); whereParams.push(sexo); }
+      await conn.query(
+        `DELETE FROM jogos
+         WHERE ${whereParts.join(' AND ')}`,
+        whereParams
+      );
+    } else {
+      await conn.query(
+        `DELETE FROM jogos`,
+        []
+      );
+    }
+    if (metaHasOrg || metaHasEvento || metaHasModalidade || metaHasSexo) {
+      const metaParts = [];
+      const metaParams = [];
+      if (metaHasOrg) { metaParts.push('organization_id = ?'); metaParams.push(organization_id); }
+      if (metaHasEvento) { metaParts.push('evento_id = ?'); metaParams.push(evento_id); }
+      if (metaHasModalidade) { metaParts.push('modalidade_id = ?'); metaParams.push(modalidade_id); }
+      if (metaHasSexo) { metaParts.push('sexo = ?'); metaParams.push(sexo); }
+      await conn.query(
+        `DELETE FROM sorteio_meta
+         WHERE ${metaParts.join(' AND ')}`,
+        metaParams
+      );
+    } else {
+      await conn.query(
+        `DELETE FROM sorteio_meta`,
+        []
+      );
+    }
     await conn.commit();
   } catch (err) {
     await conn.rollback();
@@ -372,4 +499,3 @@ export async function buscarTurmasInscritas({ modalidade_id, sexo }) {
   );
   return rows.map(r => r.turma).filter(Boolean);
 }
-

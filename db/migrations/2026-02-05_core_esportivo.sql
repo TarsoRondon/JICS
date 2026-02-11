@@ -27,4 +27,3 @@ ALTER TABLE sorteio_meta
 ALTER TABLE sorteio_meta
   ADD UNIQUE KEY uq_sorteio_meta (organization_id, evento_id, modalidade_id, sexo),
   ADD INDEX idx_sorteio_meta_org_evento (organization_id, evento_id);
-

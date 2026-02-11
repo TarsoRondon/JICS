@@ -44,7 +44,7 @@
         <div class="app-body">
             <main class="page">
         <section class="hero dashboard-hero">
-          <div class="hero-layout">
+          <div class="hero-layout hero-single">
             <div class="hero-copy">
               <div class="hero-badge">JICS - IFRO Esportes</div>
               <h1 id="heroGreeting">Bem-vindo ao IFRO ESPORTES</h1>
@@ -69,46 +69,29 @@
                 </div>
               </div>
             </div>
-            <div class="hero-aside">
-              <div class="hero-card">
-                <div class="hero-card-title">Ações rápidas</div>
-                <div class="hero-card-actions">
-                  <a class="btn-outline user-only" href="modalidades.html">Nova inscrição</a>
-                  <a class="btn-outline" href="horarios.html">Ver horários</a>
-                  <a class="btn-outline" href="resultados.html">Resultados</a>
-                </div>
-              </div>
-              <div class="hero-card hero-card-highlight">
-                <div class="hero-card-title">Destaque do evento</div>
-                <p>Participe das atividades e acompanhe as novidades do JICS.</p>
-                <a class="btn-primary" href="noticias.html">Abrir mural</a>
-              </div>
-            </div>
           </div>
         </section>
 
-                <div class="dashboard-content">
-                    <section class="grid dashboard-main-grid">
-                        <div class="card card-principal card-modalidades">
-                            <div class="page-header">
-                                <div>
-                                    <div class="page-title">Modalidades em destaque</div>
-                                    <div class="page-subtitle">Veja as atividades disponíveis.</div>
-                                </div>
-                                <a class="btn-link" href="modalidades.html">Ver todas</a>
+                <div class="dashboard-content dashboard-stack">
+                    <section class="card card-principal card-modalidades">
+                        <div class="page-header">
+                            <div>
+                                <div class="page-title">Modalidades em destaque</div>
+                                <div class="page-subtitle">Veja as atividades disponíveis.</div>
                             </div>
-                            <div id="modalidadesGrid" class="grid-cards"></div>
+                            <a class="btn-link" href="modalidades.html">Ver todas</a>
                         </div>
-                        <div class="card card-principal card-noticias">
-                            <div class="page-header">
-                                <div>
-                                    <div class="page-title">Notícias recentes</div>
-                                    <div class="page-subtitle">Avisos e comunicados do evento.</div>
-                                </div>
-                                <a class="btn-link" href="noticias.html">Ver mural</a>
+                        <div id="modalidadesGrid" class="grid-cards"></div>
+                    </section>
+                    <section class="card card-principal card-noticias">
+                        <div class="page-header">
+                            <div>
+                                <div class="page-title">Notícias recentes</div>
+                                <div class="page-subtitle">Avisos e comunicados do evento.</div>
                             </div>
-                            <div id="noticiasGrid" class="grid-cards noticias-horizontal"></div>
+                            <a class="btn-link" href="noticias.html">Ver mural</a>
                         </div>
+                        <div id="noticiasGrid" class="grid-cards noticias-horizontal"></div>
                     </section>
                 </div>
             </main>

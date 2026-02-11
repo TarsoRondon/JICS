@@ -464,34 +464,31 @@ textarea:focus {
    ADMIN CADASTRO
 ===================== */
 body.admin-cadastro {
-  background: radial-gradient(circle at 20% 20%, rgba(0, 168, 119, 0.14), transparent 45%),
-    radial-gradient(circle at 80% 10%, rgba(10, 93, 84, 0.12), transparent 40%),
+  background:
+    radial-gradient(circle at 18% 20%, rgba(0, 168, 119, 0.16), transparent 46%),
+    radial-gradient(circle at 88% 10%, rgba(10, 93, 84, 0.14), transparent 44%),
     var(--bg);
 }
 
 .cadastro-shell {
   min-height: 100vh;
   display: grid;
-  place-items: center;
-  padding: 48px 20px;
-}
-
-.cadastro-grid {
-  width: 100%;
-  max-width: 980px;
-  display: grid;
-  gap: 24px;
-  grid-template-columns: 1.1fr 0.9fr;
-  align-items: stretch;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  gap: 32px;
+  padding: 56px 22px;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: center;
 }
 
 .cadastro-hero {
   display: grid;
-  gap: 14px;
-  padding: 28px;
-  border-radius: 22px;
-  background: linear-gradient(135deg, rgba(0, 168, 119, 0.16), rgba(10, 93, 84, 0.08));
+  gap: 18px;
+  padding: 30px;
+  border-radius: 24px;
+  background: linear-gradient(140deg, rgba(0, 168, 119, 0.16), rgba(10, 93, 84, 0.08));
   border: 1px solid rgba(10, 93, 84, 0.12);
+  box-shadow: 0 18px 36px rgba(10, 60, 52, 0.1);
 }
 
 .admin-cadastro .brand {
@@ -500,15 +497,13 @@ body.admin-cadastro {
   gap: 12px;
 }
 
-.brand-badge {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #00a877, #0a5d54);
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-weight: 800;
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(10, 93, 84, 0.2);
+  padding: 6px;
 }
 
 .brand-text {
@@ -523,27 +518,61 @@ body.admin-cadastro {
   color: var(--muted);
 }
 
-.cadastro-hero h1 {
-  margin: 0;
-  font-size: 1.8rem;
+.cadastro-kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--brand-2);
 }
 
-.cadastro-hero p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.5;
+.cadastro-title-block h1 {
+  margin: 8px 0 6px;
+  font-size: 2rem;
 }
 
-.cadastro-tips {
+.cadastro-title-block p {
   margin: 0;
-  padding-left: 18px;
   color: var(--muted);
+  line-height: 1.55;
+}
+
+.cadastro-highlights {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.highlight-card {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(10, 93, 84, 0.12);
   display: grid;
   gap: 6px;
+  color: #214d45;
+}
+
+.highlight-card strong {
+  font-size: 0.92rem;
+}
+
+.highlight-card span {
+  font-size: 0.82rem;
+  color: rgba(10, 93, 84, 0.72);
+}
+
+.cadastro-note {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(0, 168, 119, 0.08);
+  border: 1px solid rgba(0, 168, 119, 0.2);
+  color: #2c5b52;
+  font-size: 0.88rem;
 }
 
 .cadastro-card {
-  padding: 24px;
+  padding: 26px;
 }
 
 .card-head {
@@ -601,7 +630,7 @@ body.admin-cadastro {
   margin-top: 6px;
 }
 
-.btn-primary { min-width: 160px; }
+.btn-primary { min-width: 180px; }
 
 .back-link {
   color: var(--muted);
@@ -1217,7 +1246,8 @@ body[data-page="primeiro-acesso"] .btn.is-loading .btn-spinner { display: inline
 
 @media (max-width: 900px) {
   .wrap.auth-split,
-  .cadastro-grid { grid-template-columns: 1fr; }
+  .cadastro-grid,
+  .cadastro-shell { grid-template-columns: 1fr; }
   .art { order: -1; }
 }
 
@@ -1235,4 +1265,5 @@ body[data-page="primeiro-acesso"] .btn.is-loading .btn-spinner { display: inline
     align-items: flex-start;
     gap: 8px;
   }
+  .cadastro-shell { padding: 32px 16px; }
 }
