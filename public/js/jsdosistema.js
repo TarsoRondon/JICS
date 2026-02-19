@@ -199,8 +199,8 @@ function ensureSideNavLinks() {
         sideNav.appendChild(link);
     };
 
-    addLink('inscricoes.html', 'Minhas inscrições', 'user-only');
-    addLink('admin.html', 'Administração', 'staff-only');
+    addLink('inscricoes.html', 'Minhas inscricoes', 'user-only');
+    addLink('admin.html', 'Administracao', 'staff-only');
 
     sideNav.querySelectorAll('.side-link').forEach((link) => {
         const href = link.getAttribute('href') || '';
@@ -220,12 +220,12 @@ function ensureSiteFooter() {
     footer.className = 'site-footer';
     footer.innerHTML = `
     <div class="footer-left">
-      <span>© 2015</span>
+      <span>&copy; 2015</span>
       <a href="https://gesstec.org/" target="_blank" rel="noopener">GESSTEC - IFRO</a>
       <span>Todos os direitos reservados.</span>
     </div>
     <div class="footer-right">
-      © 2026 IFRO ESPORTES
+      &copy; 2026 IFRO ESPORTES
       <span>Sistema institucional</span>
     </div>
   `;
@@ -251,7 +251,7 @@ function applyRoleVisibility() {
 
     if (!document.body.classList.contains('admin-ui')) {
         document.querySelectorAll('a[href="admin.html"]').forEach((link) => {
-            link.textContent = 'Administração';
+            link.textContent = 'Administracao';
         });
     }
 }
@@ -534,51 +534,55 @@ function attachPasswordRecoveryLinks() {
 function renderDrawer() {
     const drawer = document.getElementById('userDrawer');
     if (!drawer) return;
-    const adminLabel = 'Administração';
+    const adminLabel = 'Administracao';
     const modalidadesGroup = isStaffUser() ?
         '' :
         `
-      <button class="drawer-btn" onclick="toggleDrawerGroup('drawerModalidades', this)">
+      <button class="drawer-btn drawer-toggle" onclick="toggleDrawerGroup('drawerModalidades', this)">
         Modalidades
         <span class="material-symbols-outlined">expand_more</span>
       </button>
       <div id="drawerModalidades" class="drawer-sub">
-        <button class="drawer-sub-btn" onclick="openMinhasInscricoes()">Minhas inscrições</button>
+        <button class="drawer-sub-btn" onclick="openMinhasInscricoes()">Minhas inscricoes</button>
         <button class="drawer-sub-btn" onclick="location.href='modalidades.html'">Ver modalidades</button>
       </div>
     `;
 
     drawer.innerHTML = `
-    <button class="icon-btn drawer-close" onclick="toggleUserDrawer()">
-      <span class="material-symbols-outlined">close</span>
-      <span class="drawer-close-text">Fechar</span>
-    </button>
-    <div class="drawer-user">
-      <img id="drawerAvatar" class="drawer-avatar" src="${currentUser?.foto || '/assets/avatar-default.png'}" alt="Avatar" onerror="this.src='/assets/avatar-default.png'" />
-      <div>
-        <p id="drawerUserName">${currentUser?.nome || 'Usuário'}</p>
-        <small id="drawerUserMatricula">${currentUser?.matricula || ''}</small>
+    <div class="drawer-header">
+      <button class="icon-btn drawer-close" onclick="toggleUserDrawer()">
+        <span class="material-symbols-outlined">close</span>
+        <span class="drawer-close-text">Fechar</span>
+      </button>
+      <div class="drawer-user">
+        <img id="drawerAvatar" class="drawer-avatar" src="${currentUser?.foto || '/assets/avatar-default.png'}" alt="Avatar" onerror="this.src='/assets/avatar-default.png'" />
+        <div>
+          <p id="drawerUserName">${currentUser?.nome || 'Usuario'}</p>
+          <small id="drawerUserMatricula">${currentUser?.matricula || ''}</small>
+        </div>
       </div>
     </div>
     <div class="drawer-section">
-      <button class="drawer-btn" onclick="location.href='dashboard.html'">Início</button>
+      <div class="drawer-group-title">Menu</div>
+      <button class="drawer-btn" onclick="location.href='dashboard.html'">Inicio</button>
       <button class="drawer-btn" onclick="location.href='perfil.html'">Perfil</button>
       ${modalidadesGroup}
-      <button class="drawer-btn" onclick="location.href='noticias.html'">Notícias</button>
-      <button class="drawer-btn" onclick="location.href='horarios.html'">Horários</button>
+      <button class="drawer-btn" onclick="location.href='noticias.html'">Noticias</button>
+      <button class="drawer-btn" onclick="location.href='horarios.html'">Horarios</button>
       <button class="drawer-btn" onclick="location.href='resultados.html'">Resultados</button>
       ${isStaffUser() ? `<button class="drawer-btn" onclick="location.href='admin.html'">${adminLabel}</button>` : ''}
-      ${isAdminUser() ? `<button class="drawer-btn" onclick="location.href='sumula.html'">Súmula</button>` : ''}
+      ${isAdminUser() ? `<button class="drawer-btn" onclick="location.href='sumula.html'">Sumula</button>` : ''}
     </div>
     <div class="drawer-footer">
-      <button class="drawer-btn" onclick="toggleDrawerGroup('drawerConfig', this)">
-        Configurações
+      <div class="drawer-group-title">Configuracoes</div>
+      <button class="drawer-btn drawer-toggle" onclick="toggleDrawerGroup('drawerConfig', this)">
+        Configuracoes
         <span class="material-symbols-outlined">expand_more</span>
       </button>
       <div id="drawerConfig" class="drawer-sub">
         <button class="drawer-sub-btn" onclick="openPhotoModal()">Alterar foto</button>
         <a class="drawer-sub-btn" href="recuperacao.html#reset">Recuperar senha</a>
-        <a class="drawer-sub-btn" href="recuperar-matricula.html">Recuperar matrícula</a>
+        <a class="drawer-sub-btn" href="recuperar-matricula.html">Recuperar matricula</a>
         <button class="drawer-sub-btn" onclick="editarSenha()">Alterar senha</button>
         <a class="drawer-sub-btn" href="conta.html">Alterar telefone</a>
         <button class="drawer-sub-btn" onclick="toggleHelpPanel()">FAQ / Ajuda</button>
@@ -593,7 +597,7 @@ function renderDrawer() {
           </button>
         </div>
       </div>
-      <button class="drawer-btn" onclick="logout()">Sair</button>
+      <button class="drawer-btn drawer-danger" onclick="logout()">Sair</button>
     </div>
   `;
 
@@ -1291,7 +1295,7 @@ function resolveModalidadeIdByName(nome) {
 
 function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modalidadeEnc) {
   if (!currentUser) {
-    showToastErro('Usuário não identificado.');
+    showToastErro('Usuario não identificado.');
     return;
   }
   const inscricaoId = decodeURIComponent(inscricaoIdEnc || '').trim();
@@ -2090,7 +2094,7 @@ function salvarSumula(event, fromMobile = false) {
   setResultados(lista);
   renderResultadosLista();
   renderClassification();
-  showToastSucesso('Súmula salva com sucesso!');
+  showToastSucesso('Sumula salva com sucesso!');
   if (fromMobile) {
     document.querySelector('form').reset();
   }
@@ -2379,7 +2383,7 @@ async function createUser() {
   if (!nome || !matricula) return;
   try {
     await adminPost('/admin/add-aluno', { nome, matricula, turma, role });
-    showToast('Usuário criado', 'info');
+    showToast('Usuario criado', 'info');
     loadUsuariosAdmin();
   } catch(e){ showToast('Erro ao criar usuário','error'); }
 }
@@ -2390,7 +2394,7 @@ async function editUser(matricula) {
   const turma = prompt('Nova turma (opcional):');
   try {
     await adminPut(`/admin/aluno/${encodeURIComponent(matricula)}`, { nome: nome||undefined, turma: turma||undefined });
-    showToast('Usuário atualizado','info');
+    showToast('Usuario atualizado','info');
     loadUsuariosAdmin();
   } catch(e){ showToast('Erro ao atualizar','error'); }
 }
@@ -2400,7 +2404,7 @@ async function deleteUser(matricula) {
   if (!confirm('Excluir este usuário?')) return;
   try {
     await adminDelete(`/admin/aluno/${encodeURIComponent(matricula)}`);
-    showToast('Usuário removido','info');
+    showToast('Usuario removido','info');
     loadUsuariosAdmin();
   } catch(e){ showToast('Erro ao remover','error'); }
 }
@@ -2554,7 +2558,7 @@ function renderSorteioTabela() {
       <td class="placar">X</td>
       <td>${j.equipeB || '-'}</td>
       <td>${renderStatusPill(j.status || 'NAO_INICIADO')}</td>
-      <td><button class="btn-outline btn-sm" onclick="preencherSumulaFromSorteio(${idx})">Súmula</button></td>
+      <td><button class="btn-outline btn-sm" onclick="preencherSumulaFromSorteio(${idx})">Sumula</button></td>
     </tr>
   `).join('');
 }
@@ -2569,25 +2573,30 @@ function limparSorteio() {
 
 function exportarTabelaSorteioPrint(){ window.print(); }
 
-// ------------------ SÚMULA ------------------
+// ------------------ SUMULA ------------------
 async function salvarSumulaResultado() {
   const jogoLabel = document.getElementById('sumulaJogo')?.value;
   const placarA = document.getElementById('sumulaPlacarA')?.value || 0;
   const placarB = document.getElementById('sumulaPlacarB')?.value || 0;
   if (!jogoLabel) { showToast('Selecione o jogo', 'error'); return; }
   const jogo = adminCache.jogos.find(j => (j.jogo || j.numero_jogo) === jogoLabel);
-  if (!jogo) { showToast('Jogo não encontrado', 'error'); return; }
+  if (!jogo) { showToast('Jogo nao encontrado', 'error'); return; }
   try {
-    await adminPost('/admin/sumulas', {
-      jogo_id: jogo.id,
-      modalidade: jogo.modalidade_nome || jogo.modalidade,
-      sexo: jogo.sexo,
-      equipeA: jogo.equipeA,
-      equipeB: jogo.equipeB,
-      placarA, placarB
+    const res = await fetch(`/sumulas/jogos/${jogo.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        placar_a: placarA,
+        placar_b: placarB,
+        wo: false,
+        observacoes: ''
+      })
     });
-    showToast('Súmula salva','info');
-  } catch(e){ showToast('Erro ao salvar súmula','error'); }
+    const data = await res.json();
+    if (!data?.ok) throw new Error(data?.message || 'Erro');
+    showToast('Sumula salva','info');
+  } catch(e){ showToast('Erro ao salvar sumula','error'); }
 }
 
 function getSumulaFormData() {
@@ -2613,10 +2622,10 @@ function getSumulaFormData() {
 function gerarSumulaPreview(download = false) {
   const d = getSumulaFormData();
   if (!d.modalidade || !d.equipeA || !d.equipeB || !d.fase) {
-    showToastErro('Preencha modalidade, fase e as duas equipes antes de gerar a prévia.');
+    showToastErro('Preencha modalidade, fase e as duas equipes antes de gerar a previa.');
     return;
   }
-  const titulo = `Súmula - ${d.equipeA} x ${d.equipeB}`;
+  const titulo = `Sumula - ${d.equipeA} x ${d.equipeB}`;
   const html = `
     <!DOCTYPE html>
     <html><head><meta charset="UTF-8"><title>${titulo}</title>
@@ -2632,7 +2641,7 @@ function gerarSumulaPreview(download = false) {
         <tr><td colspan="2"><strong>Identificação do jogo</strong></td></tr>
         <tr><td>Modalidade: ${d.modalidade}</td><td>Fase: ${d.fase}</td></tr>
         <tr><td>Sexo: ${d.sexo}</td><td>Etapa: ${d.etapa}</td></tr>
-        <tr><td>Data: ${d.data}</td><td>Início: ${d.inicio}  /  Fim: ${d.fim}</td></tr>
+        <tr><td>Data: ${d.data}</td><td>Inicio: ${d.inicio}  /  Fim: ${d.fim}</td></tr>
         <tr><td>Árbitro: ${d.arbitro}</td><td>Mesários: ${d.mesarios}</td></tr>
       </table>
       <table>
@@ -3156,7 +3165,7 @@ async function gerarHorariosSorteio() {
     }));
     adminCache.jogos = sorteioRows;
     renderSorteioTabela();
-    showToastSucesso('Horários aplicados e salvos.');
+    showToastSucesso('Horarios aplicados e salvos.');
   } catch (e) {
     showToastErro('Erro ao aplicar horários.');
   }
@@ -3211,6 +3220,7 @@ function animateButton(btn) {
 function exportarTabelaSorteioPrint() {
   window.print();
 }
+
 
 
 

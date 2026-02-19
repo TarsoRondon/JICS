@@ -56,7 +56,7 @@
                     <a class="side-link" data-tab="tabInscricoes" href="admin.html" onclick="openAdminTab('tabInscricoes'); return false;">Inscrições</a>
                     <a class="side-link staff-only" data-tab="tabSorteio" href="admin.html" onclick="openAdminTab('tabSorteio'); return false;">Sorteio</a>
                     <a class="side-link" data-tab="tabBuscarAluno" href="admin.html" onclick="openAdminTab('tabBuscarAluno'); return false;">Buscar aluno</a>
-                    <a class="side-link staff-only" data-tab="tabSumula" href="admin.html" onclick="openAdminTab('tabSumula'); return false;">Súmula</a>
+                    <a class="side-link staff-only" href="#" onclick="openSumulaFromSelection(); return false;">Súmula</a>
                 </div>
 
                 <div class="side-divider"></div>
@@ -347,7 +347,7 @@
                 </section>
 
                 <section id="tabUsuarios" class="tab-content">
-                    <div class="card form-grid">
+                    <div class="card form-grid usuario-form-card">
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Buscar usuário</label>
@@ -357,9 +357,9 @@
                                 <button class="btn-outline" onclick="loadUsuariosAdmin()">Buscar</button>
                             </div>
                         </div>
-                        <form id="newUserForm" onsubmit="return false;">
+                        <form id="newUserForm" class="new-user-form" onsubmit="return false;">
                             <div id="newUserMsg" class="form-msg" role="status" aria-live="polite"></div>
-                            <div class="form-row">
+                            <div class="form-row new-user-grid">
                                 <div class="form-group">
                                     <label>Matrícula</label>
                                     <input id="newMatricula" autocomplete="username" oninput="onMatriculaInput()" />
@@ -412,7 +412,7 @@
                   </select>
                                 </div>
                             </div>
-                            <button class="btn-primary" type="button" onclick="addUser(event)">Cadastrar usuário</button>
+                            <button class="btn-primary new-user-submit" type="button" onclick="addUser(event)">Cadastrar usuário</button>
                         </form>
                     </div>
                     <div class="card table-responsive">
@@ -498,7 +498,7 @@
                 </section>
 
                 <section id="tabSorteio" class="tab-content">
-                    <div class="card form-grid">
+                    <div class="card form-grid sorteio-form-card">
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Evento</label>
@@ -553,9 +553,33 @@
                             <button class="btn-outline" onclick="limparSorteio()">Limpar</button>
                         </div>
                     </div>
-                    <div class="card table-responsive">
-                        <div class="page-title" id="sorteioTituloModalidade">Tabela de sorteio</div>
-                        <table class="table">
+                    <div class="card table-responsive sorteio-chaves-card" id="sorteioChavesCard">
+                        <div class="page-header">
+                            <div>
+                                <div class="page-title">Tabela de chaves</div>
+                                <div class="page-subtitle">Resumo por chave antes dos jogos.</div>
+                            </div>
+                        </div>
+                        <table class="table sorteio-table sorteio-table-chaves">
+                            <thead>
+                                <tr>
+                                    <th>Chave</th>
+                                    <th>Equipes</th>
+                                    <th>Jogos</th>
+                                    <th>Finalizados</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sorteioChavesBody">
+                                <tr>
+                                    <td colspan="5" class="center muted" style="padding:16px;">Gere o sorteio para exibir as chaves.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card table-responsive sorteio-jogos-card">
+                        <div class="page-title" id="sorteioTituloModalidade">Tabela de jogos</div>
+                        <table class="table sorteio-table sorteio-table-jogos">
                             <thead>
                                 <tr>
                                     <th>Ordem</th>
@@ -570,6 +594,36 @@
                                 </tr>
                             </thead>
                             <tbody id="sorteioBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="card table-responsive" id="sumulaStandingsCard">
+                        <div class="page-header">
+                            <div>
+                                <div class="page-title">Classificação da chave <span id="sumulaChaveLabel">-</span></div>
+                                <div class="page-subtitle">Atualizada ao salvar súmula.</div>
+                            </div>
+                            <button class="btn-outline btn-sm" type="button" onclick="refreshSumulaStandings()">Atualizar</button>
+                        </div>
+                        <table class="table sorteio-table sorteio-table-standings">
+                            <thead>
+                                <tr>
+                                    <th>Pos</th>
+                                    <th>Equipe</th>
+                                    <th>Pts</th>
+                                    <th>J</th>
+                                    <th>V</th>
+                                    <th>E</th>
+                                    <th>D</th>
+                                    <th>Pro</th>
+                                    <th>Contra</th>
+                                    <th>SG</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sumulaStandingsBody">
+                                <tr>
+                                    <td colspan="10" class="center muted" style="padding:16px;">Selecione evento, modalidade e chave.</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </section>
@@ -817,94 +871,12 @@
                 </section>
 
                 <section id="tabSumula" class="tab-content">
-                    <section class="card form-grid">
-                        <div class="page-title">Atualizar placar rapido</div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Jogo</label>
-                                <select id="sumulaJogo"></select>
-                            </div>
-                            <div class="form-group">
-                                <label>Placar A</label>
-                                <input id="sumulaPlacarA" type="number" />
-                            </div>
-                            <div class="form-group">
-                                <label>Placar B</label>
-                                <input id="sumulaPlacarB" type="number" />
-                            </div>
-                            <div class="form-group" style="align-self:end;">
-                                <button class="btn-primary" onclick="salvarSumulaResultado()">Salvar placar</button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="card form-grid">
-                        <div class="page-title">Formulario de sumula</div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Modalidade</label>
-                                <select id="sumulaModalidade"></select>
-                            </div>
-                            <div class="form-group">
-                                <label>Sexo</label>
-                                <input id="sumulaSexo" />
-                            </div>
-                            <div class="form-group">
-                                <label>Etapa</label>
-                                <input id="sumulaEtapa" />
-                            </div>
-                            <div class="form-group">
-                                <label>Fase</label>
-                                <input id="sumulaFase" />
-                            </div>
-                            <div class="form-group">
-                                <label>Data</label>
-                                <input id="sumulaData" type="date" />
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Equipe A</label>
-                                <input id="sumulaEquipeA" />
-                            </div>
-                            <div class="form-group">
-                                <label>Pontos A</label>
-                                <input id="sumulaPontosA" type="number" />
-                            </div>
-                            <div class="form-group">
-                                <label>Equipe B</label>
-                                <input id="sumulaEquipeB" />
-                            </div>
-                            <div class="form-group">
-                                <label>Pontos B</label>
-                                <input id="sumulaPontosB" type="number" />
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Arbitro</label>
-                                <input id="sumulaArbitro" />
-                            </div>
-                            <div class="form-group">
-                                <label>Cartoes</label>
-                                <input id="sumulaCartoes" />
-                            </div>
-                            <div class="form-group">
-                                <label>Mesarios</label>
-                                <input id="sumulaMesarios" />
-                            </div>
-                            <div class="form-group">
-                                <label>Horário início</label>
-                                <input id="sumulaHorarioInicio" type="time" />
-                            </div>
-                            <div class="form-group">
-                                <label>Horário fim</label>
-                                <input id="sumulaHorarioFim" type="time" />
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <button class="btn-primary" onclick="gerarSumulaPreview(false)">Gerar previa</button>
-                            <button class="btn-outline" onclick="gerarSumulaPreview(true)">Baixar HTML</button>
+                    <section class="card">
+                        <div class="page-title">Súmula Premium</div>
+                        <div class="page-subtitle">Selecione um jogo na tabela de sorteio e clique em “Súmula”.</div>
+                        <div class="form-row" style="margin-top:12px;">
+                            <button class="btn-primary" type="button" onclick="openSumulaFromSelection()">Abrir último jogo selecionado</button>
+                            <button class="btn-outline" type="button" onclick="openAdminTab('tabSorteio')">Ir para sorteio</button>
                         </div>
                     </section>
                 </section>
@@ -1183,6 +1155,171 @@
                         <button class="btn-primary" type="button" onclick="saveEditAdminUser()">Salvar</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <div id="sumulaModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="sumulaModalTitle">
+            <div class="modal-card sumula-modal-card">
+                <div class="modal-header">
+                    <h3 id="sumulaModalTitle">Súmula</h3>
+                    <button class="icon-btn" type="button" aria-label="Fechar" onclick="closeSumulaModal()">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="modal-body sumula-modal-grid">
+                    <section class="sumula-left">
+                        <div class="sumula-match-card">
+                            <div class="sumula-team">
+                                <div class="sumula-team-label">Equipe A</div>
+                                <div id="sumulaEquipeAName" class="sumula-team-name">-</div>
+                            </div>
+                            <div class="sumula-score">
+                                <input id="sumulaScoreA" class="sumula-score-input" type="number" min="0" inputmode="numeric" />
+                                <span class="sumula-score-sep">x</span>
+                                <input id="sumulaScoreB" class="sumula-score-input" type="number" min="0" inputmode="numeric" />
+                            </div>
+                            <div class="sumula-team">
+                                <div class="sumula-team-label">Equipe B</div>
+                                <div id="sumulaEquipeBName" class="sumula-team-name">-</div>
+                            </div>
+                        </div>
+
+                        <div class="sumula-meta">
+                            <div id="sumulaMatchMeta" class="page-subtitle">Jogo</div>
+                            <label class="sumula-switch">
+                                <input id="sumulaWo" type="checkbox" />
+                                <span>W.O.</span>
+                            </label>
+                        </div>
+
+                        <section class="sumula-counters" aria-label="Resumo de cartões por equipe">
+                            <article id="sumulaCounterA" class="sumula-counter-card">
+                                <div class="sumula-counter-title" id="sumulaCountATeam">Equipe A</div>
+                                <div class="sumula-counter-values">
+                                    <span class="sumula-counter-pill yellow">Amarelos <strong id="sumulaCountAYellow">0</strong></span>
+                                    <span class="sumula-counter-pill red">Vermelhos <strong id="sumulaCountARed">0</strong></span>
+                                </div>
+                            </article>
+                            <article id="sumulaCounterB" class="sumula-counter-card">
+                                <div class="sumula-counter-title" id="sumulaCountBTeam">Equipe B</div>
+                                <div class="sumula-counter-values">
+                                    <span class="sumula-counter-pill yellow">Amarelos <strong id="sumulaCountBYellow">0</strong></span>
+                                    <span class="sumula-counter-pill red">Vermelhos <strong id="sumulaCountBRed">0</strong></span>
+                                </div>
+                            </article>
+                        </section>
+
+                        <div class="sumula-officials-grid">
+                            <div class="form-group">
+                                <label>Árbitro</label>
+                                <input id="sumulaArbitroNome" type="text" maxlength="120" placeholder="Nome do árbitro" autocomplete="name" />
+                            </div>
+                            <div class="form-group">
+                                <label>Mesário</label>
+                                <input id="sumulaMesarioNome" type="text" maxlength="120" placeholder="Nome do mesário" autocomplete="name" />
+                            </div>
+                        </div>
+
+                        <div id="sumulaWinnerWrap" class="form-group hidden">
+                            <label>Vencedor no desempate</label>
+                            <select id="sumulaWinnerSide">
+                                <option value="">Selecione</option>
+                                <option value="A">Equipe A</option>
+                                <option value="B">Equipe B</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Observações</label>
+                            <textarea id="sumulaObs" rows="3" maxlength="255" placeholder="Opcional"></textarea>
+                            <small id="sumulaObsCounter" class="muted">0/255</small>
+                        </div>
+
+                        <section class="sumula-panel-card">
+                            <div class="sumula-panel-header">
+                                <strong>Cartões</strong>
+                                <small>Amarelo e vermelho por jogador</small>
+                            </div>
+                            <div class="sumula-cartoes-form">
+                                <select id="sumulaCardTeam">
+                                    <option value="A">Equipe A</option>
+                                    <option value="B">Equipe B</option>
+                                </select>
+                                <select id="sumulaCardPlayer">
+                                    <option value="">Jogador</option>
+                                </select>
+                                <input id="sumulaCardShirt" type="text" maxlength="4" inputmode="numeric" placeholder="Camisa (opcional)" />
+                                <select id="sumulaCardType">
+                                    <option value="YELLOW">Amarelo</option>
+                                    <option value="RED">Vermelho</option>
+                                </select>
+                                <input id="sumulaCardMinute" type="number" min="0" max="200" placeholder="Min" />
+                                <input id="sumulaCardNote" type="text" maxlength="120" placeholder="Observação (opcional)" />
+                                <button class="btn-outline" type="button" onclick="addSumulaCard()">Adicionar</button>
+                            </div>
+                            <div id="sumulaCardMsg" class="form-msg" aria-live="polite"></div>
+                            <div id="sumulaCardsList" class="sumula-cards-list"></div>
+                        </section>
+
+                        <div id="sumulaModalMsg" class="form-msg" aria-live="polite"></div>
+
+                        <div class="modal-footer sumula-footer">
+                            <button class="btn-outline" type="button" onclick="closeSumulaModal()">Cancelar</button>
+                            <button id="sumulaSaveBtn" class="btn-primary" type="button" onclick="saveSumulaModal(false)">Salvar</button>
+                            <button id="sumulaSaveNextBtn" class="btn-outline" type="button" onclick="saveSumulaModal(true)">Salvar e próximo</button>
+                        </div>
+                    </section>
+
+                    <aside class="sumula-right">
+                        <div class="page-header">
+                            <div>
+                                <div class="page-title">Classificação — Chave <span id="sumulaModalChaveLabel">-</span></div>
+                                <div class="page-subtitle">Atualização em tempo real</div>
+                            </div>
+                            <button class="btn-outline btn-sm" type="button" onclick="refreshSumulaStandings()">Atualizar</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Equipe</th>
+                                        <th>Pts</th>
+                                        <th>J</th>
+                                        <th>V</th>
+                                        <th>E</th>
+                                        <th>D</th>
+                                        <th>Pro</th>
+                                        <th>Contra</th>
+                                        <th>SG</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sumulaLiveStandingsBody">
+                                    <tr>
+                                        <td colspan="10" class="center muted" style="padding:16px;">Sem dados.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <section class="sumula-players-grid">
+                            <div class="sumula-players-card">
+                                <div class="sumula-panel-header">
+                                    <strong>Jogadores • Equipe A</strong>
+                                    <small>No camisa opcional</small>
+                                </div>
+                                <div id="sumulaPlayersAList" class="sumula-players-list"></div>
+                            </div>
+                            <div class="sumula-players-card">
+                                <div class="sumula-panel-header">
+                                    <strong>Jogadores • Equipe B</strong>
+                                    <small>No camisa opcional</small>
+                                </div>
+                                <div id="sumulaPlayersBList" class="sumula-players-list"></div>
+                            </div>
+                        </section>
+                    </aside>
+                </div>
             </div>
         </div>
     </div>

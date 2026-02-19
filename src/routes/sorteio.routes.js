@@ -8,6 +8,12 @@ import {
   limparSorteioController,
   gerarPdfSorteioController,
 } from '../controllers/sorteio.controller.js';
+import {
+  bootstrapStage,
+  closeStage,
+  overview,
+  updateMatchResult,
+} from '../controllers/tournament.controller.js';
 
 const router = Router();
 
@@ -16,6 +22,12 @@ router.use(requireAuth);
 router.use(requireOrg);
 router.use(requireRole(['ADMIN', 'SUPER_ADMIN']));
 
+// Sistema de fases (stages/groups/matches)
+router.post('/:tournamentId/:modalidadeId/bootstrap', bootstrapStage);
+router.post('/:tournamentId/:modalidadeId/close-stage', closeStage);
+router.get('/:tournamentId/:modalidadeId/overview', overview);
+router.patch('/matches/:matchId/result', updateMatchResult);
+
 router.get('/:eventoId/:modalidadeId/:sexo', getSorteio);
 router.post('/gerar', gerarSorteio);
 router.post('/horarios', aplicarHorariosController);
@@ -23,4 +35,3 @@ router.delete('/limpar', limparSorteioController);
 router.get('/:eventoId/:modalidadeId/:sexo/pdf', gerarPdfSorteioController);
 
 export default router;
-

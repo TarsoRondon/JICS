@@ -1,0 +1,88 @@
+﻿.sumula-page-shell {
+  max-width: 1320px;
+  margin: 24px auto 40px;
+  padding: 0 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.sumula-page-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.sumula-page-topbar h1 {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.sumula-page-topbar p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.sumula-page-loader {
+  display: grid;
+  gap: 10px;
+}
+
+.sumula-page-loader-row {
+  grid-template-columns: 280px auto;
+  align-items: end;
+}
+
+.sumula-page-content {
+  display: grid;
+  grid-template-columns: minmax(620px, 1.3fr) minmax(360px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.sumula-page-main,
+.sumula-page-side {
+  display: grid;
+  gap: 12px;
+}
+
+.sumula-page-cartoes-form {
+  grid-template-columns: 110px 1.2fr 170px 120px 90px 1fr auto;
+}
+
+.sumula-page-footer {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.sumula-page-side .sumula-players-grid {
+  grid-template-columns: 1fr;
+  margin-top: 0;
+}
+
+.sumula-page-side .table th,
+.sumula-page-side .table td {
+  white-space: nowrap;
+}
+
+@media (max-width: 1080px) {
+  .sumula-page-content {
+    grid-template-columns: 1fr;
+  }
+
+  .sumula-page-loader-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .sumula-page-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sumula-page-cartoes-form {
+    grid-template-columns: 1fr;
+  }
+}

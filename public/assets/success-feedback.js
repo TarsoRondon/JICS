@@ -6,6 +6,7 @@
   };
 
   let timer = null;
+  let lastActive = null;
 
   function ensureDom(){
     if (document.getElementById("sf-overlay")) return;
@@ -14,6 +15,7 @@
     overlay.id = "sf-overlay";
     overlay.className = "sf-overlay";
     overlay.setAttribute("aria-hidden", "true");
+    overlay.setAttribute("inert", "");
 
     overlay.innerHTML = `
       <div class="sf-card" role="status" aria-live="polite" aria-atomic="true" tabindex="-1">
@@ -96,8 +98,10 @@
     titleEl.textContent = payload.title;
     msgEl.textContent = payload.message;
 
+    lastActive = document.activeElement;
     overlay.classList.remove("sf-show");
-    overlay.setAttribute("aria-hidden", "false");
+    overlay.removeAttribute("aria-hidden");
+    overlay.removeAttribute("inert");
     void card.offsetWidth;
 
     buildSparkles();
@@ -113,8 +117,22 @@
   function hide(){
     const overlay = document.getElementById("sf-overlay");
     if(!overlay) return;
+    const active = document.activeElement;
+    const focusWasInside = !!(active && overlay.contains(active));
+    if (focusWasInside) {
+      active.blur();
+      const fallback = (lastActive && typeof lastActive.focus === "function") ? lastActive : document.body;
+      try {
+        fallback?.focus?.({ preventScroll: true });
+      } catch (_) {
+        fallback?.focus?.();
+      }
+    }
     overlay.classList.remove("sf-show");
-    overlay.setAttribute("aria-hidden", "true");
+    requestAnimationFrame(() => {
+      overlay.setAttribute("inert", "");
+      overlay.setAttribute("aria-hidden", "true");
+    });
     clearTimeout(timer);
     timer = null;
   }

@@ -1,6 +1,7 @@
 import { dbQuery } from '../db/conn.js';
 
 let cachedCols = null;
+let cachedStatusValues = null;
 
 async function getJogosCols() {
   if (cachedCols) return cachedCols;
@@ -26,17 +27,61 @@ function resolveLabelExpr(cols) {
   return 'NULL';
 }
 
+function resolveOrderExpr(cols) {
+  if (cols.has('atualizado_em')) return 'j.atualizado_em';
+  if (cols.has('updated_at')) return 'j.updated_at';
+  if (cols.has('criado_em')) return 'j.criado_em';
+  return 'j.id';
+}
+
+function parseEnumValues(type) {
+  const raw = String(type || '').trim();
+  const match = raw.match(/enum\((.*)\)/i);
+  if (!match) return [];
+  return match[1]
+    .split(',')
+    .map(v => v.trim().replace(/^'|'$/g, ''))
+    .filter(Boolean);
+}
+
+async function getJogosStatusValues() {
+  if (cachedStatusValues) return cachedStatusValues;
+  const rows = await dbQuery(
+    `SELECT COLUMN_TYPE
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'jogos'
+       AND COLUMN_NAME = 'status'
+     LIMIT 1`
+  );
+  cachedStatusValues = rows.length ? parseEnumValues(rows[0].COLUMN_TYPE) : [];
+  return cachedStatusValues;
+}
+
+function pickStatusValue(values, candidates) {
+  for (const c of candidates) {
+    if (values.includes(c)) return c;
+  }
+  return values[0] || null;
+}
+
 export async function getTelaoPayload({ evento_id, organization_id }) {
   const cols = await getJogosCols();
+  const statusValues = await getJogosStatusValues();
   const horaExpr = resolveTimeExpr(cols);
   const labelExpr = resolveLabelExpr(cols);
-  const where = ['j.evento_id = :evento_id'];
-  const params = { evento_id };
-  if (organization_id) {
+  const orderExpr = resolveOrderExpr(cols);
+  const where = [];
+  const params = {};
+  if (cols.has('evento_id') && evento_id) {
+    where.push('j.evento_id = :evento_id');
+    params.evento_id = evento_id;
+  }
+  if (cols.has('organization_id') && organization_id) {
     where.push('j.organization_id = :organization_id');
     params.organization_id = organization_id;
   }
-  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const whereSql = `WHERE 1=1 ${where.length ? `AND ${where.join(' AND ')}` : ''}`;
 
   const baseSelect = `
     SELECT
@@ -55,26 +100,29 @@ export async function getTelaoPayload({ evento_id, organization_id }) {
     ${whereSql}
   `;
 
+  const statusRunning = pickStatusValue(statusValues, ['EM_ANDAMENTO', 'em_andamento', 'ANDAMENTO', 'IN_PROGRESS']);
+  const statusPending = pickStatusValue(statusValues, ['NAO_INICIADO', 'SCHEDULED', 'agendado', 'PENDENTE']);
+  const statusDone = pickStatusValue(statusValues, ['FINALIZADO', 'finalizado', 'DONE', 'ENCERRADO']);
+
   const em_andamento = await dbQuery(
-    `${baseSelect} AND j.status = 'EM_ANDAMENTO'
-     ORDER BY j.atualizado_em DESC, j.ordem ASC`,
-    params
+    `${baseSelect} ${statusRunning ? 'AND j.status = :status_running' : ''}
+     ORDER BY ${orderExpr} DESC, j.ordem ASC`,
+    statusRunning ? { ...params, status_running: statusRunning } : params
   );
 
   const proximos = await dbQuery(
-    `${baseSelect} AND j.status = 'NAO_INICIADO'
+    `${baseSelect} ${statusPending ? 'AND j.status = :status_pending' : ''}
      ORDER BY j.ordem ASC, j.id ASC
      LIMIT 10`,
-    params
+    statusPending ? { ...params, status_pending: statusPending } : params
   );
 
   const ultimos = await dbQuery(
-    `${baseSelect} AND j.status = 'FINALIZADO'
-     ORDER BY j.atualizado_em DESC, j.id DESC
+    `${baseSelect} ${statusDone ? 'AND j.status = :status_done' : ''}
+     ORDER BY ${orderExpr} DESC, j.id DESC
      LIMIT 5`,
-    params
+    statusDone ? { ...params, status_done: statusDone } : params
   );
 
   return { em_andamento, proximos, ultimos };
 }
-

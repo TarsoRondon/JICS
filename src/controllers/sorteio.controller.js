@@ -58,8 +58,65 @@ export async function gerarSorteio(req, res) {
       jogos,
     } = req.body || {};
 
-    if (!evento_id || !modalidade_id || !sexo) {
+    if (!evento_id || !sexo) {
       return jsonErro(res, 400, 'Dados obrigatorios ausentes.');
+    }
+
+    if (!modalidade_id) {
+      let modalidades = [];
+      try {
+        modalidades = await dbQuery(
+          'SELECT id, nome, titulo FROM modalidades WHERE organization_id = :organization_id',
+          { organization_id: req.organizationId }
+        );
+      } catch (err) {
+        if (err?.code !== 'ER_BAD_FIELD_ERROR') throw err;
+        modalidades = await dbQuery('SELECT id, nome, titulo FROM modalidades', {});
+      }
+
+      let total_modalidades = 0;
+      let total_jogos = 0;
+      for (const mod of modalidades) {
+        const modId = mod.id;
+        const turmas = await buscarTurmasInscritas({ modalidade_id: modId, sexo });
+        if (turmas.length < 2) continue;
+        const resultado = gerarRoundRobinTurmas(turmas);
+        const jogosOrdenados = aplicarHorarios(
+          resultado.jogos,
+          req.body.hora_inicio || '07:30',
+          req.body.intervalo_min || 0
+        );
+        await salvarSorteio({
+          organization_id: req.organizationId,
+          evento_id,
+          modalidade_id: modId,
+          sexo,
+          modo: modo || 'GRUPOS',
+          local_jogos: local_jogos || 'Quadra A',
+          hora_inicio: req.body.hora_inicio || '07:30',
+          intervalo_min: req.body.intervalo_min || 10,
+          chaves_qtd: resultado.chaves_qtd,
+          jogos: jogosOrdenados,
+        });
+        total_modalidades += 1;
+        total_jogos += jogosOrdenados.length;
+      }
+
+      if (!total_modalidades) {
+        return jsonErro(res, 400, 'Nenhuma modalidade com turmas suficientes para sorteio.');
+      }
+
+      await registrarLog({
+        req,
+        admin: req.admin,
+        acao: 'CREATE',
+        entidade: 'sorteio',
+        entidade_id: `${evento_id}:ALL:${sexo}`,
+      });
+
+      await emitJogosAtualizados(req, evento_id);
+
+      return jsonOk(res, { multi: true, total_modalidades, total_jogos });
     }
 
     let jogosBase = jogos;

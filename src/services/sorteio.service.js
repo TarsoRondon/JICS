@@ -2,6 +2,7 @@ import { pool, dbQuery } from '../db/conn.js';
 
 let cachedJogosColumns = null;
 let cachedSorteioMetaColumns = null;
+let cachedJogosStatusValues = null;
 
 async function getJogosColumns() {
   if (cachedJogosColumns) return cachedJogosColumns;
@@ -14,6 +15,37 @@ async function getJogosColumns() {
   const cols = new Set(rows.map(r => r.COLUMN_NAME));
   cachedJogosColumns = cols;
   return cols;
+}
+
+function parseEnumValues(type) {
+  const raw = String(type || '').trim();
+  const match = raw.match(/enum\((.*)\)/i);
+  if (!match) return [];
+  return match[1]
+    .split(',')
+    .map(v => v.trim().replace(/^'|'$/g, ''))
+    .filter(Boolean);
+}
+
+async function getJogosStatusValues() {
+  if (cachedJogosStatusValues) return cachedJogosStatusValues;
+  const rows = await dbQuery(
+    `SELECT COLUMN_TYPE
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'jogos'
+       AND COLUMN_NAME = 'status'
+     LIMIT 1`
+  );
+  cachedJogosStatusValues = rows.length ? parseEnumValues(rows[0].COLUMN_TYPE) : [];
+  return cachedJogosStatusValues;
+}
+
+function pickStatusValue(values, candidates) {
+  for (const c of candidates) {
+    if (values.includes(c)) return c;
+  }
+  return values[0] || null;
 }
 
 async function getSorteioMetaColumns() {
@@ -48,6 +80,13 @@ function shuffle(array) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+function sanitizeTeamLabel(value) {
+  return String(value || '')
+    .replace(/\r?\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function distribuirChaves(turmas) {
@@ -238,6 +277,8 @@ export async function salvarSorteio({
   jogos,
 }) {
   const cols = await getJogosColumns();
+  const statusValues = await getJogosStatusValues();
+  const statusPending = pickStatusValue(statusValues, ['NAO_INICIADO', 'SCHEDULED', 'agendado', 'PENDENTE']);
   const timeCol = pickTimeColumn(cols);
   const labelCol = pickLabelColumn(cols);
   const hasOrg = cols.has('organization_id');
@@ -260,6 +301,7 @@ export async function salvarSorteio({
   if (labelCol) baseCols.push(labelCol);
   if (timeCol) baseCols.push(timeCol);
   if (cols.has('fase')) baseCols.push('fase');
+  const labelIsNumero = labelCol === 'numero_jogo';
 
   const conn = await pool.getConnection();
   try {
@@ -294,13 +336,22 @@ export async function salvarSorteio({
             case 'modalidade_id': row.push(modalidade_id); break;
             case 'sexo': row.push(sexo); break;
             case 'chave': row.push(j.chave || 'CH A'); break;
-            case 'equipe_a': row.push(j.equipeA); break;
-            case 'equipe_b': row.push(j.equipeB); break;
-            case 'status': row.push('NAO_INICIADO'); break;
+            case 'equipe_a': row.push(sanitizeTeamLabel(j.equipeA) || 'A definir'); break;
+            case 'equipe_b': row.push(sanitizeTeamLabel(j.equipeB) || 'A definir'); break;
+            case 'status': row.push(statusPending || 'NAO_INICIADO'); break;
             case 'ordem': row.push(j.ordem || idx + 1); break;
             case 'fase': row.push('GRUPOS'); break;
             case timeCol: row.push(j.hora || null); break;
-            case labelCol: row.push(j.numero_jogo || j.jogo || `J${idx + 1}`); break;
+            case labelCol: {
+              if (labelIsNumero) {
+                const raw = j.numero_jogo ?? j.jogo ?? (idx + 1);
+                const num = Number(String(raw).replace(/\D/g, '')) || (idx + 1);
+                row.push(num);
+              } else {
+                row.push(j.numero_jogo || j.jogo || `J${idx + 1}`);
+              }
+              break;
+            }
             default: row.push(null);
           }
         });
@@ -317,39 +368,52 @@ export async function salvarSorteio({
     const metaHasEvento = metaCols.has('evento_id');
     const metaHasModalidade = metaCols.has('modalidade_id');
     const metaHasSexo = metaCols.has('sexo');
+    const metaHasModo = metaCols.has('modo');
+    const metaHasLocal = metaCols.has('local_jogos');
+    const metaHasHoraInicio = metaCols.has('hora_inicio');
+    const metaHasIntervalo = metaCols.has('intervalo_min');
+    const metaHasChaves = metaCols.has('chaves_qtd');
     const metaFields = [
       metaHasOrg ? 'organization_id' : null,
       metaHasEvento ? 'evento_id' : null,
       metaHasModalidade ? 'modalidade_id' : null,
       metaHasSexo ? 'sexo' : null,
-      'modo',
-      'local_jogos',
-      'hora_inicio',
-      'intervalo_min',
-      'chaves_qtd',
+      metaHasModo ? 'modo' : null,
+      metaHasLocal ? 'local_jogos' : null,
+      metaHasHoraInicio ? 'hora_inicio' : null,
+      metaHasIntervalo ? 'intervalo_min' : null,
+      metaHasChaves ? 'chaves_qtd' : null,
     ].filter(Boolean);
+    if (!metaFields.length) {
+      await conn.commit();
+      return;
+    }
     const metaValues = [
       metaHasOrg ? organization_id : null,
       metaHasEvento ? evento_id : null,
       metaHasModalidade ? modalidade_id : null,
       metaHasSexo ? sexo : null,
-      modo || 'GRUPOS',
-      local_jogos || 'Quadra A',
-      hora_inicio || '07:30',
-      intervalo_min || 10,
-      chaves_qtd || 1,
+      metaHasModo ? (modo || 'GRUPOS') : null,
+      metaHasLocal ? (local_jogos || 'Quadra A') : null,
+      metaHasHoraInicio ? (hora_inicio || '07:30') : null,
+      metaHasIntervalo ? (intervalo_min || 10) : null,
+      metaHasChaves ? (chaves_qtd || 1) : null,
     ].filter(v => v !== null);
     const placeholders = metaFields.map(() => '?').join(',');
+    const updateFields = [
+      metaHasModo ? 'modo' : null,
+      metaHasLocal ? 'local_jogos' : null,
+      metaHasHoraInicio ? 'hora_inicio' : null,
+      metaHasIntervalo ? 'intervalo_min' : null,
+      metaHasChaves ? 'chaves_qtd' : null,
+    ].filter(Boolean);
+    const updateSql = updateFields.map(f => `${f} = VALUES(${f})`).join(', ');
     await conn.query(
       `INSERT INTO sorteio_meta
         (${metaFields.join(', ')})
        VALUES (${placeholders})
        ON DUPLICATE KEY UPDATE
-        modo = VALUES(modo),
-        local_jogos = VALUES(local_jogos),
-        hora_inicio = VALUES(hora_inicio),
-        intervalo_min = VALUES(intervalo_min),
-        chaves_qtd = VALUES(chaves_qtd)`,
+        ${updateSql}`,
       metaValues
     );
 
@@ -412,19 +476,31 @@ export async function aplicarHorariosEmJogos({ organization_id, evento_id, modal
   const metaHasEvento = metaCols.has('evento_id');
   const metaHasModalidade = metaCols.has('modalidade_id');
   const metaHasSexo = metaCols.has('sexo');
-  const metaParams = { hora_inicio, intervalo_min };
-  const metaWhere = [];
-  if (metaHasOrg) { metaParams.organization_id = organization_id; metaWhere.push('organization_id = :organization_id'); }
-  if (metaHasEvento) { metaParams.evento_id = evento_id; metaWhere.push('evento_id = :evento_id'); }
-  if (metaHasModalidade) { metaParams.modalidade_id = modalidade_id; metaWhere.push('modalidade_id = :modalidade_id'); }
-  if (metaHasSexo) { metaParams.sexo = sexo; metaWhere.push('sexo = :sexo'); }
-  await dbQuery(
-    `UPDATE sorteio_meta
-     SET hora_inicio = :hora_inicio,
-         intervalo_min = :intervalo_min
-     ${metaWhere.length ? `WHERE ${metaWhere.join(' AND ')}` : ''}`,
-    metaParams
-  );
+  const metaHasHoraInicio = metaCols.has('hora_inicio');
+  const metaHasIntervalo = metaCols.has('intervalo_min');
+  const setParts = [];
+  const metaParams = {};
+  if (metaHasHoraInicio) {
+    setParts.push('hora_inicio = :hora_inicio');
+    metaParams.hora_inicio = hora_inicio;
+  }
+  if (metaHasIntervalo) {
+    setParts.push('intervalo_min = :intervalo_min');
+    metaParams.intervalo_min = intervalo_min;
+  }
+  if (setParts.length) {
+    const metaWhere = [];
+    if (metaHasOrg) { metaParams.organization_id = organization_id; metaWhere.push('organization_id = :organization_id'); }
+    if (metaHasEvento) { metaParams.evento_id = evento_id; metaWhere.push('evento_id = :evento_id'); }
+    if (metaHasModalidade) { metaParams.modalidade_id = modalidade_id; metaWhere.push('modalidade_id = :modalidade_id'); }
+    if (metaHasSexo) { metaParams.sexo = sexo; metaWhere.push('sexo = :sexo'); }
+    await dbQuery(
+      `UPDATE sorteio_meta
+       SET ${setParts.join(', ')}
+       ${metaWhere.length ? `WHERE ${metaWhere.join(' AND ')}` : ''}`,
+      metaParams
+    );
+  }
 }
 
 export async function limparSorteio({ organization_id, evento_id, modalidade_id, sexo }) {

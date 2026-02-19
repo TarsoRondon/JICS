@@ -16,6 +16,8 @@ import jogosRoutes from './src/routes/jogos.routes.js';
 import rankingRoutes from './src/routes/ranking.routes.js';
 import eventosRoutes from './src/routes/eventos.routes.js';
 import organizationsRoutes from './src/routes/organizations.routes.js';
+import sumulasRoutes from './src/routes/sumulas.routes.js';
+import chaveamentoRoutes from './src/routes/chaveamento.routes.js';
 import publicRoutes from './src/routes/public.routes.js';
 import govRoutes from './src/routes/gov.routes.js';
 import recoveryRoutes from './src/routes/recovery.routes.js';
@@ -56,6 +58,8 @@ app.use('/organizations', organizationsRoutes);
 app.use('/sorteio', sorteioRoutes);
 app.use('/jogos', jogosRoutes);
 app.use('/ranking', rankingRoutes);
+app.use('/sumulas', sumulasRoutes);
+app.use('/chaveamento', chaveamentoRoutes);
 app.use('/public', publicRoutes);
 app.use('/auth/govbr', govRoutes);
 
@@ -1414,8 +1418,8 @@ app.get('/dashboard/aluno/avisos', async(_req, res) => {
 ensureAlunosRoleColumn()
     .then(ensureAdminsSchema)
     .then(() => {
-        httpServer.listen(3000, () => {
-            console.log('Servidor rodando em http://localhost:3000');
+        httpServer.listen(3005, () => {
+            console.log('Servidor rodando em http://localhost:3005');
         });
     })
     .catch((err) => {
