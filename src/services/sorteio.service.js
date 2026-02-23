@@ -89,28 +89,77 @@ function sanitizeTeamLabel(value) {
     .trim();
 }
 
-function distribuirChaves(turmas) {
-  const total = turmas.length;
-  let chavesQtd = 1;
-  if (total >= 7 && total <= 12) chavesQtd = 2;
-  else if (total >= 13 && total <= 18) chavesQtd = 3;
-  else if (total >= 19) chavesQtd = 4;
+function normalizeTeamKey(value) {
+  return sanitizeTeamLabel(value).toUpperCase();
+}
 
-  const chaves = Array.from({ length: chavesQtd }, (_, idx) => ({
+function uniqueTeams(teams) {
+  const list = Array.isArray(teams) ? teams : [];
+  const seen = new Set();
+  const unique = [];
+  list.forEach((team) => {
+    const clean = sanitizeTeamLabel(team);
+    if (!clean || clean === 'BYE') return;
+    const key = normalizeTeamKey(clean);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    unique.push(clean);
+  });
+  return unique;
+}
+
+function calcularTamanhosChaves(total) {
+  if (total <= 0) return [];
+  // Ate 5 equipes: todos contra todos em uma unica chave.
+  if (total <= 5) return [total];
+
+  const gruposBase = Math.floor(total / 3);
+  const resto = total % 3;
+
+  if (resto === 0) {
+    return Array.from({ length: gruposBase }, () => 3);
+  }
+  if (resto === 1 && gruposBase >= 1) {
+    return [
+      ...Array.from({ length: gruposBase - 1 }, () => 3),
+      4,
+    ];
+  }
+  if (resto === 2 && gruposBase >= 2) {
+    return [
+      ...Array.from({ length: gruposBase - 2 }, () => 3),
+      4,
+      4,
+    ];
+  }
+
+  // Fallback defensivo para evitar erro em cenarios inesperados.
+  return [total];
+}
+
+function distribuirChaves(turmas) {
+  const turmasUnicas = uniqueTeams(turmas);
+  const total = turmasUnicas.length;
+  const tamanhosChaves = calcularTamanhosChaves(total);
+  const chaves = Array.from({ length: tamanhosChaves.length }, (_, idx) => ({
     chave: `CH ${String.fromCharCode(65 + idx)}`,
     turmas: [],
   }));
 
-  const embaralhadas = shuffle(turmas);
-  embaralhadas.forEach((turma, idx) => {
-    chaves[idx % chavesQtd].turmas.push(turma);
+  const embaralhadas = shuffle(turmasUnicas);
+  let start = 0;
+  chaves.forEach((chave, idx) => {
+    const tamanho = tamanhosChaves[idx] || 0;
+    chave.turmas = embaralhadas.slice(start, start + tamanho);
+    start += tamanho;
   });
 
   return chaves;
 }
 
 function roundRobin(teams) {
-  const list = [...teams];
+  const list = uniqueTeams(teams);
+  if (list.length < 2) return [];
   if (list.length % 2 === 1) list.push('BYE');
   const n = list.length;
   const rounds = n - 1;
@@ -122,7 +171,9 @@ function roundRobin(teams) {
     for (let i = 0; i < half; i += 1) {
       const t1 = arr[i];
       const t2 = arr[n - 1 - i];
-      if (t1 !== 'BYE' && t2 !== 'BYE') {
+      const k1 = normalizeTeamKey(t1);
+      const k2 = normalizeTeamKey(t2);
+      if (t1 !== 'BYE' && t2 !== 'BYE' && k1 && k2 && k1 !== k2) {
         jogos.push({ equipeA: t1, equipeB: t2, rodada: round + 1 });
       }
     }
@@ -135,7 +186,11 @@ function roundRobin(teams) {
 }
 
 export function gerarRoundRobinTurmas(turmas) {
-  const chaves = distribuirChaves(turmas);
+  const turmasUnicas = uniqueTeams(turmas);
+  if (turmasUnicas.length < 2) {
+    return { jogos: [], chaves_qtd: 0 };
+  }
+  const chaves = distribuirChaves(turmasUnicas);
   const jogos = [];
   chaves.forEach(({ chave, turmas: lista }) => {
     const rr = roundRobin(lista);
@@ -326,8 +381,15 @@ export async function salvarSorteio({
       );
     }
 
-    if (jogos && jogos.length) {
-      const values = jogos.map((j, idx) => {
+    const jogosValidos = (Array.isArray(jogos) ? jogos : [])
+      .filter((j) => {
+        const a = normalizeTeamKey(j?.equipeA);
+        const b = normalizeTeamKey(j?.equipeB);
+        return Boolean(a) && Boolean(b) && a !== b;
+      });
+
+    if (jogosValidos.length) {
+      const values = jogosValidos.map((j, idx) => {
         const row = [];
         baseCols.forEach((col) => {
           switch (col) {
@@ -564,13 +626,14 @@ export async function limparSorteio({ organization_id, evento_id, modalidade_id,
 
 export async function buscarTurmasInscritas({ modalidade_id, sexo }) {
   const rows = await dbQuery(
-    `SELECT DISTINCT a.turma
+    `SELECT DISTINCT TRIM(a.turma) AS turma
      FROM inscricoes i
      JOIN alunos a ON a.id = i.aluno_id
      WHERE i.modalidade_id = :modalidade_id
        AND (:sexo IS NULL OR a.sexo = :sexo)
        AND a.turma IS NOT NULL
-     ORDER BY a.turma ASC`,
+       AND TRIM(a.turma) <> ''
+     ORDER BY TRIM(a.turma) ASC`,
     { modalidade_id, sexo: sexo || null }
   );
   return rows.map(r => r.turma).filter(Boolean);

@@ -17,6 +17,9 @@ let adminCache = {
   modalidades: [],
   jogos: []
 };
+const ADMIN_SIDEBAR_COLLAPSE_KEY = 'adminSidebarCollapsed';
+let adminSidebarResizeBound = false;
+let adminSidebarStickyObserver = null;
 
 function getPhotoStorageKey(matricula) {
   const key = String(matricula || '').trim();
@@ -274,29 +277,29 @@ const tourState = {
 
 const tourSteps = {
     inscricao: [
-        { selector: '.nav-hamburger', title: 'Menu rápido', text: 'Use o menu lateral para navegar pelas páginas.' },
-        { selector: '.hero-actions .btn-primary', title: 'Inscrição', text: 'Clique aqui para ir para a página de modalidades.', page: 'modalidades.html' },
-        { selector: '#allModalidadesGrid', title: 'Modalidades', text: 'Escolha uma modalidade e confirme a inscrição.' },
+        { selector: '.nav-hamburger', title: 'Menu rÃ¡pido', text: 'Use o menu lateral para navegar pelas pÃ¡ginas.' },
+        { selector: '.hero-actions .btn-primary', title: 'InscriÃ§Ã£o', text: 'Clique aqui para ir para a pÃ¡gina de modalidades.', page: 'modalidades.html' },
+        { selector: '#allModalidadesGrid', title: 'Modalidades', text: 'Escolha uma modalidade e confirme a inscriÃ§Ã£o.' },
     ],
     senha: [
-        { selector: '.user-trigger', title: 'Menu do usuário', text: 'Clique no avatar para abrir o menu.' },
+        { selector: '.user-trigger', title: 'Menu do usuÃ¡rio', text: 'Clique no avatar para abrir o menu.' },
         { selector: '.drawer-btn', title: 'Perfil', text: 'Acesse o perfil para alterar a senha.', page: 'perfil.html' },
         { selector: '.profile-card .btn-primary', title: 'Alterar senha', text: 'Clique para abrir o modal de troca de senha.' },
     ],
     foto: [
-        { selector: '.user-trigger', title: 'Menu do usuário', text: 'Abra o menu lateral do usuário.' },
+        { selector: '.user-trigger', title: 'Menu do usuÃ¡rio', text: 'Abra o menu lateral do usuÃ¡rio.' },
         { selector: '.drawer-sub-btn', title: 'Alterar foto', text: 'Clique em "Alterar foto" para abrir o modal.' },
-        { selector: '#photoInput', title: 'Prévia', text: 'Envie a foto e ajuste com zoom e posição.' },
+        { selector: '#photoInput', title: 'PrÃ©via', text: 'Envie a foto e ajuste com zoom e posiÃ§Ã£o.' },
     ],
     resultados: [
-        { selector: '.drawer-btn', title: 'Resultados', text: 'Acesse a página de resultados pelo menu.', page: 'resultados.html' },
+        { selector: '.drawer-btn', title: 'Resultados', text: 'Acesse a pÃ¡gina de resultados pelo menu.', page: 'resultados.html' },
         { selector: '.filter-bar', title: 'Filtros', text: 'Use filtros e busca para localizar partidas.' },
         { selector: '.btn-outline', title: 'Baixar CSV', text: 'Clique aqui para baixar os resultados.' },
     ],
     completo: [
-        { selector: '.navbar-brand', title: 'Topo rápido', text: 'Clique no IFRO ESPORTES para voltar ao topo.' },
-        { selector: '.hero-actions .btn-primary', title: 'Inscrições', text: 'Comece pelas modalidades.', page: 'modalidades.html' },
-        { selector: '.cards-grid', title: 'Modalidades', text: 'Confira as modalidades disponíveis.' },
+        { selector: '.navbar-brand', title: 'Topo rÃ¡pido', text: 'Clique no IFRO ESPORTES para voltar ao topo.' },
+        { selector: '.hero-actions .btn-primary', title: 'InscriÃ§Ãµes', text: 'Comece pelas modalidades.', page: 'modalidades.html' },
+        { selector: '.cards-grid', title: 'Modalidades', text: 'Confira as modalidades disponÃ­veis.' },
         { selector: '.drawer-btn', title: 'Resultados', text: 'Acesse os resultados no menu.', page: 'resultados.html' },
     ],
 };
@@ -326,7 +329,7 @@ async function ensureUserFromApi() {
         applyStoredPhoto(currentUser);
         sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
     } catch (_) {
-        // silencioso para não quebrar UX se offline
+        // silencioso para nÃ£o quebrar UX se offline
     }
 }
 
@@ -404,6 +407,77 @@ function toggleSideNav() {
     nav.classList.toggle('open');
     overlay.classList.toggle('active');
     closeAdminMenu();
+}
+
+function isDesktopSidebarViewport() {
+    return window.matchMedia('(min-width: 1025px)').matches;
+}
+
+function updateAdminSidebarStickyOffset() {
+    if (document.body?.dataset?.page !== 'admin') return;
+    const navbar = document.querySelector('.navbar');
+    const banner = document.getElementById('sessionBanner');
+    const navHeight = navbar ? Math.ceil(navbar.getBoundingClientRect().height) : 0;
+    const hasBanner = Boolean(banner && !banner.classList.contains('hidden'));
+    const bannerHeight = hasBanner ? Math.ceil(banner.getBoundingClientRect().height) : 0;
+    const spacing = 12;
+    const offset = navHeight + bannerHeight + spacing;
+    document.body.style.setProperty('--admin-sticky-offset', `${Math.max(offset, 72)}px`);
+}
+
+function setSidebarCollapsed(collapsed, persist = true) {
+    if (document.body?.dataset?.page !== 'admin') return;
+
+    const shouldCollapse = Boolean(collapsed) && isDesktopSidebarViewport();
+    document.body.classList.toggle('admin-sidebar-collapsed', shouldCollapse);
+
+    const btn = document.getElementById('sideCollapseBtn');
+    if (btn) {
+        btn.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
+        btn.setAttribute('aria-label', shouldCollapse ? 'Expandir barra lateral' : 'Recolher barra lateral');
+        const icon = btn.querySelector('.material-symbols-outlined');
+        if (icon) icon.textContent = shouldCollapse ? 'chevron_right' : 'chevron_left';
+    }
+
+    if (persist) {
+        try {
+            localStorage.setItem(ADMIN_SIDEBAR_COLLAPSE_KEY, shouldCollapse ? '1' : '0');
+        } catch (_) {}
+    }
+}
+
+function toggleSidebarCollapse() {
+    if (document.body?.dataset?.page !== 'admin') return;
+    const next = !document.body.classList.contains('admin-sidebar-collapsed');
+    setSidebarCollapsed(next, true);
+}
+
+function initSidebarCollapse() {
+    if (document.body?.dataset?.page !== 'admin') return;
+    updateAdminSidebarStickyOffset();
+    const storedCollapsed = localStorage.getItem(ADMIN_SIDEBAR_COLLAPSE_KEY) === '1';
+    setSidebarCollapsed(storedCollapsed, false);
+
+    const banner = document.getElementById('sessionBanner');
+    if (banner && !adminSidebarStickyObserver) {
+        adminSidebarStickyObserver = new MutationObserver(() => {
+            updateAdminSidebarStickyOffset();
+        });
+        adminSidebarStickyObserver.observe(banner, {
+            attributes: true,
+            attributeFilter: ['class', 'style']
+        });
+    }
+
+    if (!adminSidebarResizeBound) {
+        adminSidebarResizeBound = true;
+        window.addEventListener('resize', () => {
+            if (document.body?.dataset?.page !== 'admin') return;
+            updateAdminSidebarStickyOffset();
+            const preferredCollapsed = localStorage.getItem(ADMIN_SIDEBAR_COLLAPSE_KEY) === '1';
+            setSidebarCollapsed(preferredCollapsed, false);
+        });
+    }
 }
 
 function toggleUserDrawer() {
@@ -571,7 +645,7 @@ function renderDrawer() {
       <button class="drawer-btn" onclick="location.href='horarios.html'">Horarios</button>
       <button class="drawer-btn" onclick="location.href='resultados.html'">Resultados</button>
       ${isStaffUser() ? `<button class="drawer-btn" onclick="location.href='admin.html'">${adminLabel}</button>` : ''}
-      ${isAdminUser() ? `<button class="drawer-btn" onclick="location.href='sumula.html'">Sumula</button>` : ''}
+      ${isAdminUser() ? `<button class="drawer-btn" onclick="location.href='http://localhost:3005/sumula.html'">Sumula</button>` : ''}
     </div>
     <div class="drawer-footer">
       <div class="drawer-group-title">Configuracoes</div>
@@ -657,7 +731,7 @@ function entrarGovBr() {
     .then(res => res.json())
     .then(data => {
       if (!data.ok || !data.url) {
-        mostrarToastAtencao(data.message || 'Gov.br indisponível.');
+        mostrarToastAtencao(data.message || 'Gov.br indisponÃ­vel.');
         return;
       }
       window.location.href = data.url;
@@ -718,7 +792,7 @@ function handleLogin(event) {
     .then(data => {
       if (!data.sucesso) {
         const motivo = data.motivo || ''; 
-        const msg = motivo === 'matricula' ? 'Matrícula inválida.' : 'Senha incorreta.';
+        const msg = motivo === 'matricula' ? 'MatrÃ­cula invÃ¡lida.' : 'Senha incorreta.';
         showToastErro(msg);
         if (motivo === 'matricula') setFieldState(usuarioInput, 'error');
         else {
@@ -795,9 +869,9 @@ function carregarNoticias() {
       atualizarDashboard();
     })
     .catch(() => {
-      renderEmptyState(document.getElementById('noticiasGrid'), 'Sem notícias', 'Nenhuma notícia foi carregada.');
-      renderEmptyState(document.getElementById('allNoticiasGrid'), 'Sem notícias', 'Nenhuma notícia foi carregada.');
-      showToastErro('Não foi possível carregar as notícias.');
+      renderEmptyState(document.getElementById('noticiasGrid'), 'Sem notÃ­cias', 'Nenhuma notÃ­cia foi carregada.');
+      renderEmptyState(document.getElementById('allNoticiasGrid'), 'Sem notÃ­cias', 'Nenhuma notÃ­cia foi carregada.');
+      showToastErro('NÃ£o foi possÃ­vel carregar as notÃ­cias.');
     });
 }
 
@@ -828,9 +902,9 @@ function carregarModalidades() {
       atualizarDashboard();
     })
     .catch(() => {
-      renderEmptyState(document.getElementById('modalidadesGrid'), 'Sem modalidades', 'Nenhuma modalidade disponível no momento.');
-      renderEmptyState(document.getElementById('allModalidadesGrid'), 'Sem modalidades', 'Nenhuma modalidade disponível no momento.');
-      showToastErro('Não foi possível carregar as modalidades.');
+      renderEmptyState(document.getElementById('modalidadesGrid'), 'Sem modalidades', 'Nenhuma modalidade disponÃ­vel no momento.');
+      renderEmptyState(document.getElementById('allModalidadesGrid'), 'Sem modalidades', 'Nenhuma modalidade disponÃ­vel no momento.');
+      showToastErro('NÃ£o foi possÃ­vel carregar as modalidades.');
     });
 }
 
@@ -838,7 +912,7 @@ function formatarHorario(inicio, fim) {
   if (!inicio || !fim) return '-';
   const hi = inicio.slice(0, 5).replace(':', 'h');
   const hf = fim.slice(0, 5).replace(':', 'h');
-  return `${hi} às ${hf}`;
+  return `${hi} Ã s ${hf}`;
 }
 
 function carregarInscricoes() {
@@ -862,11 +936,11 @@ function carregarInscricoes() {
       preencherSelectSorteio();
     })
     .catch(() => {
-      showToastErro('Não foi possível carregar as inscrições.');
+      showToastErro('NÃ£o foi possÃ­vel carregar as inscriÃ§Ãµes.');
       const tbody = document.getElementById('tabelaInscricoes');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscrição disponível.</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscriÃ§Ã£o disponÃ­vel.</td></tr>';
       const minhas = document.getElementById('tabelaMinhasInscricoes');
-      if (minhas) minhas.innerHTML = '<tr><td colspan="3">Nenhuma inscrição disponível.</td></tr>';
+      if (minhas) minhas.innerHTML = '<tr><td colspan="3">Nenhuma inscriÃ§Ã£o disponÃ­vel.</td></tr>';
     });
 }
 
@@ -875,8 +949,8 @@ function renderModalities() {
   const allGrid = document.getElementById('allModalidadesGrid');
 
   if (!modalidades.length) {
-    renderEmptyState(grid, 'Sem modalidades', 'Nenhuma modalidade disponível no momento.');
-    renderEmptyState(allGrid, 'Sem modalidades', 'Nenhuma modalidade disponível no momento.');
+    renderEmptyState(grid, 'Sem modalidades', 'Nenhuma modalidade disponÃ­vel no momento.');
+    renderEmptyState(allGrid, 'Sem modalidades', 'Nenhuma modalidade disponÃ­vel no momento.');
     return;
   }
 
@@ -885,14 +959,14 @@ function renderModalities() {
     const rules = [
       { keys: ['futebol', 'futsal'], icon: 'sports_soccer', category: 'coletiva' },
       { keys: ['basquete', 'basket'], icon: 'sports_basketball', category: 'coletiva' },
-      { keys: ['volei', 'vôlei', 'volley'], icon: 'sports_volleyball', category: 'coletiva' },
+      { keys: ['volei', 'vÃ´lei', 'volley'], icon: 'sports_volleyball', category: 'coletiva' },
       { keys: ['handebol'], icon: 'sports_handball', category: 'coletiva' },
-      { keys: ['tenis', 'tênis'], icon: 'sports_tennis', category: 'individual' },
+      { keys: ['tenis', 'tÃªnis'], icon: 'sports_tennis', category: 'individual' },
       { keys: ['atletismo', 'corrida', 'caminhada'], icon: 'directions_run', category: 'individual' },
-      { keys: ['natacao', 'natação'], icon: 'pool', category: 'individual' },
+      { keys: ['natacao', 'nataÃ§Ã£o'], icon: 'pool', category: 'individual' },
       { keys: ['xadrez'], icon: 'chess', category: 'individual' },
-      { keys: ['judo', 'judô', 'karate', 'karatê', 'jiu', 'capoeira'], icon: 'sports_kabaddi', category: 'individual' },
-      { keys: ['academia', 'musculacao', 'musculação', 'fitness'], icon: 'fitness_center', category: 'individual' },
+      { keys: ['judo', 'judÃ´', 'karate', 'karatÃª', 'jiu', 'capoeira'], icon: 'sports_kabaddi', category: 'individual' },
+      { keys: ['academia', 'musculacao', 'musculaÃ§Ã£o', 'fitness'], icon: 'fitness_center', category: 'individual' },
     ];
     for (const rule of rules) {
       if (rule.keys.some(k => n.includes(k))) return rule;
@@ -934,8 +1008,8 @@ function renderNews(lista) {
   const grid = document.getElementById('noticiasGrid');
   const allGrid = document.getElementById('allNoticiasGrid');
   if (!lista || lista.length === 0) {
-    renderEmptyState(allGrid, 'Sem notícias', 'Nenhuma notícia publicada.');
-    renderEmptyState(grid, 'Sem notícias', 'Nenhuma notícia publicada.');
+    renderEmptyState(allGrid, 'Sem notÃ­cias', 'Nenhuma notÃ­cia publicada.');
+    renderEmptyState(grid, 'Sem notÃ­cias', 'Nenhuma notÃ­cia publicada.');
     return;
   }
   const ordered = [...lista].sort((a, b) => new Date(b.data_publicacao) - new Date(a.data_publicacao));
@@ -948,8 +1022,8 @@ function renderNews(lista) {
       </div>
       <div class="card-body">
         <p>${n.descricao}</p>
-        <small>${new Date(n.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' às')}</small>
-        ${n.data_edicao ? `<small class="muted">Editado em: ${new Date(n.data_edicao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' às')}</small>` : ''}
+        <small>${new Date(n.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s')}</small>
+        ${n.data_edicao ? `<small class="muted">Editado em: ${new Date(n.data_edicao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s')}</small>` : ''}
         <div class="card-actions">
           <button class="btn-view" onclick="verNoticia(${n.id})">Ver</button>
           ${isAdminUser() ? `
@@ -969,7 +1043,7 @@ function renderNews(lista) {
       </div>
       <div class="card-body">
         <p>${n.descricao}</p>
-        <small>${new Date(n.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' às')}</small>
+        <small>${new Date(n.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s')}</small>
         <div class="card-actions">
           <button class="btn-view" onclick="verNoticia(${n.id})">Ver</button>
         </div>
@@ -985,7 +1059,7 @@ function renderScheduleTable() {
   const tbody = document.getElementById('tabelaHorarios');
   if (!tbody) return;
   if (!modalidades.length) {
-    tbody.innerHTML = '<tr><td colspan="4">Nenhum horário disponível.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4">Nenhum horÃ¡rio disponÃ­vel.</td></tr>';
     return;
   }
   tbody.innerHTML = modalidades.map(m => `
@@ -1056,7 +1130,7 @@ function editarModalidade(id) {
 
   const submitBtn = document.getElementById('modalidadeSubmitBtn');
   const cancelBtn = document.getElementById('modalidadeCancelBtn');
-  if (submitBtn) submitBtn.textContent = 'Salvar alterações';
+  if (submitBtn) submitBtn.textContent = 'Salvar alteraÃ§Ãµes';
   if (cancelBtn) cancelBtn.classList.remove('hidden');
 }
 
@@ -1085,7 +1159,7 @@ function renderMinhasInscricoes() {
   });
 
   if (unicas.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3">Você ainda não está inscrito em nenhuma modalidade.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3">VocÃª ainda nÃ£o estÃ¡ inscrito em nenhuma modalidade.</td></tr>';
     return;
   }
 
@@ -1129,7 +1203,7 @@ function exportarInscricoesCsv() {
   animateButton(document.getElementById('btnExportarInscricoes'));
   const rows = filteredInscriptions.length ? filteredInscriptions : inscriptions;
   if (!rows.length) {
-    showToastErro('Não há inscrições para exportar.');
+    showToastErro('NÃ£o hÃ¡ inscriÃ§Ãµes para exportar.');
     return;
   }
   const header = ['Nome', 'Matricula', 'Turma', 'Modalidade', 'Sexo', 'Tipo', 'Data'];
@@ -1150,7 +1224,7 @@ function exportarModalidadesCsv() {
     horario: m.horario || (m.hora_inicio && m.hora_fim ? formatarHorario(m.hora_inicio, m.hora_fim) : '')
   }));
   if (!normalized.length) {
-    showToastErro('Não há modalidades para exportar.');
+    showToastErro('NÃ£o hÃ¡ modalidades para exportar.');
     return;
   }
   const header = ['Modalidade', 'Professor', 'Dias', 'Horario'];
@@ -1169,7 +1243,7 @@ function bindAdminDownloads() {
       if (type === 'modalidades') {
         exportarModalidadesCsv();
       } else {
-        showToastErro('Tipo de exportação não reconhecido.');
+        showToastErro('Tipo de exportaÃ§Ã£o nÃ£o reconhecido.');
       }
     });
   });
@@ -1205,7 +1279,7 @@ function loadAdminMetrics() {
       set('metricNoticias', data.noticias);
     })
     .catch(() => {
-      // silencioso, evita ruído no admin
+      // silencioso, evita ruÃ­do no admin
     });
 }
 
@@ -1246,8 +1320,8 @@ function showModalDetails(modalidadeId) {
   document.getElementById('detailContent').innerHTML = `
     <strong>Professor:</strong> <p>${mod.professor}</p>
     <strong>Dias:</strong> <p>${mod.dias}</p>
-    <strong>Horário:</strong> <p>${mod.horario}</p>
-    <strong>Descrição:</strong> <p>${mod.descricao}</p>
+    <strong>HorÃ¡rio:</strong> <p>${mod.horario}</p>
+    <strong>DescriÃ§Ã£o:</strong> <p>${mod.descricao}</p>
   `;
   const confirmarBtn = document.querySelector('#detailModal .btn-primary');
   if (confirmarBtn) confirmarBtn.style.display = isStaffUser() ? 'none' : '';
@@ -1257,7 +1331,7 @@ function showModalDetails(modalidadeId) {
 function confirmInscription() {
   if (!currentUser || !currentInscription) return;
   if (isStaffUser()) {
-    showToastErro('Administradores e professores não podem se inscrever.');
+    showToastErro('Administradores e professores nÃ£o podem se inscrever.');
     return;
   }
   subscribeToJICS(currentInscription.id);
@@ -1265,7 +1339,7 @@ function confirmInscription() {
 
 function subscribeToJICS(modalidadeId) {
   if (isStaffUser()) {
-    showToastErro('Administradores e professores não podem se inscrever.');
+    showToastErro('Administradores e professores nÃ£o podem se inscrever.');
     return;
   }
   fetch('/inscricoes/jics', {
@@ -1276,14 +1350,14 @@ function subscribeToJICS(modalidadeId) {
     .then(res => res.json())
     .then(data => {
       if (!data.sucesso) {
-        mostrarToastAtencao(data.mensagem || 'Não foi possível inscrever');
+        mostrarToastAtencao(data.mensagem || 'NÃ£o foi possÃ­vel inscrever');
         return;
       }
-      showToastSucesso('Inscrição realizada com sucesso!');
+      showToastSucesso('InscriÃ§Ã£o realizada com sucesso!');
       closeModal('detailModal');
       carregarInscricoes();
     })
-    .catch(() => showToastErro('Erro ao realizar inscrição'));
+    .catch(() => showToastErro('Erro ao realizar inscriÃ§Ã£o'));
 }
 
 function resolveModalidadeIdByName(nome) {
@@ -1295,7 +1369,7 @@ function resolveModalidadeIdByName(nome) {
 
 function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modalidadeEnc) {
   if (!currentUser) {
-    showToastErro('Usuario não identificado.');
+    showToastErro('Usuario nÃ£o identificado.');
     return;
   }
   const inscricaoId = decodeURIComponent(inscricaoIdEnc || '').trim();
@@ -1307,13 +1381,13 @@ function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modali
     if (resolved) modalidadeId = resolved;
   }
   if (!inscricaoId && !modalidadeId && !modalidadeLabel) {
-    showToastErro('Não foi possível identificar a inscrição.');
+    showToastErro('NÃ£o foi possÃ­vel identificar a inscriÃ§Ã£o.');
     return;
   }
 
   openDangerConfirm({
-    title: 'Cancelar inscrição',
-    message: `Digite CONFIRMAR para cancelar a inscrição${modalidadeLabel ? ` em ${modalidadeLabel}` : ''}.`,
+    title: 'Cancelar inscriÃ§Ã£o',
+    message: `Digite CONFIRMAR para cancelar a inscriÃ§Ã£o${modalidadeLabel ? ` em ${modalidadeLabel}` : ''}.`,
     onConfirm: () => {
       const payload = {};
       if (inscricaoId) payload.inscricao_id = inscricaoId;
@@ -1331,13 +1405,13 @@ function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modali
           let data = null;
           try { data = await res.json(); } catch (_) { data = null; }
           if (res.ok && data && data.sucesso) {
-            showToastSucesso('Inscrição cancelada.');
+            showToastSucesso('InscriÃ§Ã£o cancelada.');
             carregarInscricoes();
           } else {
-            showToastErro(data?.mensagem || 'Não foi possível cancelar.');
+            showToastErro(data?.mensagem || 'NÃ£o foi possÃ­vel cancelar.');
           }
         })
-        .catch(() => showToastErro('Erro ao cancelar inscrição.'));
+        .catch(() => showToastErro('Erro ao cancelar inscriÃ§Ã£o.'));
     }
   });
 }
@@ -1370,7 +1444,7 @@ function openDangerConfirm({ title, message, onConfirm }) {
   const btnEl = document.getElementById('dangerConfirmBtn');
 
   dangerConfirmAction = onConfirm || null;
-  if (titleEl) titleEl.textContent = title || 'Confirmar ação';
+  if (titleEl) titleEl.textContent = title || 'Confirmar aÃ§Ã£o';
   if (textEl) textEl.textContent = message || 'Digite CONFIRMAR para continuar.';
   if (inputEl) {
     inputEl.value = '';
@@ -1402,9 +1476,9 @@ function verNoticia(id) {
   document.getElementById('verTitulo').textContent = noticia.titulo;
   document.getElementById('verDescricao').textContent = noticia.descricao;
   document.getElementById('verPublicacao').textContent =
-    'Publicado em: ' + new Date(noticia.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' às');
+    'Publicado em: ' + new Date(noticia.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s');
   document.getElementById('verEdicao').textContent = noticia.data_edicao
-    ? 'Editado em: ' + new Date(noticia.data_edicao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' às')
+    ? 'Editado em: ' + new Date(noticia.data_edicao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s')
     : '';
   openModal('modalVerNoticia');
 }
@@ -1416,8 +1490,8 @@ function fecharModalVer() {
 function excluirNoticia(id) {
   if (currentUser?.role !== 'ADMIN') return;
   openDangerConfirm({
-    title: 'Excluir notícia',
-    message: 'Digite CONFIRMAR para excluir esta notícia.',
+    title: 'Excluir notÃ­cia',
+    message: 'Digite CONFIRMAR para excluir esta notÃ­cia.',
     onConfirm: () => confirmarExclusaoNoticia(id),
   });
 }
@@ -1431,9 +1505,9 @@ function confirmarExclusaoNoticia(id) {
   fetch(`/noticias/${id}`, { method: 'DELETE' })
     .then(() => {
       carregarNoticias();
-      showToastSucesso('Notícia excluída!');
+      showToastSucesso('NotÃ­cia excluÃ­da!');
     })
-    .catch(() => showToastErro('Erro ao excluir notícia'));
+    .catch(() => showToastErro('Erro ao excluir notÃ­cia'));
 }
 
 function switchAdminTab(tabId, btn) {
@@ -1499,7 +1573,7 @@ function publicarNoticia(event) {
   if (!isStaffUser()) return showToastErro('Acesso restrito.');
   const titulo = document.getElementById('tituloNoticia')?.value?.trim();
   const descricao = document.getElementById('descricaoNoticia')?.value?.trim();
-  if (!titulo || !descricao) return showToastErro('Preencha título e descrição.');
+  if (!titulo || !descricao) return showToastErro('Preencha tÃ­tulo e descriÃ§Ã£o.');
   fetch('/admin/noticias', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1507,24 +1581,24 @@ function publicarNoticia(event) {
   })
     .then(res => res.json())
     .then(data => {
-      if (!data.sucesso) return showToastErro('Erro ao publicar notícia');
-      showToastSucesso('Notícia publicada!');
+      if (!data.sucesso) return showToastErro('Erro ao publicar notÃ­cia');
+      showToastSucesso('NotÃ­cia publicada!');
       if (event && event.target?.reset) event.target.reset();
       carregarNoticias();
     })
-    .catch(() => showToastErro('Erro ao publicar notícia'));
+    .catch(() => showToastErro('Erro ao publicar notÃ­cia'));
 }
 
 function excluirNoticiaAdmin(id) {
-  if (!confirm('Excluir esta notícia?')) return;
+  if (!confirm('Excluir esta notÃ­cia?')) return;
   fetch(`/noticias/${id}`, { method: 'DELETE' })
     .then(res => res.json())
     .then(data => {
-      if (!data.sucesso) return showToastErro('Erro ao excluir notícia');
-      showToastSucesso('Notícia excluída!');
+      if (!data.sucesso) return showToastErro('Erro ao excluir notÃ­cia');
+      showToastSucesso('NotÃ­cia excluÃ­da!');
       carregarNoticias();
     })
-    .catch(() => showToastErro('Erro ao excluir notícia'));
+    .catch(() => showToastErro('Erro ao excluir notÃ­cia'));
 }
 
 function addModalidade(event) {
@@ -1541,7 +1615,7 @@ function addModalidade(event) {
   const diasSelecionados = Array.from(document.querySelectorAll('.dias-semana input:checked')).map(el => el.value);
 
   if (diasSelecionados.length === 0 || diasSelecionados.length > 2) {
-    mostrarToastAtencao('Selecione até 2 dias de treino.');
+    mostrarToastAtencao('Selecione atÃ© 2 dias de treino.');
     return;
   }
 
@@ -1750,7 +1824,7 @@ function verificarMatriculaAutomatica(matricula) {
     .then(data => {
       if (data.existe) {
         input.classList.add('input-erro');
-        status.textContent = 'Esta matrícula já possui cadastro';
+        status.textContent = 'Esta matrÃ­cula jÃ¡ possui cadastro';
       } else {
         input.classList.remove('input-erro');
         status.textContent = '';
@@ -1806,7 +1880,7 @@ function confirmarTrocaSenha() {
     .then(data => {
       if (data.sucesso) showToastSucesso('Senha alterada com sucesso!');
       else if (data.tipo === 'senha_atual_incorreta') showToastErro('Senha atual incorreta');
-      else if (data.tipo === 'mesma_senha') showToastErro('Essa senha já está cadastrada');
+      else if (data.tipo === 'mesma_senha') showToastErro('Essa senha jÃ¡ estÃ¡ cadastrada');
       else showToastErro('Erro ao alterar senha');
       closeModalConfirmar();
     })
@@ -2085,7 +2159,7 @@ function salvarSumula(event, fromMobile = false) {
   const dados = getSumulaFormData();
 
   if (!dados.modalidade || !dados.equipeA || !dados.equipeB) {
-    showToastErro('Preencha todos os campos obrigatórios');
+    showToastErro('Preencha todos os campos obrigatÃ³rios');
     return;
   }
 
@@ -2109,7 +2183,7 @@ function handleAdminSessionExpired(message) {
   } catch (_) {}
   const banner = document.getElementById('sessionBanner');
   const text = document.getElementById('sessionBannerText');
-  if (text) text.textContent = message || 'Sessão expirada. Faça login novamente.';
+  if (text) text.textContent = message || 'SessÃ£o expirada. FaÃ§a login novamente.';
   if (banner) banner.classList.remove('hidden');
 }
 
@@ -2118,7 +2192,7 @@ async function adminFetch(url, fallback = []) {
     if (window.__adminSessionExpired) return fallback;
     const r = await fetch(url, { credentials: 'include' });
     if (r.status === 401) {
-      handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
+      handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
       return fallback;
     }
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -2187,7 +2261,7 @@ function renderSkeletonCards(containerId, count = 4) {
 function renderStatusPill(status) {
   const normalized = String(status || '').toUpperCase();
   const map = {
-    NAO_INICIADO: { label: 'Não iniciado', cls: 'status-nao_iniciado' },
+    NAO_INICIADO: { label: 'NÃ£o iniciado', cls: 'status-nao_iniciado' },
     AGENDADO: { label: 'Agendado', cls: 'status-nao_iniciado' },
     EM_ANDAMENTO: { label: 'Em andamento', cls: 'status-em_andamento' },
     FINALIZADO: { label: 'Finalizado', cls: 'status-finalizado' },
@@ -2210,7 +2284,7 @@ function renderAdminInscricoesTable(rows) {
   const tbody = document.getElementById('inscBody');
   if (!tbody) return;
   if (!rows || rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma inscrição encontrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma inscriÃ§Ã£o encontrada.</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(r => `
@@ -2333,9 +2407,9 @@ function initAdminPage() {
 
 document.addEventListener('DOMContentLoaded', initAdminPage);
 
-// ------ Ações rápidas de botões (CRUD simples) ------
+// ------ AÃ§Ãµes rÃ¡pidas de botÃµes (CRUD simples) ------
 async function adminPost(url, body) {
-  if (window.__adminSessionExpired) throw new Error('Sessão expirada.');
+  if (window.__adminSessionExpired) throw new Error('SessÃ£o expirada.');
   const r = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -2343,14 +2417,14 @@ async function adminPost(url, body) {
     body: JSON.stringify(body||{})
   });
   if (r.status === 401) {
-    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
-    throw new Error('Sessão expirada.');
+    handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
+    throw new Error('SessÃ£o expirada.');
   }
   if (!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
 async function adminPut(url, body) {
-  if (window.__adminSessionExpired) throw new Error('Sessão expirada.');
+  if (window.__adminSessionExpired) throw new Error('SessÃ£o expirada.');
   const r = await fetch(url, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -2358,26 +2432,26 @@ async function adminPut(url, body) {
     body: JSON.stringify(body||{})
   });
   if (r.status === 401) {
-    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
-    throw new Error('Sessão expirada.');
+    handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
+    throw new Error('SessÃ£o expirada.');
   }
   if (!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
 async function adminDelete(url) {
-  if (window.__adminSessionExpired) throw new Error('Sessão expirada.');
+  if (window.__adminSessionExpired) throw new Error('SessÃ£o expirada.');
   const r = await fetch(url, { method: 'DELETE', credentials: 'include' });
   if (r.status === 401) {
-    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
-    throw new Error('Sessão expirada.');
+    handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
+    throw new Error('SessÃ£o expirada.');
   }
   if (!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
 
 async function createUser() {
-  const nome = prompt('Nome completo do usuário:');
-  const matricula = prompt('Matrícula:');
+  const nome = prompt('Nome completo do usuÃ¡rio:');
+  const matricula = prompt('MatrÃ­cula:');
   const turma = prompt('Turma:');
   const role = prompt('Papel (ADMIN/PROFESSOR/ALUNO):','ALUNO');
   if (!nome || !matricula) return;
@@ -2385,7 +2459,7 @@ async function createUser() {
     await adminPost('/admin/add-aluno', { nome, matricula, turma, role });
     showToast('Usuario criado', 'info');
     loadUsuariosAdmin();
-  } catch(e){ showToast('Erro ao criar usuário','error'); }
+  } catch(e){ showToast('Erro ao criar usuÃ¡rio','error'); }
 }
 
 async function editUser(matricula) {
@@ -2401,7 +2475,7 @@ async function editUser(matricula) {
 
 async function deleteUser(matricula) {
   if (!matricula) return;
-  if (!confirm('Excluir este usuário?')) return;
+  if (!confirm('Excluir este usuÃ¡rio?')) return;
   try {
     await adminDelete(`/admin/aluno/${encodeURIComponent(matricula)}`);
     showToast('Usuario removido','info');
@@ -2418,12 +2492,12 @@ async function resetPassUser(matricula) {
 }
 
 async function createNews() {
-  const titulo = prompt('Título da notícia:');
-  const descricao = prompt('Descrição:');
+  const titulo = prompt('TÃ­tulo da notÃ­cia:');
+  const descricao = prompt('DescriÃ§Ã£o:');
   if (!titulo || !descricao) return;
   try {
     await adminPost('/admin/noticias', { titulo, descricao });
-    showToast('Notícia publicada','info');
+    showToast('NotÃ­cia publicada','info');
     loadNoticiasAdmin();
   } catch(e){ showToast('Erro ao publicar','error'); }
 }
@@ -2433,35 +2507,35 @@ async function saveNews(event) {
   const autor = document.getElementById('newsAutor')?.value.trim();
   const data = document.getElementById('newsData')?.value;
   const descricao = document.getElementById('newsDescricao')?.value.trim();
-  if (!titulo || !descricao) { showToast('Preencha título e descrição','error'); return; }
+  if (!titulo || !descricao) { showToast('Preencha tÃ­tulo e descriÃ§Ã£o','error'); return; }
   try {
     await adminPost('/admin/noticias', { titulo, descricao, autor, data });
-    showToast('Notícia publicada','info');
+    showToast('NotÃ­cia publicada','info');
     if (event && event.target?.reset) event.target.reset();
     loadNoticiasAdmin();
   } catch(e){ showToast('Erro ao publicar','error'); }
 }
 async function editNews(id) {
-  const titulo = prompt('Novo título:');
-  const descricao = prompt('Nova descrição:');
+  const titulo = prompt('Novo tÃ­tulo:');
+  const descricao = prompt('Nova descriÃ§Ã£o:');
   try {
     await adminPut(`/noticias/${id}`, { titulo, descricao });
-    showToast('Notícia atualizada','info');
+    showToast('NotÃ­cia atualizada','info');
     loadNoticiasAdmin();
   } catch(e){ showToast('Erro ao atualizar','error'); }
 }
 async function deleteNews(id) {
-  if (!confirm('Excluir notícia?')) return;
+  if (!confirm('Excluir notÃ­cia?')) return;
   try {
     await adminDelete(`/noticias/${id}`);
-    showToast('Notícia excluída','info');
+    showToast('NotÃ­cia excluÃ­da','info');
     loadNoticiasAdmin();
   } catch(e){ showToast('Erro ao excluir','error'); }
 }
 
 async function createMod() {
   const nome = prompt('Nome da modalidade:');
-  const horario = prompt('Dias/horários:');
+  const horario = prompt('Dias/horÃ¡rios:');
   if (!nome) return;
   try {
     await adminPost('/admin/modalidades', { nome, horario });
@@ -2473,7 +2547,7 @@ async function saveMod(event) {
   if (event) event.preventDefault();
   const nome = document.getElementById('modNome')?.value.trim();
   const horario = document.getElementById('modHorario')?.value.trim();
-  if (!nome || !horario) { showToast('Preencha modalidade e horário','error'); return; }
+  if (!nome || !horario) { showToast('Preencha modalidade e horÃ¡rio','error'); return; }
   try {
     await adminPost('/admin/modalidades', { nome, horario });
     showToast('Modalidade salva','info');
@@ -2483,7 +2557,7 @@ async function saveMod(event) {
 }
 async function editMod(id) {
   const nome = prompt('Novo nome:');
-  const horario = prompt('Novo horário:');
+  const horario = prompt('Novo horÃ¡rio:');
   try {
     await adminPut(`/admin/modalidades/${id}`, { nome, horario });
     showToast('Modalidade atualizada','info');
@@ -2504,25 +2578,48 @@ async function buscarAlunoAdmin() {
   const matricula = document.getElementById('buscaMatricula')?.value.trim();
   const box = document.getElementById('buscaResultado');
   if (!box) return;
-  if (!matricula) { box.innerHTML = '<p class="muted">Informe a matrícula.</p>'; return; }
+  if (!matricula) {
+    box.innerHTML = '<p class="muted">Informe a matricula.</p>';
+    return;
+  }
   try {
     const res = await fetch(`/admin/aluno/${encodeURIComponent(matricula)}`);
     if (!res.ok) throw new Error(res.status);
     const a = await res.json();
     box.innerHTML = `
-      <div><strong>${a.nome||'-'}</strong></div>
-      <div>Matrícula: ${a.matricula||'-'}</div>
-      <div>Turma: ${a.turma||'-'}</div>
-      <div>Campus: ${a.campus||'-'}</div>
-      <div>Sexo: ${a.sexo||'-'}</div>
-      <div>Email: ${a.email_pessoal||a.email_academico||'-'}</div>
+      <table class="busca-aluno-table" aria-label="Dados do aluno">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Matricula</th>
+            <th>Turma</th>
+            <th>Campus</th>
+            <th>Sexo</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${a.nome || '-'}</td>
+            <td>${a.matricula || '-'}</td>
+            <td>${a.turma || '-'}</td>
+            <td>${a.campus || '-'}</td>
+            <td>${a.sexo || '-'}</td>
+            <td>${a.email_pessoal || a.email_academico || '-'}</td>
+          </tr>
+        </tbody>
+      </table>
     `;
-  } catch(e){
-    box.innerHTML = '<p class="muted">Aluno não encontrado.</p>';
+  } catch (e) {
+    box.innerHTML = '<p class="muted">Aluno nao encontrado.</p>';
   }
 }
 
-// ------------------ SORTEIO: carregar/horários ------------------
+function buscarAluno() {
+  return buscarAlunoAdmin();
+}
+
+// ------------------ SORTEIO: carregar/horÃ¡rios ------------------
 async function carregarTabelaSorteio() {
   const mod = document.getElementById('sorteioModalidade')?.value;
   const sexo = document.getElementById('sorteioSexo')?.value;
@@ -2638,11 +2735,11 @@ function gerarSumulaPreview(download = false) {
     </head><body>
       <h3>${titulo}</h3>
       <table>
-        <tr><td colspan="2"><strong>Identificação do jogo</strong></td></tr>
+        <tr><td colspan="2"><strong>IdentificaÃ§Ã£o do jogo</strong></td></tr>
         <tr><td>Modalidade: ${d.modalidade}</td><td>Fase: ${d.fase}</td></tr>
         <tr><td>Sexo: ${d.sexo}</td><td>Etapa: ${d.etapa}</td></tr>
         <tr><td>Data: ${d.data}</td><td>Inicio: ${d.inicio}  /  Fim: ${d.fim}</td></tr>
-        <tr><td>Árbitro: ${d.arbitro}</td><td>Mesários: ${d.mesarios}</td></tr>
+        <tr><td>Ãrbitro: ${d.arbitro}</td><td>MesÃ¡rios: ${d.mesarios}</td></tr>
       </table>
       <table>
         <tr><td colspan="4"><strong>Placar</strong></td></tr>
@@ -2650,8 +2747,8 @@ function gerarSumulaPreview(download = false) {
         <tr><td colspan="2">Pontos A: ${d.pontosA}</td><td colspan="2">Pontos B: ${d.pontosB}</td></tr>
       </table>
       <table>
-        <tr><td><strong>Cartões</strong></td></tr>
-        <tr><td>${d.cartoes || '—'}</td></tr>
+        <tr><td><strong>CartÃµes</strong></td></tr>
+        <tr><td>${d.cartoes || 'â€”'}</td></tr>
       </table>
     </body></html>
   `;
@@ -2667,7 +2764,7 @@ function gerarSumulaPreview(download = false) {
       w.document.write(html);
       w.document.close();
     } else {
-      showToastErro('Popup bloqueado. Permita popups para ver a prévia.');
+      showToastErro('Popup bloqueado. Permita popups para ver a prÃ©via.');
     }
   }
 }
@@ -2693,7 +2790,7 @@ function preencherSumulaFromSorteio(idx = 0) {
   if (equipeA) equipeA.value = jogo.equipeA || '';
   if (equipeB) equipeB.value = jogo.equipeB || '';
   const fase = document.getElementById('sumulaFase');
-  if (fase) fase.value = jogo.jogo || 'Classificatória';
+  if (fase) fase.value = jogo.jogo || 'ClassificatÃ³ria';
   const data = document.getElementById('sumulaData');
   if (data && !data.value) data.valueAsDate = new Date();
   document.getElementById('tabSumula')?.scrollIntoView({ behavior: 'smooth' });
@@ -2711,7 +2808,7 @@ function renderResultadosLista() {
     <div class="result-card">
       <strong>${r.modalidade} - ${r.fase} (${r.sexo})</strong>
       <span>${r.equipeA} ${r.pontosA} x ${r.pontosB} ${r.equipeB}</span>
-      <small>Etapa: ${r.etapa} Data: ${r.data || '-'} Árbitro: ${r.arbitro || '-'}</small>
+      <small>Etapa: ${r.etapa} Data: ${r.data || '-'} Ãrbitro: ${r.arbitro || '-'}</small>
     </div>
   `).join('');
 }
@@ -2741,10 +2838,10 @@ function filtrarResultados() {
 function baixarResultados() {
   const lista = filtrarLista(getResultados());
   if (lista.length === 0) {
-    showToastErro('Não há resultados para exportar.');
+    showToastErro('NÃ£o hÃ¡ resultados para exportar.');
     return;
   }
-  const header = ['Modalidade', 'Fase', 'Sexo', 'Etapa', 'Equipe A', 'Pontos A', 'Equipe B', 'Pontos B', 'Data', 'Árbitro'];
+  const header = ['Modalidade', 'Fase', 'Sexo', 'Etapa', 'Equipe A', 'Pontos A', 'Equipe B', 'Pontos B', 'Data', 'Ãrbitro'];
   const rows = lista.map(r => [r.modalidade, r.fase, r.sexo, r.etapa, r.equipeA, r.pontosA, r.equipeB, r.pontosB, r.data, r.arbitro]);
   const csv = buildCsvContent(rows, header);
   const filename = `resultados_${new Date().toISOString().slice(0,10)}.csv`;
@@ -2773,7 +2870,7 @@ function renderClassification() {
   const ranking = Object.entries(pontos).sort((a, b) => b[1] - a[1]);
   container.innerHTML = ranking.length
     ? ranking.map(([equipe, pts], idx) => `<div class="result-card">${idx + 1}. ${equipe} - ${pts} pts</div>`).join('')
-    : '<p class="muted">Nenhuma pontuação registrada.</p>';
+    : '<p class="muted">Nenhuma pontuaÃ§Ã£o registrada.</p>';
 }
 
 function initSumula() {
@@ -2912,7 +3009,7 @@ function initPage() {
   if (avatar) avatar.src = currentUser.foto || '/assets/avatar-default.png';
 
   if (page === 'admin' && sessionStorage.getItem('adminSessionExpired') === '1') {
-    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
+    handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
     return;
   }
 
@@ -2934,6 +3031,7 @@ function initPage() {
   if (page === 'sumula' || page === 'sumula-mobile') initSumula();
   if (page === 'resultados') renderResultadosLista();
   if (page === 'admin') {
+    initSidebarCollapse();
     applyAdminTabVisibility();
     const pendingTab = localStorage.getItem('adminTab');
     if (pendingTab) {
@@ -2977,7 +3075,7 @@ function updateInscriptionsTable(list) {
   if (!tbody) return;
   const source = Array.isArray(list) ? list : inscriptions;
   if (!source.length) {
-    tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscrição encontrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscriÃ§Ã£o encontrada.</td></tr>';
     if (empty) empty.classList.remove('hidden');
     return;
   }
@@ -3134,7 +3232,7 @@ async function gerarTabelaSorteio() {
 async function gerarHorariosSorteio() {
   const horaInicio = document.getElementById('sorteioHoraInicio')?.value || '07:30';
   const intervaloMin = Number(document.getElementById('sorteioIntervalo')?.value || 0);
-  if (!sorteioRows.length) { showToastErro('Gere a tabela antes de aplicar horários'); return; }
+  if (!sorteioRows.length) { showToastErro('Gere a tabela antes de aplicar horÃ¡rios'); return; }
 
   aplicarNumeracaoEHorarios(sorteioRows, horaInicio, intervaloMin);
 
@@ -3167,7 +3265,7 @@ async function gerarHorariosSorteio() {
     renderSorteioTabela();
     showToastSucesso('Horarios aplicados e salvos.');
   } catch (e) {
-    showToastErro('Erro ao aplicar horários.');
+    showToastErro('Erro ao aplicar horÃ¡rios.');
   }
 }
 

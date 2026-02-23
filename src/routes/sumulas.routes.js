@@ -8,7 +8,7 @@ const router = Router();
 router.use(attachAdminToReq);
 router.use(requireAuth);
 router.use(requireOrg);
-router.use(requireRole(['ADMIN', 'SUPER_ADMIN']));
+router.use(requireRole(['ADMIN', 'SUPER_ADMIN', 'STAFF']));
 
 router.patch('/jogos/:id', patchSumula);
 router.get('/jogos/:id/detalhes', getJogoDetalhesController);

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFRO Esportes - Painel de Sorteio</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/light-override.css" />
+  <link rel="stylesheet" href="/css/painel-sorteio.css" />
+</head>
+<body data-page="painel-sorteio" data-theme="light">
+  <div class="painel-sorteio-shell">
+    <header class="painel-sorteio-topbar">
+      <div>
+        <h1>Painel de Sorteio</h1>
+        <p>Gerencie jogos, chaves e acesso rapido a sumula em tela cheia.</p>
+      </div>
+      <div class="painel-sorteio-top-actions">
+        <a class="btn-outline" href="/admin.html?tab=tabSorteio">Voltar ao admin</a>
+        <a id="painelTelaoLink" class="btn-outline" href="/telao" target="_blank" rel="noopener">Abrir telao</a>
+      </div>
+    </header>
+
+    <section class="card sorteio-form-card painel-sorteio-filters">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sorteioEvento">Evento</label>
+          <select id="sorteioEvento">
+            <option value="">Evento</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sorteioModalidade">Modalidade</label>
+          <select id="sorteioModalidade">
+            <option value="">Todas as modalidades</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sorteioSexo">Sexo</label>
+          <select id="sorteioSexo">
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sorteioChave">Chave</label>
+          <select id="sorteioChave">
+            <option value="">Todas</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sorteioLocal">Local</label>
+          <input id="sorteioLocal" value="Quadra A" />
+        </div>
+
+        <div class="form-group">
+          <label for="sorteioModo">Modo</label>
+          <select id="sorteioModo">
+            <option value="GRUPOS">Grupos</option>
+            <option value="MATA_MATA">Mata-mata</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sorteioHoraInicio">Hora inicio</label>
+          <input id="sorteioHoraInicio" type="time" value="07:30" />
+        </div>
+
+        <div class="form-group">
+          <label for="sorteioIntervalo">Intervalo (min)</label>
+          <input id="sorteioIntervalo" type="number" value="10" min="0" />
+        </div>
+      </div>
+
+      <div class="form-row painel-sorteio-actions">
+        <button id="painelLoadBtn" class="btn-primary" type="button">Carregar tabela</button>
+        <button id="painelGenerateBtn" class="btn-primary" type="button">Gerar tabela</button>
+        <button id="painelApplyTimeBtn" class="btn-outline" type="button">Aplicar horarios</button>
+        <button id="painelClearBtn" class="btn-outline" type="button">Limpar</button>
+      </div>
+
+      <div id="painelSorteioMsg" class="form-msg" aria-live="polite"></div>
+    </section>
+
+    <section class="painel-sorteio-main">
+      <aside class="painel-sorteio-side">
+        <article class="card sorteio-chaves-card">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Tabela de chaves</div>
+              <div class="page-subtitle">Resumo de equipes e progresso por chave.</div>
+            </div>
+          </div>
+          <div class="table-responsive painel-scroll painel-scroll--small">
+            <table class="table sorteio-table sorteio-table-chaves">
+              <thead>
+                <tr>
+                  <th>Chave</th>
+                  <th>Equipes</th>
+                  <th>Jogos</th>
+                  <th>Finalizados</th>
+                  <th>Acao</th>
+                </tr>
+              </thead>
+              <tbody id="sorteioChavesBody">
+                <tr>
+                  <td colspan="5" class="center muted" style="padding:16px;">Gere ou carregue o sorteio.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card" id="painelStandingsCard">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Classificacao da chave <span id="painelSorteioChaveLabel">-</span></div>
+              <div class="page-subtitle">Atualizada a partir da sumula salva.</div>
+            </div>
+            <button id="painelRefreshStandingsBtn" class="btn-outline btn-sm" type="button">Atualizar</button>
+          </div>
+          <div class="table-responsive painel-scroll painel-scroll--small">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Equipe</th>
+                  <th>Pts</th>
+                  <th>J</th>
+                  <th>V</th>
+                  <th>E</th>
+                  <th>D</th>
+                  <th>Pro</th>
+                  <th>Contra</th>
+                  <th>SG</th>
+                </tr>
+              </thead>
+              <tbody id="painelStandingsBody">
+                <tr>
+                  <td colspan="10" class="center muted" style="padding:16px;">Selecione uma chave.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </aside>
+
+      <article class="card sorteio-jogos-card painel-jogos-card">
+        <div class="page-title" id="sorteioTituloModalidade">Tabela de jogos</div>
+        <div class="table-responsive painel-scroll painel-scroll--games">
+          <table class="table sorteio-table sorteio-table-jogos">
+            <thead>
+              <tr>
+                <th>Ordem</th>
+                <th>Jogo</th>
+                <th>Hora</th>
+                <th>Chave</th>
+                <th>Equipe A</th>
+                <th>X</th>
+                <th>Equipe B</th>
+                <th>Status</th>
+                <th>Sumula</th>
+              </tr>
+            </thead>
+            <tbody id="sorteioBody">
+              <tr>
+                <td colspan="9" class="center muted" style="padding:16px;">Sem jogos carregados.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <script defer src="/assets/success-feedback.js"></script>
+  <script defer src="/js/painel-sorteio.js"></script>
+</body>
+</html>

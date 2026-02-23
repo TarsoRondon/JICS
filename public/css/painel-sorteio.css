@@ -1,0 +1,110 @@
+body[data-page="painel-sorteio"] {
+  background:
+    radial-gradient(980px 420px at -8% -10%, rgba(0, 168, 119, 0.14), transparent 64%),
+    radial-gradient(840px 360px at 108% 0%, rgba(10, 93, 84, 0.11), transparent 66%),
+    #f2faf7;
+  color: #0b302b;
+}
+
+body[data-page="painel-sorteio"] .card {
+  background: #ffffff;
+  border-color: rgba(10, 93, 84, 0.16);
+  box-shadow: 0 14px 30px rgba(10, 60, 52, 0.08);
+}
+
+.painel-sorteio-shell {
+  min-height: 100vh;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 16px clamp(12px, 2vw, 28px) 22px;
+  display: grid;
+  gap: 16px;
+}
+
+.painel-sorteio-topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.painel-sorteio-topbar h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 2.8vw, 2.4rem);
+  line-height: 1.05;
+}
+
+.painel-sorteio-topbar p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.96rem;
+}
+
+.painel-sorteio-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.painel-sorteio-filters {
+  margin: 0;
+}
+
+.painel-sorteio-actions {
+  margin-top: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+.painel-sorteio-main {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+  grid-template-columns: minmax(320px, 0.92fr) minmax(0, 1.38fr);
+}
+
+.painel-sorteio-side {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.painel-jogos-card .page-title {
+  margin-bottom: 10px;
+}
+
+.painel-scroll {
+  width: 100%;
+  overflow: auto;
+}
+
+.painel-scroll--small {
+  max-height: min(44vh, 440px);
+}
+
+.painel-scroll--games {
+  max-height: calc(100vh - 314px);
+}
+
+#painelStandingsCard .table th,
+#painelStandingsCard .table td {
+  white-space: nowrap;
+}
+
+@media (max-width: 1280px) {
+  .painel-sorteio-main {
+    grid-template-columns: 1fr;
+  }
+
+  .painel-scroll--games {
+    max-height: min(56vh, 520px);
+  }
+}
+
+@media (max-width: 860px) {
+  .painel-sorteio-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

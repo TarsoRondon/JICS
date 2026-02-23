@@ -38,8 +38,8 @@
       ok = false;
     }
 
-    if (s.length < 6) {
-      setFieldError(senha, "Senha muito curta.");
+    if (!s) {
+      setFieldError(senha, "Informe sua senha.");
       ok = false;
     }
 
@@ -76,10 +76,12 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.sucesso === false) {
         const motivo = String(data.motivo || "").toLowerCase();
+        if (motivo === "senha") setFieldError(senha, "Senha incorreta.");
+        if (motivo === "matricula") setFieldError(matricula, "Matrícula não encontrada.");
         const msg =
           data.mensagem ||
           (motivo === "senha"
-            ? "Senha inválida."
+            ? "Senha incorreta."
             : motivo === "matricula"
             ? "Matrícula não encontrada."
             : "Não foi possível entrar.");

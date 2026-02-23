@@ -229,18 +229,50 @@ body[data-theme="light"] .nav-link.active {
 .app-body { flex: 1; display: flex; min-height: 0; }
 .side-drawer {
   width: 240px;
+  flex: 0 0 240px;
   background: var(--surface);
   border-right: 1px solid var(--border);
   padding: var(--space-6) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  transition: width var(--dur-3) var(--ease), flex-basis var(--dur-3) var(--ease), padding var(--dur-2) var(--ease);
 }
 .no-drawer .side-drawer { display: none; }
 .no-drawer .nav-hamburger { display: none; }
 .no-drawer #sideOverlay { display: none; }
 .no-drawer .app-body { display: block; }
-.side-header { font-weight: 700; margin-bottom: 8px; }
+.side-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.side-header-title {
+  font-weight: 700;
+  white-space: nowrap;
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease), width var(--dur-2) var(--ease);
+}
+.side-collapse-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 10px;
+}
+.side-collapse-btn .material-symbols-outlined {
+  transition: transform var(--dur-2) var(--ease);
+}
+.side-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: 2000px;
+  overflow: hidden;
+  opacity: 1;
+  transform: translateX(0);
+  transition: max-height var(--dur-3) var(--ease), opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+}
 .side-divider {
   height: 1px;
   background: var(--border);
@@ -295,6 +327,48 @@ body[data-theme="light"] .nav-link.active {
 
 .side-sub.open {
   display: flex;
+}
+
+body[data-page="admin"] .side-drawer {
+  position: sticky;
+  top: var(--admin-sticky-offset, 84px);
+  align-self: flex-start;
+  max-height: calc(100vh - var(--admin-sticky-offset, 84px) - 12px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+body[data-page="admin"] .page.admin-panel {
+  min-width: 0;
+}
+
+body[data-page="admin"] .app-body {
+  align-items: flex-start;
+}
+
+body[data-page="admin"].admin-sidebar-collapsed .side-drawer {
+  width: 72px;
+  flex-basis: 72px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+body[data-page="admin"].admin-sidebar-collapsed .side-header-title {
+  width: 0;
+  opacity: 0;
+  transform: translateX(-8px);
+  pointer-events: none;
+}
+
+body[data-page="admin"].admin-sidebar-collapsed .side-sections {
+  max-height: 0;
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
+body[data-page="admin"].admin-sidebar-collapsed .side-collapse-btn .material-symbols-outlined {
+  transform: rotate(180deg);
 }
 
 .page {
@@ -735,22 +809,33 @@ body[data-page="inscricoes"] .search-group input:focus {
 
 /* Sumula modal */
 .sumula-modal-card {
-  width: min(980px, 96vw);
+  width: min(1120px, 97vw);
   max-height: 92vh;
   overflow: hidden;
+  padding: 0;
+}
+.sumula-modal-card .modal-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(10, 93, 84, 0.15);
+  background: linear-gradient(90deg, rgba(0, 168, 119, 0.13), rgba(10, 93, 84, 0.08));
+}
+.sumula-modal-card .modal-body {
+  padding: 14px;
 }
 .sumula-modal-grid {
   display: grid;
   grid-template-columns: 1.25fr 1fr;
   gap: 16px;
   align-items: start;
+  background: linear-gradient(180deg, rgba(10, 93, 84, 0.04) 0%, rgba(255, 255, 255, 0.88) 100%);
 }
 .sumula-left,
 .sumula-right {
   background: var(--card);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(10, 93, 84, 0.18);
   border-radius: 14px;
   padding: 14px;
+  box-shadow: 0 10px 24px rgba(10, 60, 52, 0.08);
 }
 .sumula-right .table th,
 .sumula-right .table td {
@@ -763,8 +848,8 @@ body[data-page="inscricoes"] .search-group input:focus {
   gap: 16px;
   padding: 16px;
   border-radius: var(--radius-md);
-  background: rgba(10, 93, 84, 0.06);
-  border: 1px solid rgba(10, 93, 84, 0.12);
+  background: linear-gradient(180deg, rgba(10, 93, 84, 0.07) 0%, rgba(10, 93, 84, 0.03) 100%);
+  border: 1px solid rgba(10, 93, 84, 0.16);
 }
 .sumula-team-label {
   font-size: var(--fs-1);
@@ -812,6 +897,10 @@ body[data-page="inscricoes"] .search-group input:focus {
   justify-content: space-between;
   gap: 12px;
   margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(10, 93, 84, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
 }
 .sumula-counters {
   display: grid;
@@ -880,14 +969,16 @@ body[data-page="inscricoes"] .search-group input:focus {
 }
 .sumula-footer {
   justify-content: flex-start;
-  margin-top: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(10, 93, 84, 0.14);
 }
 .sumula-panel-card,
 .sumula-players-card {
-  border: 1px solid rgba(10, 93, 84, 0.14);
+  border: 1px solid rgba(10, 93, 84, 0.17);
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(0, 168, 119, 0.05) 0%, rgba(255, 255, 255, 0.92) 100%);
-  padding: 10px;
+  background: linear-gradient(180deg, rgba(0, 168, 119, 0.06) 0%, rgba(255, 255, 255, 0.96) 100%);
+  padding: 12px;
 }
 .sumula-panel-header {
   display: flex;
@@ -910,9 +1001,9 @@ body[data-page="inscricoes"] .search-group input:focus {
   margin-top: 8px;
   display: grid;
   gap: 6px;
-  max-height: 168px;
+  max-height: 210px;
   overflow: auto;
-  padding-right: 2px;
+  padding: 4px 4px 4px 0;
 }
 .sumula-card-item {
   display: grid;
@@ -974,8 +1065,9 @@ body[data-page="inscricoes"] .search-group input:focus {
 .sumula-players-list {
   display: grid;
   gap: 6px;
-  max-height: 180px;
+  max-height: 220px;
   overflow: auto;
+  padding-right: 4px;
 }
 .sumula-player-item {
   border: 1px solid rgba(10, 93, 84, 0.12);
@@ -1058,6 +1150,9 @@ body[data-page="inscricoes"] .search-group input:focus {
   .sumula-modal-card {
     max-height: 96vh;
     overflow: auto;
+  }
+  .sumula-modal-card .modal-body {
+    padding: 10px;
   }
 }
 @media (max-width: 780px) {
@@ -1144,16 +1239,45 @@ body[data-page="inscricoes"] .search-group input:focus {
 }
 
 /* Admin - Sorteio */
+#tabSorteio > .card + .card {
+  margin-top: 16px;
+}
+
 .sorteio-form-card {
-  border: 1px solid rgba(0, 168, 119, 0.2);
-  background: linear-gradient(180deg, rgba(0, 168, 119, 0.06) 0%, rgba(0, 168, 119, 0.02) 100%);
-  box-shadow: 0 14px 28px rgba(10, 93, 84, 0.08);
+  padding: 18px;
+  border: 1px solid rgba(0, 168, 119, 0.24);
+  background:
+    linear-gradient(180deg, rgba(0, 168, 119, 0.09) 0%, rgba(0, 168, 119, 0.03) 100%),
+    #ffffff;
+  box-shadow: 0 16px 32px rgba(10, 93, 84, 0.08);
+}
+.sorteio-form-card .form-row:first-child {
+  gap: 14px;
+}
+.sorteio-form-card .form-group {
+  padding: 10px 12px 12px;
+  border: 1px solid rgba(10, 93, 84, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
 }
 .sorteio-form-card .form-group > label {
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.01em;
 }
+.sorteio-form-card input,
+.sorteio-form-card select {
+  min-height: 46px;
+  border: 1px solid rgba(10, 93, 84, 0.26);
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.sorteio-form-card input:focus,
+.sorteio-form-card select:focus {
+  border-color: #00a877;
+  box-shadow: 0 0 0 3px rgba(0, 168, 119, 0.2);
+}
 .sorteio-form-card .form-row:last-child {
+  margin-top: 4px;
   grid-template-columns: repeat(3, minmax(160px, 240px));
   gap: 10px;
 }
@@ -1166,6 +1290,11 @@ body[data-page="inscricoes"] .search-group input:focus {
 #sumulaStandingsCard {
   position: relative;
   overflow: hidden;
+  border-color: rgba(10, 93, 84, 0.18);
+  box-shadow: 0 12px 26px rgba(10, 93, 84, 0.07);
+}
+#tabSorteio .page-header {
+  margin-bottom: 10px;
 }
 .sorteio-chaves-card::before,
 .sorteio-jogos-card::before,
@@ -1180,71 +1309,88 @@ body[data-page="inscricoes"] .search-group input:focus {
 .sorteio-table {
   min-width: 980px;
   table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid rgba(10, 93, 84, 0.16);
+  border-radius: 14px;
+  background: #ffffff;
 }
-.sorteio-table th,
-.sorteio-table td {
+.sorteio-table > thead > tr > th,
+.sorteio-table > tbody > tr > td {
   vertical-align: middle;
+  border-bottom: 1px solid rgba(10, 93, 84, 0.12);
 }
-.sorteio-table thead th {
+.sorteio-table > thead > tr > th:not(:last-child),
+.sorteio-table > tbody > tr > td:not(:last-child) {
+  border-right: 1px solid rgba(10, 93, 84, 0.1);
+}
+.sorteio-table > thead > tr > th {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #f4fbf9;
+  background: #eff8f5;
   backdrop-filter: blur(4px);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.86rem;
 }
-.sorteio-table tbody td {
+.sorteio-table > tbody > tr > td {
   line-height: 1.35;
 }
-.sorteio-table tbody tr {
+.sorteio-table > tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+.sorteio-table > tbody > tr {
   transition: background-color 0.18s ease, box-shadow 0.18s ease;
 }
-.sorteio-table tbody tr:hover {
+.sorteio-table > tbody > tr:hover {
   background: rgba(0, 168, 119, 0.06);
   box-shadow: inset 3px 0 0 rgba(0, 168, 119, 0.45);
 }
-.sorteio-table tbody tr.is-done {
+.sorteio-table > tbody > tr.is-done {
   background: rgba(16, 185, 129, 0.06);
 }
-.sorteio-table-chaves th:nth-child(1),
-.sorteio-table-chaves td:nth-child(1) {
+.sorteio-table-chaves > thead > tr > th:nth-child(1),
+.sorteio-table-chaves > tbody > tr > td:nth-child(1) {
   width: 110px;
 }
-.sorteio-table-chaves th:nth-child(2),
-.sorteio-table-chaves td:nth-child(2) {
-  width: 420px;
+.sorteio-table-chaves > thead > tr > th:nth-child(2),
+.sorteio-table-chaves > tbody > tr > td:nth-child(2) {
+  width: 520px;
 }
-.sorteio-table-jogos th:nth-child(1),
-.sorteio-table-jogos td:nth-child(1) {
+.sorteio-table-jogos > thead > tr > th:nth-child(1),
+.sorteio-table-jogos > tbody > tr > td:nth-child(1) {
   width: 90px;
 }
-.sorteio-table-jogos th:nth-child(2),
-.sorteio-table-jogos td:nth-child(2) {
+.sorteio-table-jogos > thead > tr > th:nth-child(2),
+.sorteio-table-jogos > tbody > tr > td:nth-child(2) {
   width: 110px;
 }
-.sorteio-table-jogos th:nth-child(3),
-.sorteio-table-jogos td:nth-child(3) {
+.sorteio-table-jogos > thead > tr > th:nth-child(3),
+.sorteio-table-jogos > tbody > tr > td:nth-child(3) {
   width: 90px;
 }
-.sorteio-table-jogos th:nth-child(4),
-.sorteio-table-jogos td:nth-child(4) {
+.sorteio-table-jogos > thead > tr > th:nth-child(4),
+.sorteio-table-jogos > tbody > tr > td:nth-child(4) {
   width: 110px;
 }
-.sorteio-table-jogos th:nth-child(5),
-.sorteio-table-jogos td:nth-child(5),
-.sorteio-table-jogos th:nth-child(7),
-.sorteio-table-jogos td:nth-child(7) {
+.sorteio-table-jogos > thead > tr > th:nth-child(5),
+.sorteio-table-jogos > tbody > tr > td:nth-child(5),
+.sorteio-table-jogos > thead > tr > th:nth-child(7),
+.sorteio-table-jogos > tbody > tr > td:nth-child(7) {
   width: 280px;
 }
-.sorteio-table-jogos th:nth-child(6),
-.sorteio-table-jogos td:nth-child(6) {
+.sorteio-table-jogos > thead > tr > th:nth-child(6),
+.sorteio-table-jogos > tbody > tr > td:nth-child(6) {
   width: 56px;
 }
-.sorteio-table-jogos th:nth-child(8),
-.sorteio-table-jogos td:nth-child(8) {
+.sorteio-table-jogos > thead > tr > th:nth-child(8),
+.sorteio-table-jogos > tbody > tr > td:nth-child(8) {
   width: 140px;
 }
-.sorteio-table-jogos th:nth-child(9),
-.sorteio-table-jogos td:nth-child(9) {
+.sorteio-table-jogos > thead > tr > th:nth-child(9),
+.sorteio-table-jogos > tbody > tr > td:nth-child(9) {
   width: 120px;
 }
 .sorteio-col-center {
@@ -1283,17 +1429,46 @@ body[data-page="inscricoes"] .search-group input:focus {
   font-weight: 700;
   font-size: 0.78rem;
 }
-.sorteio-equipes-cell {
+.sorteio-equipes-box {
+  display: grid;
+  gap: 8px;
+}
+.sorteio-equipes-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 600;
 }
-.sorteio-equipes-preview {
+.sorteio-equipes-mini {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid rgba(10, 93, 84, 0.18);
+  border-radius: 10px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  background: #ffffff;
+}
+.sorteio-equipes-mini td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(10, 93, 84, 0.1);
+}
+.sorteio-equipes-mini tr:last-child td {
+  border-bottom: 0;
+}
+.sorteio-equipes-mini-pos {
+  width: 38px;
+  text-align: center;
+  font-weight: 700;
+  color: #0a5d54;
+  background: rgba(10, 93, 84, 0.08);
+}
+.sorteio-equipes-mini-name {
+  font-weight: 600;
+}
+.sorteio-equipes-mini-empty {
+  text-align: center;
   color: var(--muted);
+  font-weight: 500;
 }
 .sorteio-progress-wrap {
   display: grid;
@@ -1320,16 +1495,16 @@ body[data-page="inscricoes"] .search-group input:focus {
   border-radius: inherit;
   background: linear-gradient(90deg, #00a877, #0a5d54);
 }
-.sorteio-chaves-card .table tbody tr td:first-child {
+.sorteio-chaves-card > .sorteio-table > tbody > tr > td:first-child {
   font-weight: 700;
 }
-.sorteio-chaves-card .table tbody tr:nth-child(even),
-.sorteio-jogos-card .table tbody tr:nth-child(even) {
+.sorteio-chaves-card > .sorteio-table > tbody > tr:nth-child(even),
+.sorteio-jogos-card > .sorteio-table > tbody > tr:nth-child(even) {
   background: rgba(10, 93, 84, 0.03);
 }
-.sorteio-chaves-card .table tbody td,
-.sorteio-jogos-card .table tbody td,
-#sumulaStandingsCard .table tbody td {
+.sorteio-chaves-card > .sorteio-table > tbody > tr > td,
+.sorteio-jogos-card > .sorteio-table > tbody > tr > td,
+#sumulaStandingsCard > .sorteio-table > tbody > tr > td {
   padding-top: 11px;
   padding-bottom: 11px;
 }
@@ -1346,6 +1521,32 @@ body[data-page="inscricoes"] .search-group input:focus {
   text-align: center;
   font-weight: 700;
 }
+
+@media (max-width: 980px) {
+  #tabSorteio > .card + .card {
+    margin-top: 14px;
+  }
+  .sorteio-form-card {
+    padding: 14px;
+  }
+  .sorteio-form-card .form-group {
+    padding: 8px 10px 10px;
+  }
+}
+
+@media (max-width: 780px) {
+  .sorteio-form-card .form-row:last-child {
+    grid-template-columns: 1fr;
+  }
+  .sorteio-form-card .form-group {
+    border-radius: 12px;
+  }
+  .sorteio-form-card input,
+  .sorteio-form-card select {
+    min-height: 44px;
+  }
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -1389,6 +1590,137 @@ body[data-page="inscricoes"] .search-group input:focus {
 }
 .new-user-form .form-group > label {
   font-weight: 600;
+}
+
+/* Admin - ajustes de layout por aba */
+body.admin-ui .tab-content.active {
+  display: grid;
+  gap: 14px;
+}
+
+body.admin-ui #tabUsuarios .usuario-form-card,
+body.admin-ui #tabInscricoes > .card:first-child,
+body.admin-ui #tabSorteio .sorteio-form-card,
+body.admin-ui #tabBuscarAluno > .card {
+  padding: 18px;
+  border: 1px solid rgba(10, 93, 84, 0.16);
+}
+
+body.admin-ui #tabUsuarios .form-row:first-child {
+  grid-template-columns: minmax(320px, 1fr) minmax(170px, 220px);
+  align-items: end;
+}
+
+body.admin-ui #tabUsuarios .form-row:first-child .form-group,
+body.admin-ui #tabInscricoes > .card:first-child .form-group {
+  padding: 10px 12px;
+  border: 1px solid rgba(10, 93, 84, 0.14);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+body.admin-ui #tabUsuarios .new-user-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+body.admin-ui #tabUsuarios .new-user-grid .form-group {
+  padding: 10px 12px 12px;
+  border: 1px solid rgba(10, 93, 84, 0.14);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+body.admin-ui #tabUsuarios .new-user-grid .form-group input,
+body.admin-ui #tabUsuarios .new-user-grid .form-group select {
+  min-height: 42px;
+}
+
+body.admin-ui #tabUsuarios .new-user-submit {
+  justify-self: start;
+}
+
+body.admin-ui #tabInscricoes > .card:first-child .form-row {
+  grid-template-columns:
+    minmax(130px, 0.9fr)
+    minmax(120px, 0.8fr)
+    minmax(130px, 0.9fr)
+    minmax(140px, 0.9fr)
+    minmax(260px, 1.5fr)
+    minmax(140px, 220px);
+  align-items: end;
+}
+
+body.admin-ui #tabInscricoes > .card:first-child .form-row > .form-group:last-child .btn-primary {
+  width: 100%;
+}
+
+body.admin-ui #tabInscricoes .table-responsive,
+body.admin-ui #tabUsuarios .table-responsive {
+  padding: 10px;
+}
+
+body.admin-ui #tabSorteio .sorteio-form-card .form-row:first-child {
+  grid-template-columns: repeat(6, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+body.admin-ui #tabBuscarAluno .form-row {
+  grid-template-columns: minmax(280px, 1fr) minmax(160px, 220px);
+  align-items: end;
+}
+
+body.admin-ui #buscaResultado {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px dashed rgba(10, 93, 84, 0.28);
+  border-radius: 12px;
+  background: #f8fffc;
+  min-height: 64px;
+}
+
+body.admin-ui #buscaResultado .busca-aluno-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+body.admin-ui #buscaResultado .busca-aluno-table th,
+body.admin-ui #buscaResultado .busca-aluno-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(10, 93, 84, 0.12);
+  text-align: left;
+}
+
+body.admin-ui #buscaResultado .busca-aluno-table tr:last-child td {
+  border-bottom: 0;
+}
+
+@media (max-width: 1240px) {
+  body.admin-ui #tabUsuarios .new-user-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  body.admin-ui #tabInscricoes > .card:first-child .form-row,
+  body.admin-ui #tabSorteio .sorteio-form-card .form-row:first-child {
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+  }
+}
+
+@media (max-width: 780px) {
+  body.admin-ui #tabUsuarios .form-row:first-child,
+  body.admin-ui #tabUsuarios .new-user-grid,
+  body.admin-ui #tabInscricoes > .card:first-child .form-row,
+  body.admin-ui #tabSorteio .sorteio-form-card .form-row:first-child,
+  body.admin-ui #tabBuscarAluno .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  body.admin-ui #tabUsuarios .new-user-submit,
+  body.admin-ui #tabInscricoes > .card:first-child .form-row > .form-group:last-child .btn-primary {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 /* Admin UI theme */
@@ -2191,6 +2523,31 @@ body[data-page="login"] .login-input:focus-within {
   .side-drawer { position: fixed; left: -260px; top: 0; height: 100vh; z-index: 35; transition: left 0.3s ease; }
   .side-drawer.open { left: 0; }
   .app-body { flex-direction: column; }
+  body[data-page="admin"] .side-drawer {
+    width: 240px;
+    flex-basis: auto;
+    max-height: 100vh;
+    padding: var(--space-6) var(--space-5);
+    overflow-y: auto;
+  }
+  body[data-page="admin"] .side-collapse-btn { display: none; }
+  body[data-page="admin"] .side-header-title {
+    width: auto;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  body[data-page="admin"] .side-sections {
+    max-height: none;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+  body[data-page="admin"].admin-sidebar-collapsed .side-drawer {
+    width: 240px;
+    flex-basis: auto;
+    padding: var(--space-6) var(--space-5);
+  }
 }
 
 @media (max-width: 980px) {

@@ -253,8 +253,18 @@
 
   function fillMatch(match) {
     state.match = match || null;
-    byId('sumulaPageTeamA').textContent = normalizeName(match?.equipe_a || '-');
-    byId('sumulaPageTeamB').textContent = normalizeName(match?.equipe_b || '-');
+    const teamA = normalizeName(match?.equipe_a || '-');
+    const teamB = normalizeName(match?.equipe_b || '-');
+    const teamAEl = byId('sumulaPageTeamA');
+    const teamBEl = byId('sumulaPageTeamB');
+    if (teamAEl) {
+      teamAEl.textContent = teamA;
+      teamAEl.title = teamA;
+    }
+    if (teamBEl) {
+      teamBEl.textContent = teamB;
+      teamBEl.title = teamB;
+    }
     byId('sumulaPageMeta').textContent = `Jogo #${match?.numero_jogo || match?.id || '-'} • ${match?.fase || 'GRUPOS'} • ${match?.chave || '-'}`;
     byId('sumulaPageScoreA').value = match?.placar_a ?? '';
     byId('sumulaPageScoreB').value = match?.placar_b ?? '';

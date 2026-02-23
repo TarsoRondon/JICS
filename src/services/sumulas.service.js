@@ -8,6 +8,7 @@ import {
 
 let cachedHasJogoJogadoresTable = null;
 let cachedInscricoesHasNumeroCamisa = null;
+let cachedAlunosHasSexo = null;
 
 export async function getStandings({ modalidadeId, sexo, chave }) {
   const cols = await getJogosColumns();
@@ -94,6 +95,47 @@ function normalizeTeamCompact(value) {
   return normalizeTeamKey(value).replace(/[^A-Z0-9]/g, '');
 }
 
+function normalizeSexoValue(value) {
+  const raw = normalizeTeamKey(value);
+  if (!raw) return '';
+  if (raw === 'M' || raw.startsWith('MASC')) return 'M';
+  if (raw === 'F' || raw.startsWith('FEM')) return 'F';
+  return '';
+}
+
+function normalizeTeamSignature(value) {
+  const raw = normalizeTeamKey(value);
+  if (!raw) return '';
+
+  let base = raw;
+  if (base.includes(' - ')) {
+    base = base.split(' - ').pop().trim();
+  }
+
+  // Remove prefixos de codigo institucional (ex: 20251.2.0606.2I - ...)
+  base = base.replace(/^\d{4,}(?:[.\-][A-Z0-9]+)+\s*/g, '').trim() || base;
+
+  // Suporta formatos como "2º Informatica B", "2 Informatica B", "2ºB Informatica"
+  const full = base.match(/^(\d+)\s*(?:[\u00BA\u00B0])?\s+(.+?)(?:\s+([A-Z]))?$/);
+  const compact = base.match(/^(\d+)\s*(?:[\u00BA\u00B0])?\s*([A-Z])\s+(.+)$/);
+
+  if (full) {
+    const serie = full[1];
+    const curso = String(full[2] || '').replace(/[^A-Z0-9]/g, '');
+    const turma = String(full[3] || '').replace(/[^A-Z0-9]/g, '');
+    if (serie && curso) return `${serie}${turma}${curso}`;
+  }
+
+  if (compact) {
+    const serie = compact[1];
+    const turma = String(compact[2] || '').replace(/[^A-Z0-9]/g, '');
+    const curso = String(compact[3] || '').replace(/[^A-Z0-9]/g, '');
+    if (serie && curso) return `${serie}${turma}${curso}`;
+  }
+
+  return '';
+}
+
 function normalizeShirtNumber(value) {
   const digits = String(value ?? '').replace(/\D/g, '').trim();
   if (!digits) return null;
@@ -105,6 +147,15 @@ function teamMatches(turma, equipe) {
   const equipeKey = normalizeTeamKey(equipe);
   if (!turmaKey || !equipeKey) return false;
   if (turmaKey === equipeKey) return true;
+
+  const turmaSig = normalizeTeamSignature(turma);
+  const equipeSig = normalizeTeamSignature(equipe);
+  if (turmaSig && equipeSig) {
+    if (turmaSig === equipeSig) return true;
+    const minSigLen = 6;
+    if (turmaSig.length >= minSigLen && equipeSig.includes(turmaSig)) return true;
+    if (equipeSig.length >= minSigLen && turmaSig.includes(equipeSig)) return true;
+  }
 
   const turmaCompact = normalizeTeamCompact(turmaKey);
   const equipeCompact = normalizeTeamCompact(equipeKey);
@@ -152,6 +203,12 @@ async function inscricoesHasNumeroCamisa() {
   if (cachedInscricoesHasNumeroCamisa !== null) return cachedInscricoesHasNumeroCamisa;
   cachedInscricoesHasNumeroCamisa = await columnExists('inscricoes', 'numero_camisa');
   return cachedInscricoesHasNumeroCamisa;
+}
+
+async function alunosHasSexo() {
+  if (cachedAlunosHasSexo !== null) return cachedAlunosHasSexo;
+  cachedAlunosHasSexo = await columnExists('alunos', 'sexo');
+  return cachedAlunosHasSexo;
 }
 
 function upsertJogador(map, nome, numeroCamisa = null) {
@@ -262,32 +319,35 @@ export async function getJogoDetalhes({ jogoId }) {
 
   const teamA = normalizeTeamLabel(jogo.equipe_a);
   const teamB = normalizeTeamLabel(jogo.equipe_b);
+  const sexoJogo = normalizeSexoValue(jogo.sexo);
   const withCamisa = await inscricoesHasNumeroCamisa();
+  const hasSexoAlunos = await alunosHasSexo();
+  const sexoSelect = hasSexoAlunos ? 'a.sexo AS sexo_aluno' : 'NULL AS sexo_aluno';
   const playersRows = await dbQuery(
-    `SELECT
+    `SELECT DISTINCT
         a.nome AS nome,
         TRIM(REPLACE(REPLACE(a.turma, '\r', ''), '\n', '')) AS turma,
         ${withCamisa ? 'i.numero_camisa' : 'NULL AS numero_camisa'},
-        a.sexo AS sexo_aluno
+        ${sexoSelect}
       FROM inscricoes i
       JOIN alunos a ON a.id = i.aluno_id
       WHERE i.modalidade_id = :modalidade_id
         AND a.turma IS NOT NULL
         AND TRIM(a.turma) <> ''
+        AND TRIM(a.turma) <> '-'
       ORDER BY a.nome ASC`,
     { modalidade_id: jogo.modalidade_id }
   );
 
-  const sexoJogo = String(jogo.sexo || '').toUpperCase().trim();
   const jogadoresMapA = new Map();
   const jogadoresMapB = new Map();
 
   for (const row of playersRows) {
     const nome = normalizeTeamLabel(row.nome);
     const turma = normalizeTeamLabel(row.turma);
-    const sexoAluno = String(row.sexo_aluno || '').toUpperCase().trim();
+    const sexoAluno = normalizeSexoValue(row.sexo_aluno);
     if (!nome || !turma) continue;
-    if (sexoJogo && sexoAluno && !sexoAluno.startsWith(sexoJogo)) continue;
+    if (hasSexoAlunos && sexoJogo && sexoAluno !== sexoJogo) continue;
     if (teamMatches(turma, teamA)) upsertJogador(jogadoresMapA, nome, row.numero_camisa);
     if (teamMatches(turma, teamB)) upsertJogador(jogadoresMapB, nome, row.numero_camisa);
   }

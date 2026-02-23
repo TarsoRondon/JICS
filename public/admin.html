@@ -45,7 +45,14 @@
 
         <div class="app-body">
             <aside id="sideNav" class="side-drawer">
-                <div class="side-header">JICS Admin</div>
+                <div class="side-header">
+                    <span class="side-header-title">JICS Admin</span>
+                    <button id="sideCollapseBtn" class="icon-btn side-collapse-btn" type="button" aria-label="Recolher barra lateral" aria-expanded="true" onclick="toggleSidebarCollapse()">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                </div>
+
+                <div class="side-sections">
 
                 <button class="side-group-btn open" onclick="toggleDrawerGroup('adminOps', this)">
           Operações
@@ -83,6 +90,7 @@
                     <a class="side-link staff-only" data-tab="tabGraficos" href="admin.html" onclick="openAdminTab('tabGraficos'); return false;">Gráficos</a>
                     <a class="side-link staff-only" data-tab="tabRanking" href="admin.html" onclick="openAdminTab('tabRanking'); return false;">Ranking</a>
                     <a class="side-link admin-only" data-tab="tabLogs" href="admin.html" onclick="openAdminTab('tabLogs'); return false;">Logs</a>
+                </div>
                 </div>
             </aside>
 

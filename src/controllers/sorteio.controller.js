@@ -81,6 +81,7 @@ export async function gerarSorteio(req, res) {
         const turmas = await buscarTurmasInscritas({ modalidade_id: modId, sexo });
         if (turmas.length < 2) continue;
         const resultado = gerarRoundRobinTurmas(turmas);
+        if (!resultado.jogos?.length) continue;
         const jogosOrdenados = aplicarHorarios(
           resultado.jogos,
           req.body.hora_inicio || '07:30',
@@ -128,6 +129,9 @@ export async function gerarSorteio(req, res) {
         return jsonErro(res, 400, 'Numero insuficiente de turmas para sorteio.');
       }
       const resultado = gerarRoundRobinTurmas(turmas);
+      if (!resultado.jogos?.length) {
+        return jsonErro(res, 400, 'Nao foi possivel gerar confrontos validos. Verifique turmas duplicadas.');
+      }
       jogosBase = resultado.jogos;
       chaves_qtd = resultado.chaves_qtd;
     } else {
@@ -149,6 +153,15 @@ export async function gerarSorteio(req, res) {
       jogos: jogosOrdenados,
     });
 
+    const sorteioAtual = await buscarSorteio({
+      organization_id: req.organizationId,
+      evento_id,
+      modalidade_id,
+      sexo,
+    });
+    const jogosPersistidos = Array.isArray(sorteioAtual?.jogos) ? sorteioAtual.jogos : [];
+    const chavesQtdPersistidas = Number(sorteioAtual?.meta?.chaves_qtd || chaves_qtd || 1);
+
     await registrarLog({
       req,
       admin: req.admin,
@@ -159,7 +172,7 @@ export async function gerarSorteio(req, res) {
 
     await emitJogosAtualizados(req, evento_id);
 
-    return jsonOk(res, { jogos: jogosOrdenados, chaves_qtd });
+    return jsonOk(res, { jogos: jogosPersistidos, chaves_qtd: chavesQtdPersistidas });
   } catch (err) {
     return handleUnexpected(res, err, 'Falha ao gerar sorteio.');
   }

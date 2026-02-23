@@ -17,6 +17,7 @@
   const safeShowLoading = window.showLoading || (() => {});
   const safeConfirm = window.openConfirmModal || (() => {});
   const ADMIN_LOGIN_URL = 'index.html';
+  const SUMULA_PAGE_URL = 'http://localhost:3005/sumula.html';
 
   let adminSessionExpired = false;
 
@@ -24,7 +25,7 @@
     if (adminSessionExpired || window.__adminSessionExpired) return;
     const banner = document.getElementById('sessionBanner');
     const text = document.getElementById('sessionBannerText');
-    if (text) text.textContent = message || 'Sessão expirada. Faça login novamente.';
+    if (text) text.textContent = message || 'Sessao expirada. Faca login novamente.';
     if (banner) banner.classList.remove('hidden');
     adminSessionExpired = true;
     window.__adminSessionExpired = true;
@@ -44,17 +45,17 @@
   }
 
   function handleUnauthorized(message) {
-    showSessionBanner(message || 'Sessão expirada. Faça login novamente.');
+    showSessionBanner(message || 'Sessao expirada. Faca login novamente.');
   }
 
   function validateEmailField(value, helpId, inputId) {
     const email = String(value || '').trim();
     if (!email) {
-      setHelpById(inputId, helpId, 'Email obrigatório.');
+      setHelpById(inputId, helpId, 'Email obrigatorio.');
       return false;
     }
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    setHelpById(inputId, helpId, ok ? '' : 'Email inválido.');
+    setHelpById(inputId, helpId, ok ? '' : 'Email invalido.');
     return ok;
   }
 
@@ -79,12 +80,12 @@
   async function ensureAdminSession() {
     try {
       if (adminSessionExpired || sessionStorage.getItem('adminSessionExpired') === '1') {
-        showSessionBanner('Sessão expirada. Faça login novamente.');
+        showSessionBanner('Sessao expirada. Faca login novamente.');
         return;
       }
       const res = await fetch('/auth/admin/me', { credentials: 'include' });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       if (res.ok) {
@@ -102,7 +103,7 @@
         if (window.__adminSessionExpired) return fallback;
         const r = await fetch(url, { credentials: 'include' });
         if (r.status === 401) {
-          handleUnauthorized('Sessão expirada. Faça login novamente.');
+          handleUnauthorized('Sessao expirada. Faca login novamente.');
           throw new Error('HTTP 401');
         }
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -115,7 +116,7 @@
 
     window.adminPost = async (url, body) => {
       if (window.__adminSessionExpired) {
-        throw new Error('Sessão expirada.');
+        throw new Error('Sessao expirada.');
       }
       const r = await fetch(url, {
         method: 'POST',
@@ -124,7 +125,7 @@
         body: JSON.stringify(body || {}),
       });
       if (r.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         throw new Error('HTTP 401');
       }
       if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -166,7 +167,7 @@
     try {
       const res = await fetch('/auth/admin/me', { credentials: 'include' });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -196,7 +197,7 @@
     try {
       const res = await fetch('/eventos', { credentials: 'include' });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -267,7 +268,7 @@
         body: JSON.stringify({ organization_id, nome, ano, data_inicio: dataInicio, data_fim: dataFim, status })
       });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -365,7 +366,7 @@
     try {
       const res = await fetch('/admins', { credentials: 'include' });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -421,7 +422,7 @@
         body: JSON.stringify({ nome, email, senha, role: 'STAFF' })
       });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -615,7 +616,7 @@
     try {
       const res = await fetch('/admins', { credentials: 'include' });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -668,7 +669,7 @@
         body: JSON.stringify({ nome, email, senha, role })
       });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -847,14 +848,99 @@
       .trim();
   }
 
+  function normalizeLookup(value) {
+    return cleanLabel(value)
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function extractMatchId(row) {
+    const candidates = [
+      row?.id,
+      row?.jogo_id,
+      row?.jogoId,
+      row?.id_jogo,
+      row?.match_id,
+      row?.matchId,
+      row?.ID,
+    ];
+    for (const candidate of candidates) {
+      const parsed = Number(candidate);
+      if (Number.isInteger(parsed) && parsed > 0) return parsed;
+    }
+    return 0;
+  }
+
+  function resolveMatchIdBySignature(match) {
+    const ordem = Number(match?.ordem || 0);
+    const jogoLabel = normalizeLookup(match?.jogo || match?.numero_jogo || match?.jogo_label || '');
+    const chave = normalizeLookup(match?.chave || match?.chave_grupo || '');
+    const equipeA = normalizeLookup(match?.equipeA || match?.equipe_a || '');
+    const equipeB = normalizeLookup(match?.equipeB || match?.equipe_b || '');
+    const pool = [...sorteioRows, ...sorteioAllRows];
+
+    for (const row of pool) {
+      const rowId = extractMatchId(row);
+      if (!rowId) continue;
+      const rowOrdem = Number(row?.ordem || 0);
+      if (ordem && rowOrdem === ordem) return rowId;
+
+      const rowJogo = normalizeLookup(row?.jogo || row?.numero_jogo || row?.jogo_label || '');
+      const rowChave = normalizeLookup(row?.chave || row?.chave_grupo || '');
+      if (jogoLabel && rowJogo && jogoLabel === rowJogo) {
+        if (!chave || !rowChave || chave === rowChave) return rowId;
+      }
+
+      const rowEquipeA = normalizeLookup(row?.equipeA || row?.equipe_a || '');
+      const rowEquipeB = normalizeLookup(row?.equipeB || row?.equipe_b || '');
+      if (equipeA && equipeB && rowEquipeA && rowEquipeB && equipeA === rowEquipeA && equipeB === rowEquipeB) {
+        return rowId;
+      }
+    }
+
+    return 0;
+  }
+
+  function simplifyCourseLabel(value) {
+    const raw = cleanLabel(value);
+    if (!raw) return '';
+    return raw
+      .replace(/^t(?:e|\u00E9)cnico(?:a)?\s+em\s+/i, '')
+      .replace(/\s+integrado(?:\s+ao)?\s+ensino\s+m(?:e|\u00E9)dio.*$/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function formatTeamLabel(value) {
+    const label = cleanLabel(value);
+    if (!label || label === '-') return '-';
+
+    let base = label;
+    if (base.includes(' - ')) {
+      base = cleanLabel(base.split(' - ').pop());
+    }
+
+    base = base.replace(/^\d{4,}(?:[.\-][A-Za-z0-9]+)+\s*/g, '').trim() || base;
+    const parsed = base.match(/^(\d+)\s*(?:[\u00BA\u00B0])?\s+(.+?)(?:\s+([A-Za-z]))?$/i);
+    if (!parsed) return base || label;
+
+    const serie = `${parsed[1]}\u00BA`;
+    const curso = simplifyCourseLabel(parsed[2]) || cleanLabel(parsed[2]);
+    const turma = String(parsed[3] || '').toUpperCase();
+    return `${serie}${turma} ${curso}`.replace(/\s+/g, ' ').trim();
+  }
+
   function mapSorteioRow(j) {
-    const equipeA = cleanLabel(j.equipeA || j.equipe_a || j.equipeA_nome || '-');
-    const equipeB = cleanLabel(j.equipeB || j.equipe_b || j.equipeB_nome || '-');
+    const id = extractMatchId(j);
+    const equipeA = formatTeamLabel(j.equipeA || j.equipe_a || j.equipeA_nome || '-');
+    const equipeB = formatTeamLabel(j.equipeB || j.equipe_b || j.equipeB_nome || '-');
     const hora = cleanLabel(j.hora || j.hora_oficial || j.hora_texto || '');
-    const jogo = cleanLabel(j.jogo || j.numero_jogo || j.jogo_label || `Jogo ${j.ordem || j.id || ''}`);
+    const jogo = cleanLabel(j.jogo || j.numero_jogo || j.jogo_label || `Jogo ${j.ordem || id || ''}`);
     const chave = cleanLabel(j.chave || j.chave_grupo || 'CH A');
     return {
       ...j,
+      id: id || null,
       equipeA,
       equipeB,
       hora,
@@ -880,7 +966,11 @@
       tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Escolha filtros e clique em \"Gerar tabela\".</td></tr>';
       return;
     }
-    tbody.innerHTML = sorteioRows.map((j) => `
+    tbody.innerHTML = sorteioRows.map((j) => {
+      const sumulaAction = j.id
+        ? `<button class="btn-outline btn-sm" type="button" onclick="openSumulaMatchById('${j.id}')">S\u00FAmula</button>`
+        : '<button class="btn-outline btn-sm" type="button" disabled title="Gere e recarregue a tabela para abrir a sumula.">S\u00FAmula</button>';
+      return `
       <tr class="${normalizeSorteioStatus(j.status) === 'DONE' ? 'is-done' : ''}">
         <td class="sorteio-col-center">${j.ordem ?? '-'}</td>
         <td class="sorteio-col-center">${escapeHtml(j.jogo || '-')}</td>
@@ -890,9 +980,10 @@
         <td class="placar">X</td>
         <td><span class="sorteio-team-name" title="${escapeHtml(j.equipeB || '-')}">${escapeHtml(j.equipeB || '-')}</span></td>
         <td class="sorteio-col-center">${renderSorteioStatus(j.status)}</td>
-        <td class="sorteio-col-center"><button class="btn-outline btn-sm" type="button" onclick="openSumulaMatchById('${j.id}')">Súmula</button></td>
+        <td class="sorteio-col-center">${sumulaAction}</td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
   }
 
   function syncSorteioChaveOptions() {
@@ -929,18 +1020,31 @@
     const rows = Array.from(map.values()).sort((a, b) => a.chave.localeCompare(b.chave));
     const selectedChave = document.getElementById('sorteioChave')?.value || '';
     tbody.innerHTML = rows.map((r) => {
-      const teamNames = Array.from(r.equipes).sort((a, b) => a.localeCompare(b));
-      const preview = teamNames.slice(0, 3).join(' • ');
-      const shortPreview = teamNames.length > 3 ? `${preview}...` : preview;
+      const teamNames = Array.from(r.equipes).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+      const teamsTableRows = teamNames.length
+        ? teamNames.map((team, idx) => `
+            <tr>
+              <td class="sorteio-equipes-mini-pos">${idx + 1}</td>
+              <td class="sorteio-equipes-mini-name">${escapeHtml(team)}</td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="2" class="sorteio-equipes-mini-empty">Sem equipes</td></tr>';
       const progress = r.total > 0 ? Math.round((r.done / r.total) * 100) : 0;
       const isActive = selectedChave && selectedChave === r.chave;
       return `
         <tr class="sorteio-chave-row${isActive ? ' is-active' : ''}">
           <td><span class="sorteio-key-badge">${escapeHtml(r.chave)}</span></td>
           <td>
-            <div class="sorteio-equipes-cell">
-              <span class="sorteio-num-chip">${r.equipes.size}</span>
-              <span class="sorteio-equipes-preview" title="${escapeHtml(teamNames.join(', '))}">${escapeHtml(shortPreview || '-')}</span>
+            <div class="sorteio-equipes-box">
+              <div class="sorteio-equipes-head">
+                <span class="sorteio-num-chip">${r.equipes.size}</span>
+                <span>Equipes da chave</span>
+              </div>
+              <table class="sorteio-equipes-mini" aria-label="Equipes ${escapeHtml(r.chave)}">
+                <tbody>
+                  ${teamsTableRows}
+                </tbody>
+              </table>
             </div>
           </td>
           <td class="sorteio-col-center">${r.total}</td>
@@ -1264,8 +1368,24 @@
         handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
-      const data = await res.json();
-      if (!data?.ok) throw new Error(data?.message || 'Erro ao carregar detalhes.');
+
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+
+      if (!res.ok) {
+        const backendMsg = data?.erro?.mensagem || data?.message;
+        throw new Error(backendMsg || `Erro HTTP ${res.status} ao carregar detalhes.`);
+      }
+
+      if (!data?.ok) {
+        const backendMsg = data?.erro?.mensagem || data?.message;
+        throw new Error(backendMsg || 'Erro ao carregar detalhes.');
+      }
+
       sumulaPlayersByTeam = {
         A: (data.jogadoresA || []).map((player) => normalizePlayerEntry(player)).filter(Boolean),
         B: (data.jogadoresB || []).map((player) => normalizePlayerEntry(player)).filter(Boolean),
@@ -1289,13 +1409,13 @@
       populateCardPlayerSelect();
       renderSumulaPlayers();
       renderSumulaCards();
-    } catch (_) {
+    } catch (err) {
       sumulaPlayersByTeam = { A: [], B: [] };
       sumulaCards = [];
       populateCardPlayerSelect();
       renderSumulaPlayers();
       renderSumulaCards();
-      setSumulaCardMsg('Nao foi possivel carregar jogadores/cartoes.', 'error');
+      setSumulaCardMsg(err?.message || 'Nao foi possivel carregar jogadores/cartoes.', 'error');
     }
   }
 
@@ -1329,13 +1449,26 @@
 
   function openSumulaModal(match) {
     if (!match) return;
+    let matchId = extractMatchId(match);
+    if (!matchId) {
+      matchId = resolveMatchIdBySignature(match);
+    }
+    if (!Number.isInteger(matchId) || matchId <= 0) {
+      safeShowToast({
+        type: 'error',
+        title: 'Erro',
+        message: 'ID de jogo invalido. Gere a tabela novamente antes de abrir a sumula.',
+      });
+      return;
+    }
+
     const modal = document.getElementById('sumulaModal');
     if (!modal) return;
     clearSumulaMsg();
     modal.classList.remove('hidden');
-    modal.dataset.matchId = match.id;
+    modal.dataset.matchId = String(matchId);
     modal.dataset.fase = String(match.fase || 'GRUPOS').toUpperCase();
-    lastSumulaMatch = match;
+    lastSumulaMatch = { ...match, id: matchId };
     lastSumulaContext = {
       modalidade_id: match.modalidade_id || document.getElementById('sorteioModalidade')?.value,
       sexo: match.sexo || document.getElementById('sorteioSexo')?.value,
@@ -1389,10 +1522,9 @@
     updateSumulaChaveLabel(lastSumulaContext.chave);
     attachSumulaFocusTrap();
     refreshSumulaStandings();
-    loadSumulaDetails(match.id);
+    loadSumulaDetails(matchId);
     scoreA?.focus();
   }
-
   function closeSumulaModal() {
     const modal = document.getElementById('sumulaModal');
     if (!modal) return;
@@ -1660,8 +1792,16 @@
   }
 
   function openSumulaFromSelection() {
+    const openSumulaPage = (matchId = 0) => {
+      const parsed = Number(matchId || 0);
+      const url = Number.isInteger(parsed) && parsed > 0
+        ? `${SUMULA_PAGE_URL}?jogo=${encodeURIComponent(parsed)}`
+        : SUMULA_PAGE_URL;
+      window.location.href = url;
+    };
+
     if (lastSumulaMatch) {
-      openSumulaModal(lastSumulaMatch);
+      openSumulaPage(extractMatchId(lastSumulaMatch));
       return;
     }
     if (!sorteioRows.length) {
@@ -1672,13 +1812,15 @@
       return;
     }
     const pending = sorteioRows.find((r) => normalizeSorteioStatus(r.status) !== 'DONE');
-    openSumulaModal(pending || sorteioRows[0]);
+    openSumulaPage(extractMatchId(pending || sorteioRows[0]));
   }
 
   function openSumulaMatchById(matchId) {
-    const found = sorteioRows.find((row) => String(row.id) === String(matchId));
-    if (!found) return;
-    openSumulaModal(found);
+    const targetId = Number(matchId || 0);
+    const url = Number.isInteger(targetId) && targetId > 0
+      ? `${SUMULA_PAGE_URL}?jogo=${encodeURIComponent(targetId)}`
+      : SUMULA_PAGE_URL;
+    window.location.href = url;
   }
 
   function selectSorteioChave(chave) {
@@ -1695,7 +1837,7 @@
     try {
       const res = await fetch('/eventos', { credentials: 'include' });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -2192,7 +2334,7 @@
     try {
       const res = await fetch(`/logs?${params.toString()}`, { credentials: 'include' });
       if (res.status === 401) {
-        handleUnauthorized('Sessão expirada. Faça login novamente.');
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
       }
       const data = await res.json();
@@ -2229,6 +2371,64 @@
     fetchLogs();
   }
 
+  async function buscarAlunoAdminTab() {
+    const input = document.getElementById('buscaMatricula');
+    const box = document.getElementById('buscaResultado');
+    if (!box) return;
+
+    const matricula = String(input?.value || '').trim();
+    if (!matricula) {
+      box.innerHTML = '<p class="muted">Informe a matricula.</p>';
+      return;
+    }
+
+    box.innerHTML = '<p class="muted">Buscando...</p>';
+    try {
+      const res = await fetch(`/admin/aluno/${encodeURIComponent(matricula)}`, { credentials: 'include' });
+      if (res.status === 401) {
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
+        return;
+      }
+      if (!res.ok) {
+        throw new Error('Aluno nao encontrado.');
+      }
+
+      let aluno = {};
+      try {
+        aluno = await res.json();
+      } catch {
+        aluno = {};
+      }
+
+      box.innerHTML = `
+        <table class="busca-aluno-table" aria-label="Dados do aluno">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Matricula</th>
+              <th>Turma</th>
+              <th>Campus</th>
+              <th>Sexo</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${escapeHtml(aluno.nome || '-')}</td>
+              <td>${escapeHtml(aluno.matricula || matricula)}</td>
+              <td>${escapeHtml(aluno.turma || '-')}</td>
+              <td>${escapeHtml(aluno.campus || '-')}</td>
+              <td>${escapeHtml(aluno.sexo || '-')}</td>
+              <td>${escapeHtml(aluno.email_pessoal || aluno.email_academico || '-')}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+    } catch (err) {
+      box.innerHTML = `<p class="muted">${escapeHtml(err?.message || 'Aluno nao encontrado.')}</p>`;
+    }
+  }
+
   // =====================
   // Exports and tab hook
   // =====================
@@ -2261,6 +2461,8 @@
   window.addSumulaCard = addSumulaCard;
   window.removeSumulaCard = removeSumulaCard;
   window.updateSumulaPlayerShirt = updateSumulaPlayerShirt;
+  window.buscarAluno = buscarAlunoAdminTab;
+  window.buscarAlunoAdmin = buscarAlunoAdminTab;
 
     const basePreencherSelectsAdmin = window.preencherSelectsAdmin;
   window.preencherSelectsAdmin = function () {
@@ -2331,7 +2533,6 @@
     }
   });
 })();
-
 
 
 
