@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -11,8 +11,9 @@
   <link rel="stylesheet" href="css/auth.css" />
   <link rel="stylesheet" href="/assets/success-feedback.css" />
   <script defer src="/assets/success-feedback.js"></script>
+  <link rel="stylesheet" href="/css/dark-theme.css" />
 </head>
-<body class="auth-page" data-theme="light" data-page="primeiro-acesso">
+<body class="auth-page" data-page="primeiro-acesso" data-theme="dark">
   <main class="pa-shell">
     <section class="pa-left">
       <header class="pa-header">
@@ -500,8 +501,12 @@
     if (storedMatricula) matriculaInput.value = storedMatricula;
     if (storedEmail) emailInput.value = storedEmail;
   </script>
+  <script defer src="/js/global-footer.js"></script>
 </body>
 </html>
+
+
+
 
 
 

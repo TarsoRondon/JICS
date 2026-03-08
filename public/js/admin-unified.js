@@ -17,7 +17,7 @@
   const safeShowLoading = window.showLoading || (() => {});
   const safeConfirm = window.openConfirmModal || (() => {});
   const ADMIN_LOGIN_URL = 'index.html';
-  const SUMULA_PAGE_URL = 'http://localhost:3005/sumula.html';
+  const SUMULA_PAGE_URL = '/sumula.html';
 
   let adminSessionExpired = false;
 
@@ -51,11 +51,11 @@
   function validateEmailField(value, helpId, inputId) {
     const email = String(value || '').trim();
     if (!email) {
-      setHelpById(inputId, helpId, 'Email obrigatorio.');
+      setHelpById(inputId, helpId, 'E-mail obrigatorio.');
       return false;
     }
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    setHelpById(inputId, helpId, ok ? '' : 'Email invalido.');
+    setHelpById(inputId, helpId, ok ? '' : 'E-mail invalido.');
     return ok;
   }
 
@@ -148,6 +148,9 @@
   let sumulaBackdropHandler = null;
   let sumulaCards = [];
   let sumulaPlayersByTeam = { A: [], B: [] };
+  const SORTEIO_LOADING_MIN = 1200;
+  let sorteioLoadingShownAt = 0;
+  let sorteioLoadingTimer = null;
 
   overrideAdminFetch();
 
@@ -244,7 +247,7 @@
     const dataFim = document.getElementById('evtFim')?.value || null;
     const status = document.getElementById('evtStatus')?.value || 'ABERTO';
     const organization_id = Number(document.getElementById('evtOrgId')?.value || 0);
-    setHelpById('evtOrgId', null, organization_id ? '' : 'Organization obrigatoria.');
+    setHelpById('evtOrgId', null, organization_id ? '' : 'Organizacao obrigatoria.');
     setHelpById('evtNome', null, nome ? '' : 'Nome obrigatorio.');
     setHelpById('evtAno', null, ano ? '' : 'Ano obrigatorio.');
 
@@ -503,8 +506,7 @@
     if (!admin) return;
     safeConfirm({
       title: admin.ativo ? 'Desativar organizador' : 'Ativar organizador',
-      message: 'Digite CONFIRMAR para continuar.',
-      confirmText: 'CONFIRMAR',
+      message: 'Tem certeza que deseja continuar?',
       onConfirm: async () => {
         safeShowLoading(true);
         try {
@@ -534,8 +536,7 @@
     }
     safeConfirm({
       title: 'Excluir organizador',
-      message: 'Acao irreversivel. Digite CONFIRMAR para excluir.',
-      confirmText: 'CONFIRMAR',
+      message: 'Tem certeza que deseja excluir este organizador?',
       onConfirm: async () => {
         safeShowLoading(true);
         try {
@@ -752,8 +753,7 @@
     if (!admin) return;
     safeConfirm({
       title: admin.ativo ? 'Desativar admin' : 'Ativar admin',
-      message: 'Digite CONFIRMAR para continuar.',
-      confirmText: 'CONFIRMAR',
+      message: 'Tem certeza que deseja continuar?',
       onConfirm: async () => {
         safeShowLoading(true);
         try {
@@ -783,8 +783,7 @@
     }
     safeConfirm({
       title: 'Excluir administrador',
-      message: 'Acao irreversivel. Digite CONFIRMAR para excluir.',
-      confirmText: 'CONFIRMAR',
+      message: 'Tem certeza que deseja excluir este administrador?',
       onConfirm: async () => {
         safeShowLoading(true);
         try {
@@ -846,6 +845,64 @@
       .replace(/\r?\n|\r/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  function setSorteioLoading(visible, text = 'Gerando tabela de sorteio...') {
+    let overlay = document.getElementById('sorteioLoadingOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'sorteioLoadingOverlay';
+      overlay.className = 'sorteio-loading-overlay hidden';
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.innerHTML = `
+        <div class="sorteio-loading-card" role="status" aria-atomic="true">
+          <div class="sorteio-loading-spinner" aria-hidden="true"></div>
+          <p class="sorteio-loading-title">Sorteio em andamento</p>
+          <p class="sorteio-loading-text"></p>
+          <div class="sorteio-loading-bar" aria-hidden="true"><span></span></div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+    const textNode = overlay.querySelector('.sorteio-loading-text');
+    if (textNode) textNode.textContent = text;
+
+    if (visible) {
+      clearTimeout(sorteioLoadingTimer);
+      sorteioLoadingTimer = null;
+      overlay.classList.remove('hidden');
+      document.body.classList.add('sorteio-loading-active');
+      sorteioLoadingShownAt = Date.now();
+      return;
+    }
+
+    const elapsed = Date.now() - sorteioLoadingShownAt;
+    const remaining = Math.max(0, SORTEIO_LOADING_MIN - elapsed);
+    clearTimeout(sorteioLoadingTimer);
+    sorteioLoadingTimer = setTimeout(() => {
+      overlay.classList.add('hidden');
+      document.body.classList.remove('sorteio-loading-active');
+      sorteioLoadingTimer = null;
+    }, remaining);
+  }
+
+  function serializeSorteioRowsForSave(rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    return list
+      .map((row, idx) => {
+        const equipeA = cleanLabel(row?.equipeA || row?.equipe_a || '');
+        const equipeB = cleanLabel(row?.equipeB || row?.equipe_b || '');
+        if (!equipeA || !equipeB) return null;
+        return {
+          chave: cleanLabel(row?.chave || row?.chave_grupo || 'CH A') || 'CH A',
+          equipeA,
+          equipeB,
+          ordem: Number(row?.ordem || (idx + 1)) || (idx + 1),
+          hora: cleanLabel(row?.hora || row?.hora_oficial || row?.hora_texto || ''),
+          jogo: cleanLabel(row?.jogo || row?.numero_jogo || row?.jogo_label || `Jogo ${idx + 1}`),
+        };
+      })
+      .filter(Boolean);
   }
 
   function normalizeLookup(value) {
@@ -1470,6 +1527,7 @@
     modal.dataset.fase = String(match.fase || 'GRUPOS').toUpperCase();
     lastSumulaMatch = { ...match, id: matchId };
     lastSumulaContext = {
+      evento_id: match.evento_id || document.getElementById('sorteioEvento')?.value,
       modalidade_id: match.modalidade_id || document.getElementById('sorteioModalidade')?.value,
       sexo: match.sexo || document.getElementById('sorteioSexo')?.value,
       chave: match.chave || document.getElementById('sorteioChave')?.value || 'CH A',
@@ -1615,6 +1673,7 @@
   }
 
   async function refreshSumulaStandings() {
+    const eventoId = lastSumulaContext?.evento_id || document.getElementById('sorteioEvento')?.value;
     const modalidadeId = lastSumulaContext?.modalidade_id || document.getElementById('sorteioModalidade')?.value;
     const sexo = lastSumulaContext?.sexo || document.getElementById('sorteioSexo')?.value;
     const chave = lastSumulaContext?.chave || document.getElementById('sorteioChave')?.value;
@@ -1632,7 +1691,7 @@
     if (bodyModal) bodyModal.innerHTML = loadingHtml;
     updateSumulaChaveLabel(chave);
     try {
-      const res = await fetch(`/sumulas/tabela?modalidade_id=${modalidadeId}&sexo=${sexo}&chave=${encodeURIComponent(chave)}`, { credentials: 'include' });
+      const res = await fetch(`/sumulas/tabela?evento_id=${encodeURIComponent(eventoId || '')}&modalidade_id=${modalidadeId}&sexo=${sexo}&chave=${encodeURIComponent(chave)}`, { credentials: 'include' });
       if (res.status === 401) {
         handleUnauthorized('Sessao expirada. Faca login novamente.');
         return;
@@ -1805,7 +1864,7 @@
       return;
     }
     if (!sorteioRows.length) {
-      safeShowToast({ type: 'warning', title: 'Atencao', message: 'Selecione um jogo na tabela de sorteio.' });
+      safeShowToast({ type: 'warning', title: 'Aten??o', message: 'Selecione um jogo na tabela de sorteio.' });
       if (typeof window.openAdminTab === 'function') {
         window.openAdminTab('tabSorteio');
       }
@@ -1912,6 +1971,7 @@
     }
     renderSkeletonTable('sorteioChavesBody', 4, 5);
     renderSkeletonTable('sorteioBody', 6, 9);
+    setSorteioLoading(true, 'Carregando tabela de sorteio...');
     try {
       const res = await fetch(`/sorteio/${eventoId}/${modalidadeId}/${sexo}`, { credentials: 'include' });
       if (res.status === 401) {
@@ -1937,6 +1997,8 @@
       renderSorteioChavesTabela();
       renderSorteioTabela();
       safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao carregar tabela.' });
+    } finally {
+      setSorteioLoading(false);
     }
   }
 
@@ -1954,9 +2016,15 @@
     const intervaloMin = Number(document.getElementById('sorteioIntervalo')?.value || 0);
     const multiMode = !modalidadeId;
     if (!eventoId || !sexo) {
-      safeShowToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento e sexo.' });
+      safeShowToast({ type: 'warning', title: 'Aten??o', message: 'Selecione evento e sexo.' });
       return;
     }
+    setSorteioLoading(
+      true,
+      multiMode
+        ? 'Gerando sorteio para todas as modalidades...'
+        : 'Gerando sorteio da modalidade selecionada...'
+    );
     try {
       const payload = {
         evento_id: eventoId,
@@ -2002,11 +2070,13 @@
         type: 'success',
         title: 'Sucesso',
         message: multiMode
-          ? (total ? `Sorteio gerado para ${total} modalidades.` : 'Sorteio gerado para todas as modalidades.')
-          : 'Tabela gerada.'
+          ? (total ? `Sorteio gerado e salvo para ${total} modalidades.` : 'Sorteio gerado e salvo para todas as modalidades.')
+          : 'Tabela gerada e salva.'
       });
     } catch (err) {
       safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao gerar sorteio.' });
+    } finally {
+      setSorteioLoading(false);
     }
   }
 
@@ -2021,9 +2091,10 @@
     const horaInicio = document.getElementById('sorteioHoraInicio')?.value || '07:30';
     const intervaloMin = Number(document.getElementById('sorteioIntervalo')?.value || 0);
     if (!eventoId || !modalidadeId || !sexo) {
-      safeShowToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento, modalidade e sexo.' });
+      safeShowToast({ type: 'warning', title: 'Aten??o', message: 'Selecione evento, modalidade e sexo.' });
       return;
     }
+    setSorteioLoading(true, 'Aplicando horários nos jogos...');
     try {
       const res = await fetch('/sorteio/horarios', {
         method: 'POST',
@@ -2047,6 +2118,8 @@
       carregarTabelaSorteioAdmin();
     } catch (err) {
       safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao aplicar horarios.' });
+    } finally {
+      setSorteioLoading(false);
     }
   }
 
@@ -2059,9 +2132,10 @@
     const modalidadeId = document.getElementById('sorteioModalidade')?.value;
     const sexo = document.getElementById('sorteioSexo')?.value;
     if (!eventoId || !modalidadeId || !sexo) {
-      safeShowToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento, modalidade e sexo.' });
+      safeShowToast({ type: 'warning', title: 'Aten??o', message: 'Selecione evento, modalidade e sexo.' });
       return;
     }
+    setSorteioLoading(true, 'Limpando sorteio...');
     try {
       const res = await fetch('/sorteio/limpar', {
         method: 'DELETE',
@@ -2084,6 +2158,8 @@
       safeShowToast({ type: 'success', title: 'Sucesso', message: 'Sorteio limpo.' });
     } catch (err) {
       safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao limpar sorteio.' });
+    } finally {
+      setSorteioLoading(false);
     }
   }
 
@@ -2224,7 +2300,7 @@
     const modalidadeId = document.getElementById('rankModalidadeSelect')?.value;
     const sexo = document.getElementById('rankSexoSelect')?.value;
     if (!eventoId || !modalidadeId || !sexo) {
-      safeShowToast({ type: 'warning', title: 'Atencao', message: 'Selecione evento, modalidade e sexo.' });
+      safeShowToast({ type: 'warning', title: 'Aten??o', message: 'Selecione evento, modalidade e sexo.' });
       return;
     }
     renderRankSkeleton();
@@ -2371,6 +2447,83 @@
     fetchLogs();
   }
 
+  async function salvarSorteioAdmin() {
+    if (adminSessionExpired) {
+      showSessionBanner();
+      return;
+    }
+    const eventoId = document.getElementById('sorteioEvento')?.value;
+    const modalidadeId = document.getElementById('sorteioModalidade')?.value;
+    const sexo = document.getElementById('sorteioSexo')?.value;
+    const local = document.getElementById('sorteioLocal')?.value || 'Quadra A';
+    const modo = document.getElementById('sorteioModo')?.value || 'GRUPOS';
+    const horaInicio = document.getElementById('sorteioHoraInicio')?.value || '07:30';
+    const intervaloMin = Number(document.getElementById('sorteioIntervalo')?.value || 0);
+
+    if (!eventoId || !modalidadeId || !sexo) {
+      safeShowToast({ type: 'warning', title: 'Aten??o', message: 'Selecione evento, modalidade e sexo.' });
+      return;
+    }
+
+    const sourceRows = (Array.isArray(sorteioAllRows) && sorteioAllRows.length)
+      ? sorteioAllRows
+      : sorteioRows;
+    const jogos = serializeSorteioRowsForSave(sourceRows);
+    if (!jogos.length) {
+      safeShowToast({ type: 'warning', title: 'Aten??o', message: 'Gere ou carregue a tabela antes de salvar.' });
+      return;
+    }
+
+    const saveBtn = document.getElementById('sorteioSaveBtn');
+    const oldLabel = saveBtn?.textContent || 'Salvar sorteio';
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Salvando...';
+    }
+    setSorteioLoading(true, 'Salvando sorteio...');
+
+    try {
+      const res = await fetch('/sorteio/gerar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          evento_id: eventoId,
+          modalidade_id: modalidadeId,
+          sexo,
+          local_jogos: local,
+          modo,
+          hora_inicio: horaInicio,
+          intervalo_min: intervaloMin,
+          jogos,
+        }),
+      });
+
+      if (res.status === 401) {
+        handleUnauthorized('Sessao expirada. Faca login novamente.');
+        return;
+      }
+      const data = await res.json();
+      if (!data?.sucesso) throw new Error(data?.erro?.mensagem || 'Erro ao salvar sorteio.');
+
+      const jogosPersistidos = Array.isArray(data?.data?.jogos) ? data.data.jogos : [];
+      sorteioAllRows = jogosPersistidos.map(mapSorteioRow);
+      adminCache.jogos = sorteioAllRows;
+      syncSorteioChaveOptions();
+      updateSorteioTitle();
+      applySorteioFilter();
+      safeShowToast({ type: 'success', title: 'Sucesso', message: 'Sorteio salvo com sucesso.' });
+    } catch (err) {
+      safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao salvar sorteio.' });
+    } finally {
+      setSorteioLoading(false);
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = oldLabel;
+      }
+    }
+  }
+
   async function buscarAlunoAdminTab() {
     const input = document.getElementById('buscaMatricula');
     const box = document.getElementById('buscaResultado');
@@ -2449,6 +2602,7 @@
   window.createAdminUser = createAdminUser;
   window.saveEditAdminUser = saveEditAdminUser;
   window.gerarTabelaSorteio = gerarTabelaSorteioAdmin;
+  window.salvarSorteio = salvarSorteioAdmin;
   window.aplicarHorariosSorteio = aplicarHorariosSorteioAdmin;
   window.limparSorteio = limparSorteioAdmin;
   window.carregarTabelaSorteio = carregarTabelaSorteioAdmin;
@@ -2488,7 +2642,7 @@
 
   window.preencherSumulaFromSorteio = function (idx = 0) {
     if (!sorteioRows.length) {
-      safeShowToast({ type: 'warning', title: 'Atencao', message: 'Gere a tabela de sorteio primeiro.' });
+      safeShowToast({ type: 'warning', title: 'Aten??o', message: 'Gere a tabela de sorteio primeiro.' });
       return;
     }
     const jogo = sorteioRows[idx] || sorteioRows[0];

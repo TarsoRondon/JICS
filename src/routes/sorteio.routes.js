@@ -3,17 +3,16 @@ import { attachAdminToReq, requireAuth, requireOrg } from '../middlewares/auth.j
 import { requireRole } from '../middlewares/roles.js';
 import {
   getSorteio,
+  listarSorteiosSalvosController,
   gerarSorteio,
+  realizarCongressoTecnicoDigitalController,
+  salvarSorteioController,
+  gerarMataMataController,
   aplicarHorariosController,
   limparSorteioController,
+  downloadSorteioTabelaController,
   gerarPdfSorteioController,
 } from '../controllers/sorteio.controller.js';
-import {
-  bootstrapStage,
-  closeStage,
-  overview,
-  updateMatchResult,
-} from '../controllers/tournament.controller.js';
 
 const router = Router();
 
@@ -22,16 +21,16 @@ router.use(requireAuth);
 router.use(requireOrg);
 router.use(requireRole(['ADMIN', 'SUPER_ADMIN']));
 
-// Sistema de fases (stages/groups/matches)
-router.post('/:tournamentId/:modalidadeId/bootstrap', bootstrapStage);
-router.post('/:tournamentId/:modalidadeId/close-stage', closeStage);
-router.get('/:tournamentId/:modalidadeId/overview', overview);
-router.patch('/matches/:matchId/result', updateMatchResult);
-
+router.get('/salvos', listarSorteiosSalvosController);
 router.get('/:eventoId/:modalidadeId/:sexo', getSorteio);
 router.post('/gerar', gerarSorteio);
+router.post('/congresso-tecnico-digital', realizarCongressoTecnicoDigitalController);
+router.post('/gerar/oficial', gerarSorteio);
+router.post('/salvar', salvarSorteioController);
+router.post('/mata-mata', gerarMataMataController);
 router.post('/horarios', aplicarHorariosController);
 router.delete('/limpar', limparSorteioController);
+router.get('/:eventoId/:modalidadeId/:sexo/download', downloadSorteioTabelaController);
 router.get('/:eventoId/:modalidadeId/:sexo/pdf', gerarPdfSorteioController);
 
 export default router;

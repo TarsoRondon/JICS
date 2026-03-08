@@ -33,8 +33,8 @@
     clearFieldError(matricula);
     clearFieldError(senha);
 
-    if (m.length < 6) {
-      setFieldError(matricula, "Matricula invalida.");
+    if (!/^[A-Za-z0-9]{3,20}$/.test(m)) {
+      setFieldError(matricula, "Use um usuario valido (3 a 20 letras e numeros).");
       ok = false;
     }
 
@@ -50,6 +50,16 @@
     const isPass = senha.type === "password";
     senha.type = isPass ? "text" : "password";
     toggle.setAttribute("aria-label", isPass ? "Ocultar senha" : "Mostrar senha");
+  });
+
+  matricula?.addEventListener("input", () => {
+    const normalized = (matricula.value || "").replace(/\s+/g, "").slice(0, 20);
+    if (matricula.value !== normalized) matricula.value = normalized;
+    clearFieldError(matricula);
+  });
+
+  senha?.addEventListener("input", () => {
+    clearFieldError(senha);
   });
 
   form?.addEventListener("submit", async (e) => {
@@ -77,13 +87,13 @@
       if (!res.ok || data.sucesso === false) {
         const motivo = String(data.motivo || "").toLowerCase();
         if (motivo === "senha") setFieldError(senha, "Senha incorreta.");
-        if (motivo === "matricula") setFieldError(matricula, "Matrícula não encontrada.");
+        if (motivo === "matricula") setFieldError(matricula, "Usuario nao encontrado.");
         const msg =
           data.mensagem ||
           (motivo === "senha"
             ? "Senha incorreta."
             : motivo === "matricula"
-            ? "Matrícula não encontrada."
+            ? "Usuario nao encontrado."
             : "Não foi possível entrar.");
         console.warn("Falha no login:", data);
         throw new Error(msg);

@@ -2,126 +2,100 @@
 <html lang="pt-BR">
 
 <head>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login - JICS</title>
     <link rel="icon" type="image/png" href="/assets/ifro.png" />
     <link rel="stylesheet" href="css/login.css" />
-  <link rel="stylesheet" href="/assets/success-feedback.css" />
-  <script defer src="/assets/success-feedback.js"></script>
+    <link rel="stylesheet" href="/assets/success-feedback.css" />
+    <script defer src="/assets/success-feedback.js"></script>
 </head>
 
-<body>
-    <main class="login-page login-page--institutional">
-        <section class="login-left" aria-label="Apresentacao do sistema">
-            <header class="brand">
-                <span class="brand-mark" aria-hidden="true">
-                    <img src="/assets/ifro.png" alt="IFRO" />
-                </span>
-                <div class="brand-text">
-                    <strong>INSTITUTO FEDERAL</strong>
-                    <span>Rondonia - IFRO Esportes</span>
-                </div>
-            </header>
-
-            <div class="hero-content">
-                <span class="hero-kicker">Sistema JICS</span>
-                <h1>IFRO Esportes - JICS</h1>
-                <p>Um software desenvolvido por uma instituicao publica para instituicoes publicas.</p>
-            </div>
-
-            <div class="hero-cards">
-                <div class="hero-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M8 4h8v3a4 4 0 0 1-8 0V4z" />
-                        <path d="M4 5h4v3a4 4 0 0 1-4-4V5z" />
-                        <path d="M20 5h-4v3a4 4 0 0 0 4-4V5z" />
-                        <path d="M10 14h4" />
-                        <path d="M9 18h6" />
-                        <path d="M10 14v4" />
-                        <path d="M14 14v4" />
-                    </svg>
-                    <div>
-                        <strong>Resultados</strong>
-                        <span>Atualizados no painel</span>
+<body class="login-v2" data-no-global-nav data-preserve-theme>
+    <main class="login-shell">
+        <section class="login-pane login-pane-left" aria-label="Apresentacao do sistema">
+            <div class="login-left-inner">
+                <header class="ifro-brand">
+                    <span class="ifro-brand-mark" aria-hidden="true">
+            <img src="/assets/ifro.png" alt="" />
+          </span>
+                    <div class="ifro-brand-text">
+                        <strong>IFRO ESPORTES</strong>
+                        <span>JICS - Sistema institucional</span>
                     </div>
-                </div>
-                <div class="hero-card">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <rect x="3" y="4.5" width="18" height="16" rx="2.5" />
-                        <path d="M7 3v3" />
-                        <path d="M17 3v3" />
-                        <path d="M3 9h18" />
-                        <path d="M8.5 13.5h2.5" />
-                        <path d="M13 13.5h2.5" />
-                    </svg>
-                    <div>
-                        <strong>Eventos</strong>
-                        <span>Organizacao rapida</span>
-                    </div>
-                </div>
+                </header>
+
+                <p class="status-pill">Temporada 2026 &#8226; Jogos escolares IFRO</p>
+                <h1>Central de acesso do IFRO Esportes</h1>
+                <p class="hero-copy">
+                    Inscricoes, noticias, horarios e resultados em um painel unico para estudantes e equipes tecnicas.
+                </p>
+
+                <ul class="login-points" aria-label="Beneficios do sistema">
+                    <li>Inscricao em modalidades com validacao imediata.</li>
+                    <li>Acompanhamento de jogos e tabelas em tempo real.</li>
+                    <li>Acesso rapido a perfil, recuperacao de conta e suporte.</li>
+                </ul>
+
             </div>
         </section>
 
-        <section class="login-card" aria-label="Area de login">
-            <header class="card-head">
-                <span class="chip">Acesso unico</span>
-                <h2>Login</h2>
-                <p>Digite sua matricula e senha.</p>
-            </header>
+        <section class="login-pane login-pane-right" aria-label="Area de login">
+            <article class="login-card">
+                <header class="card-head">
+                    <span class="access-chip">Area segura</span>
+                    <h2>Entrar</h2>
+                    <p>Use seu usuario (letras e numeros) e senha institucional.</p>
+                </header>
 
-            <form id="loginForm" novalidate>
-                <div class="field">
-                    <label for="matricula">Matricula</label>
-                    <div class="control">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="5" width="18" height="14" rx="2" />
-                            <path d="M7 9h6" />
-                            <path d="M7 13h4" />
-                            <circle cx="17" cy="12" r="2.5" />
-                        </svg>
-                        <input id="matricula" name="matricula" type="text" inputmode="numeric" autocomplete="username" placeholder="Digite sua matricula" required minlength="6" maxlength="13" />
+                <form id="loginForm" novalidate>
+                    <div class="field">
+                        <label for="matricula">Usuario:</label>
+                        <div class="control control-dark">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4z" />
+                <path d="M4 20a8 8 0 0 1 16 0" />
+              </svg>
+                            <input id="matricula" name="matricula" type="text" inputmode="text" autocomplete="username" placeholder="Digite seu usuario" required minlength="3" maxlength="20" />
+                        </div>
+                        <small class="hint"></small>
                     </div>
-                    <small class="hint"></small>
-                </div>
 
-                <div class="field">
-                    <label for="senha">Senha</label>
-                    <div class="control">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="4" y="10" width="16" height="10" rx="2" />
-                            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-                            <path d="M12 14v2" />
-                        </svg>
-                        <input id="senha" name="senha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required minlength="4" />
-                        <button type="button" class="icon-btn" id="togglePass" aria-label="Mostrar senha">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6z" />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
-                        </button>
+                    <div class="field">
+                        <label for="senha">Senha:</label>
+                        <div class="control control-dark">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="4" y="10" width="16" height="10" rx="2" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                <path d="M12 14v2" />
+              </svg>
+                            <input id="senha" name="senha" type="password" autocomplete="current-password" placeholder="Digite sua senha" required minlength="4" />
+                            <button type="button" class="icon-btn" id="togglePass" aria-label="Mostrar senha">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+                        </div>
+                        <small class="hint"></small>
                     </div>
-                    <small class="hint"></small>
-                </div>
 
-                <button class="btn primary" id="btnLogin" type="submit">
-                    <span class="btn-text">Acessar</span>
-                </button>
+                    <button class="btn primary" id="btnLogin" type="submit">
+            <span class="btn-text">Acessar painel</span>
+          </button>
 
-                <a class="btn secondary" href="/recuperacao.html">Primeiro acesso</a>
+                    <a class="btn secondary" href="/recuperacao.html">Primeiro acesso</a>
 
-                <div class="links">
-                    <a href="/recuperacao.html#reset">Esqueceu ou deseja alterar sua senha?</a>
-                    <a href="/recuperar-matricula.html">Esqueceu seu numero de matricula?</a>
-                </div>
-            </form>
-
-            <footer class="card-foot">
-                <span>(c) JICS - 2026</span>
-            </footer>
+                    <div class="links">
+                        <a href="/recuperacao.html#reset">Esqueceu ou deseja alterar sua senha?</a>
+                        <a href="/recuperar-matricula.html">Esqueceu seu numero de matricula?</a>
+                    </div>
+                    <p class="card-note">Ao entrar, voce concorda com <a href="/termos.html">Termos</a> e <a href="/privacidade.html">Privacidade</a>.</p>
+                </form>
+            </article>
         </section>
     </main>
 
@@ -130,7 +104,3 @@
 </body>
 
 </html>
-
-
-
-

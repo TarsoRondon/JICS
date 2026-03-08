@@ -1,130 +1,142 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Recuperação - JICS</title>
-  
-  
-  <link rel="stylesheet" href="css/auth.css" />
-<link rel="icon" type="image/png" href="/assets/ifro.png" />
-  <link rel="stylesheet" href="css/recovery.css" />
-  <link rel="stylesheet" href="/assets/success-feedback.css" />
-  <script defer src="/assets/success-feedback.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recuperacao - JICS</title>
+    <link rel="icon" type="image/png" href="/assets/ifro.png" />
+
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="stylesheet" href="css/recovery.css" />
+    <link rel="stylesheet" href="/assets/success-feedback.css" />
+    <script defer src="/assets/success-feedback.js"></script>
+    <link rel="stylesheet" href="/css/dark-theme.css" />
 </head>
-<body class="recovery-body auth-page">
-  <div class="recovery-shell">
-    <section class="recovery-left">
-      <div class="brand">
-        <img src="/assets/ifro.png" alt="IFRO" />
-        <div>
-          <strong>IFRO Esportes</strong>
-          <div class="helper-text">JICS</div>
-        </div>
-      </div>
-      <h1 class="recovery-title">Ative sua conta com segurança</h1>
-      <p class="recovery-subtitle">Use sua matrícula e um contato cadastrado para receber o código de verificação.</p>
-      <div class="recovery-steps">
-        <div class="recovery-step-card"><span>1</span><div>Confirme seus dados</div></div>
-        <div class="recovery-step-card"><span>2</span><div>Receba o código OTP</div></div>
-        <div class="recovery-step-card"><span>3</span><div>Defina sua nova senha</div></div>
-      </div>
-    </section>
 
-    <section class="recovery-card">
-      <div class="mode-tabs" role="tablist">
-        <button class="mode-tab active" type="button" data-mode="FIRST_ACCESS">Primeiro acesso</button>
-        <button class="mode-tab" type="button" data-mode="RESET_PASSWORD">Recuperar senha</button>
-      </div>
+<body class="recovery-body auth-page" data-theme="light">
+    <main class="recovery-shell">
+        <section class="recovery-left" aria-label="Contexto de recuperacao">
+            <header class="brand">
+                <span class="brand-mark" aria-hidden="true">
+          <img src="/assets/ifro.png" alt="" />
+        </span>
+                <div>
+                    <strong>IFRO Esportes</strong>
+                    <div class="helper-text">JICS - ambiente seguro</div>
+                </div>
+            </header>
 
-      <div id="statusBox" class="status-box hidden" role="status" aria-live="polite"></div>
+            <p class="status-pill">Acesso protegido por OTP</p>
+            <h1 class="recovery-title">Recupere sua conta por e-mail</h1>
+            <p class="recovery-subtitle">Valide sua matricula e confirme um e-mail cadastrado para receber o codigo de verificacao.</p>
 
-      <form id="recoveryForm" novalidate>
-        <input id="usernameHidden" class="sr-only" type="text" name="username" autocomplete="username" aria-hidden="true" tabindex="-1" />
-
-        <div class="step" id="step-ident">
-          <div class="field">
-            <label for="matricula">Matrícula</label>
-            <input id="matricula" class="input" type="text" inputmode="numeric" autocomplete="username" placeholder="Digite sua matrícula" />
-          </div>
-          <div class="field">
-            <label>Preferência de verificação</label>
-            <div class="radio-group">
-              <label class="radio-option"><input type="radio" name="canal" value="sms" checked /> Telefone (SMS)</label>
-              <label class="radio-option"><input type="radio" name="canal" value="email_pessoal" /> E-mail pessoal</label>
-              <label class="radio-option"><input type="radio" name="canal" value="email_academico" /> E-mail acadêmico</label>
+            <div class="recovery-steps">
+                <div class="recovery-step-card"><span>1</span>
+                    <div>Valide seus dados</div>
+                </div>
+                <div class="recovery-step-card"><span>2</span>
+                    <div>Receba e confirme o codigo OTP</div>
+                </div>
+                <div class="recovery-step-card"><span>3</span>
+                    <div>Defina sua nova senha</div>
+                </div>
             </div>
-          </div>
-          <div class="field" id="contactField">
-            <label for="contato" id="contactLabel">Telefone</label>
-            <input id="contato" class="input" type="tel" autocomplete="tel" placeholder="(00) 00000-0000" />
-          </div>
-          <div class="button-row">
-            <button id="btnValidate" class="btn-outline" type="button">Validar dados</button>
-            <button id="btnSendOtp" class="btn-primary hidden" type="button" disabled>Enviar código</button>
-          </div>
-        </div>
 
-      <div class="step hidden" id="step-otp">
-        <div class="field">
-          <label for="otp">Código OTP</label>
-          <input id="otp" class="input otp-input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" />
-          <span class="helper-text" id="otpHint"></span>
-          <span class="helper-text error-text hidden" id="otpError" aria-live="polite"></span>
-        </div>
-          <div class="button-row">
-            <button id="btnVerifyOtp" class="btn-primary" type="button">Verificar</button>
-            <button id="btnResend" class="btn-outline" type="button" disabled>Reenviar (60s)</button>
-          </div>
-        </div>
 
-        <div class="step hidden" id="step-password">
-          <div class="field">
-            <label for="newPassword">Nova senha</label>
-            <input id="newPassword" class="input" type="password" autocomplete="new-password" />
-          </div>
-          <div class="field">
-            <label for="confirmPassword">Confirmar senha</label>
-            <input id="confirmPassword" class="input" type="password" autocomplete="new-password" />
-          </div>
-          <div class="password-rules" id="passwordRules">
-            <div class="rule-item" data-rule="length"><span class="rule-icon">?</span> Minimo 8 caracteres</div>
-            <div class="rule-item" data-rule="upper"><span class="rule-icon">?</span> 1 letra maiuscula</div>
-            <div class="rule-item" data-rule="number"><span class="rule-icon">?</span> 1 numero</div>
-            <div class="rule-item" data-rule="symbol"><span class="rule-icon">?</span> 1 simbolo</div>
-          </div>
-          <div class="password-ux">
-            <div class="strength-bar"><span id="strengthBar" class="strength-fill"></span></div>
-            <span id="strengthText" class="strength-text"></span>
-            <span id="matchText" class="password-match"></span>
-          </div>
-          <div class="button-row">
-            <button id="btnSavePassword" class="btn-primary" type="button">Salvar senha</button>
-          </div>
-        </div>
-      </form>
+        </section>
 
-      <div class="helper-text" id="loginBackLink">
-        <a href="/index.html">Voltar ao login</a>
-      </div>
-      <div class="helper-text hidden" id="cancelLoggedIn">
-        <button id="cancelRecovery" class="btn-outline" type="button">Cancelar ação</button>
-      </div>
-    </section>
-  </div>
+        <section class="recovery-card" aria-label="Formulario de recuperacao">
+            <div class="mode-tabs" role="tablist">
+                <button class="mode-tab active" type="button" data-mode="FIRST_ACCESS">Primeiro acesso</button>
+                <button class="mode-tab" type="button" data-mode="RESET_PASSWORD">Recuperar senha</button>
+            </div>
 
-  <script src="js/password-ux.js"></script>
-  <script src="js/recovery.js"></script>
+            <div id="statusBox" class="status-box hidden" role="status" aria-live="polite"></div>
+
+            <form id="recoveryForm" novalidate>
+                <input id="usernameHidden" class="sr-only" type="text" name="username" autocomplete="username" aria-hidden="true" tabindex="-1" />
+
+                <div class="step" id="step-ident">
+                    <div class="field">
+                        <label for="matricula">Matricula</label>
+                        <input id="matricula" class="input" type="text" inputmode="numeric" autocomplete="username" placeholder="Digite sua matricula" />
+                    </div>
+
+                    <div class="field">
+                        <label>Canal de verificacao</label>
+                        <div class="radio-group" role="radiogroup" aria-label="Canal de verificacao por email">
+                            <label class="radio-option"><input type="radio" name="canal" value="email_pessoal" checked /> E-mail pessoal</label>
+                            <label class="radio-option"><input type="radio" name="canal" value="email_academico" /> E-mail academico</label>
+                        </div>
+                        <small class="helper-text">Verificacao por telefone e SMS removida deste fluxo.</small>
+                    </div>
+
+                    <div class="field" id="contactField">
+                        <label for="contato" id="contactLabel">E-mail pessoal</label>
+                        <input id="contato" class="input" type="email" autocomplete="email" placeholder="seu.email@provedor.com" />
+                    </div>
+
+                    <div class="button-row">
+                        <button id="btnValidate" class="btn-outline" type="button">Validar dados</button>
+                        <button id="btnSendOtp" class="btn-primary hidden" type="button" disabled>Enviar codigo</button>
+                    </div>
+                </div>
+
+                <div class="step hidden" id="step-otp">
+                    <div class="field">
+                        <label for="otp">Codigo OTP</label>
+                        <input id="otp" class="input otp-input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" />
+                        <span class="helper-text" id="otpHint"></span>
+                        <span class="helper-text error-text hidden" id="otpError" aria-live="polite"></span>
+                    </div>
+                    <div class="button-row">
+                        <button id="btnVerifyOtp" class="btn-primary" type="button">Verificar</button>
+                        <button id="btnResend" class="btn-outline" type="button" disabled>Reenviar (60s)</button>
+                    </div>
+                </div>
+
+                <div class="step hidden" id="step-password">
+                    <div class="field">
+                        <label for="newPassword">Nova senha</label>
+                        <input id="newPassword" class="input" type="password" autocomplete="new-password" />
+                    </div>
+                    <div class="field">
+                        <label for="confirmPassword">Confirmar senha</label>
+                        <input id="confirmPassword" class="input" type="password" autocomplete="new-password" />
+                    </div>
+                    <div class="password-rules" id="passwordRules">
+                        <div class="rule-item" data-rule="length"><span class="rule-icon">?</span> Minimo 8 caracteres</div>
+                        <div class="rule-item" data-rule="upper"><span class="rule-icon">?</span> 1 letra maiuscula</div>
+                        <div class="rule-item" data-rule="number"><span class="rule-icon">?</span> 1 numero</div>
+                        <div class="rule-item" data-rule="symbol"><span class="rule-icon">?</span> 1 simbolo</div>
+                    </div>
+                    <div class="password-ux">
+                        <div class="strength-bar"><span id="strengthBar" class="strength-fill"></span></div>
+                        <span id="strengthText" class="strength-text"></span>
+                        <span id="matchText" class="password-match"></span>
+                    </div>
+                    <div class="button-row">
+                        <button id="btnSavePassword" class="btn-primary" type="button">Salvar senha</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="helper-text" id="loginBackLink">
+                <a href="/index.html">Voltar ao login</a>
+            </div>
+            <div class="helper-text hidden" id="cancelLoggedIn">
+                <button id="cancelRecovery" class="btn-outline" type="button">Cancelar acao</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/password-ux.js"></script>
+    <script src="js/recovery.js"></script>
+    <script defer src="/js/global-footer.js"></script>
 </body>
+
 </html>
-
-
-
-
-
-
-
-

@@ -24,29 +24,79 @@ import recoveryRoutes from './src/routes/recovery.routes.js';
 import smsRoutes from './src/routes/sms.routes.js';
 import twilioStatusRoutes from './src/routes/twilioStatus.routes.js';
 import { attachUserSession, setUserSessionCookie } from './src/middlewares/userSession.js';
+import { rateLimitAuth } from './src/middlewares/rateLimitAuth.js';
 import { createUserSession } from './src/services/userSession.service.js';
 import { signAdminToken, setAuthCookie } from './src/utils/jwt.js';
+import { pool } from './src/db/conn.js';
 
 const app = express();
 const __filename = fileURLToPath(
     import.meta.url);
 const __dirname = path.dirname(__filename);
 const httpServer = http.createServer(app);
+const PORT = Number(process.env.PORT || 3005);
 const io = new SocketIOServer(httpServer, {
     cors: { origin: true, credentials: true }
 });
 app.set('io', io);
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+httpServer.keepAliveTimeout = 65000;
+httpServer.headersTimeout = 66000;
+httpServer.requestTimeout = 30000;
+httpServer.on('error', (err) => {
+    console.error('[http] Erro no servidor:', err);
+    if (err?.code === 'EADDRINUSE') {
+        process.exit(1);
+    }
+});
 
 io.on('connection', (socket) => {
     socket.on('join_evento', ({ eventoId } = {}) => {
         if (eventoId) socket.join(`evento:${eventoId}`);
     });
 });
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 app.use(cookieParser());
 app.use(attachUserSession);
-app.use(express.static('public'));
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-DNS-Prefetch-Control', 'off');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+    if ((process.env.NODE_ENV || '').toLowerCase() === 'production') {
+        res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+    }
+    next();
+});
+app.get('/healthz', (_req, res) => {
+    res.status(200).json({ ok: true, status: 'up' });
+});
+app.get('/readyz', async(_req, res) => {
+    try {
+        await pool.query('SELECT 1');
+        res.status(200).json({ ok: true, status: 'ready' });
+    } catch (err) {
+        res.status(503).json({ ok: false, status: 'db_unavailable' });
+    }
+});
+app.use(express.static(path.join(__dirname, 'public'), {
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+        const ext = path.extname(filePath).toLowerCase();
+        if (ext === '.html') {
+            res.setHeader('Cache-Control', 'no-cache');
+            return;
+        }
+        // Cache moderado para assets estaticos sem travar atualizacao de deploy.
+        res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    },
+}));
 app.use('/auth', authRoutes);
 app.use('/auth', recoveryRoutes);
 app.use('/', smsRoutes);
@@ -67,7 +117,7 @@ app.get('/', (_req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.get('index.html', (_req, res) => {
+app.get('/index.html', (_req, res) => {
     res.redirect('/');
 });
 
@@ -169,6 +219,153 @@ async function ensureAdminsSchema() {
     }
 }
 
+async function ensureModalidadesSchema() {
+    const conexao = await conectar();
+    try {
+        const [tables] = await conexao.query("SHOW TABLES LIKE 'modalidades'");
+        if (!tables.length) return;
+
+        const [cols] = await conexao.query('SHOW COLUMNS FROM modalidades');
+        const colSet = new Set(cols.map(c => c.Field));
+
+        if (!colSet.has('criado_em')) {
+            await conexao.query('ALTER TABLE modalidades ADD COLUMN criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP');
+        }
+
+        if (!colSet.has('atualizado_em')) {
+            await conexao.query('ALTER TABLE modalidades ADD COLUMN atualizado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+        }
+
+        await conexao.query('UPDATE modalidades SET atualizado_em = COALESCE(atualizado_em, criado_em, CURRENT_TIMESTAMP)');
+    } finally {
+        await conexao.end();
+    }
+}
+
+async function ensureSorteioSchema() {
+    const conexao = await conectar();
+    try {
+        const [orgRows] = await conexao.query('SELECT id FROM organizations ORDER BY id ASC LIMIT 1');
+        const defaultOrgId = orgRows[0]?.id || null;
+
+        const [jogosTables] = await conexao.query("SHOW TABLES LIKE 'jogos'");
+        if (jogosTables.length) {
+            const [jogosColsRows] = await conexao.query('SHOW COLUMNS FROM jogos');
+            const jogosCols = new Set(jogosColsRows.map(c => c.Field));
+
+            if (!jogosCols.has('organization_id')) {
+                await conexao.query('ALTER TABLE jogos ADD COLUMN organization_id BIGINT NULL');
+                jogosCols.add('organization_id');
+            }
+            if (!jogosCols.has('evento_id')) {
+                await conexao.query('ALTER TABLE jogos ADD COLUMN evento_id BIGINT NULL');
+                jogosCols.add('evento_id');
+            }
+            if (!jogosCols.has('atualizado_em')) {
+                await conexao.query('ALTER TABLE jogos ADD COLUMN atualizado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+                jogosCols.add('atualizado_em');
+            }
+
+            const [jogosIdx] = await conexao.query("SHOW INDEX FROM jogos WHERE Key_name = 'idx_jogos_ctx'");
+            if (!jogosIdx.length) {
+                const idxCols = ['organization_id', 'evento_id', 'modalidade_id', 'sexo', 'ordem'].filter((col) => jogosCols.has(col));
+                if (idxCols.length >= 2) {
+                    await conexao.query(`CREATE INDEX idx_jogos_ctx ON jogos (${idxCols.join(', ')})`);
+                }
+            }
+
+            if (jogosCols.has('organization_id') && jogosCols.has('evento_id') && jogosCols.has('modalidade_id') && jogosCols.has('sexo') && jogosCols.has('ordem')) {
+                const [legacyUkOrdem] = await conexao.query("SHOW INDEX FROM jogos WHERE Key_name = 'uk_ordem'");
+                if (legacyUkOrdem.length) {
+                    await conexao.query('ALTER TABLE jogos DROP INDEX uk_ordem');
+                }
+                const [ukOrdemCtx] = await conexao.query("SHOW INDEX FROM jogos WHERE Key_name = 'uk_ordem_ctx'");
+                if (!ukOrdemCtx.length) {
+                    await conexao.query('ALTER TABLE jogos ADD UNIQUE KEY uk_ordem_ctx (organization_id, evento_id, modalidade_id, sexo, ordem)');
+                }
+            }
+
+            if (jogosCols.has('organization_id') && jogosCols.has('evento_id') && jogosCols.has('modalidade_id') && jogosCols.has('sexo') && jogosCols.has('numero_jogo')) {
+                const [legacyUkNumJogo] = await conexao.query("SHOW INDEX FROM jogos WHERE Key_name = 'uk_numjogo'");
+                if (legacyUkNumJogo.length) {
+                    await conexao.query('ALTER TABLE jogos DROP INDEX uk_numjogo');
+                }
+                const [ukNumJogoCtx] = await conexao.query("SHOW INDEX FROM jogos WHERE Key_name = 'uk_numjogo_ctx'");
+                if (!ukNumJogoCtx.length) {
+                    await conexao.query('ALTER TABLE jogos ADD UNIQUE KEY uk_numjogo_ctx (organization_id, evento_id, modalidade_id, sexo, numero_jogo)');
+                }
+            }
+
+            if (defaultOrgId && jogosCols.has('organization_id')) {
+                await conexao.query('UPDATE jogos SET organization_id = ? WHERE organization_id IS NULL', [defaultOrgId]);
+            }
+        }
+
+        const [metaTables] = await conexao.query("SHOW TABLES LIKE 'sorteio_meta'");
+        if (metaTables.length) {
+            const [metaColsRows] = await conexao.query('SHOW COLUMNS FROM sorteio_meta');
+            const metaCols = new Set(metaColsRows.map(c => c.Field));
+
+            if (!metaCols.has('organization_id')) {
+                await conexao.query('ALTER TABLE sorteio_meta ADD COLUMN organization_id BIGINT NULL');
+                metaCols.add('organization_id');
+            }
+            if (!metaCols.has('evento_id')) {
+                await conexao.query('ALTER TABLE sorteio_meta ADD COLUMN evento_id BIGINT NULL');
+                metaCols.add('evento_id');
+            }
+            if (!metaCols.has('hora_inicio')) {
+                await conexao.query('ALTER TABLE sorteio_meta ADD COLUMN hora_inicio VARCHAR(10) NULL');
+                metaCols.add('hora_inicio');
+            }
+            if (!metaCols.has('intervalo_min')) {
+                await conexao.query('ALTER TABLE sorteio_meta ADD COLUMN intervalo_min INT NULL');
+                metaCols.add('intervalo_min');
+            }
+            if (!metaCols.has('chaves_qtd')) {
+                await conexao.query('ALTER TABLE sorteio_meta ADD COLUMN chaves_qtd INT NULL');
+                metaCols.add('chaves_qtd');
+            }
+            if (!metaCols.has('atualizado_em')) {
+                await conexao.query('ALTER TABLE sorteio_meta ADD COLUMN atualizado_em TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
+                metaCols.add('atualizado_em');
+            }
+
+            const hasUqCols = ['organization_id', 'evento_id', 'modalidade_id', 'sexo'].every((col) => metaCols.has(col));
+            if (hasUqCols) {
+                if (defaultOrgId) {
+                    await conexao.query('UPDATE sorteio_meta SET organization_id = ? WHERE organization_id IS NULL', [defaultOrgId]);
+                }
+
+                await conexao.query(`
+                    DELETE sm1
+                    FROM sorteio_meta sm1
+                    INNER JOIN sorteio_meta sm2
+                      ON COALESCE(sm1.organization_id, 0) = COALESCE(sm2.organization_id, 0)
+                     AND COALESCE(sm1.evento_id, 0) = COALESCE(sm2.evento_id, 0)
+                     AND sm1.modalidade_id = sm2.modalidade_id
+                     AND sm1.sexo = sm2.sexo
+                     AND sm1.id < sm2.id
+                `);
+
+                const [metaUq] = await conexao.query("SHOW INDEX FROM sorteio_meta WHERE Key_name = 'uq_sorteio_meta_ctx'");
+                if (!metaUq.length) {
+                    await conexao.query('ALTER TABLE sorteio_meta ADD UNIQUE KEY uq_sorteio_meta_ctx (organization_id, evento_id, modalidade_id, sexo)');
+                }
+
+                // Remove chave unica legada (modalidade_id, sexo), pois ela
+                // impede salvar sorteios por evento e causa ER_DUP_ENTRY no backend novo.
+                const [legacyUkMeta] = await conexao.query("SHOW INDEX FROM sorteio_meta WHERE Key_name = 'uk_meta'");
+                if (legacyUkMeta.length) {
+                    await conexao.query('ALTER TABLE sorteio_meta DROP INDEX uk_meta');
+                }
+            }
+        }
+    } finally {
+        await conexao.end();
+    }
+}
+
 function normalizeCursoTexto(texto) {
     return String(texto || '')
         .toLowerCase()
@@ -207,7 +404,7 @@ async function logAudit(userId, entidade, entidadeId, acao, payload = null) {
     }
 }
 
-app.post('/login', async(req, res) => {
+app.post('/login', rateLimitAuth, async(req, res) => {
     const { usuario, senha } = req.body;
 
     try {
@@ -727,15 +924,36 @@ app.post('/admin/modalidades', async(req, res) => {
 
         try {
             const conexao = await conectar();
-            await conexao.query(
+            const [insertResult] = await conexao.query(
                 `INSERT INTO modalidades
                (titulo, descricao, professor, hora_inicio, hora_fim)
                VALUES (?, ?, ?, ?, ?)`,
                 [tituloFinal, descricaoFinal, professorFinal, horaInicioFinal, horaFimFinal]
             );
+
+            const [rows] = await conexao.query(
+                `SELECT id,
+                        titulo AS nome,
+                        titulo,
+                        descricao,
+                        professor,
+                        hora_inicio,
+                        hora_fim,
+                        CONCAT(
+                            COALESCE(hora_inicio, ''),
+                            CASE WHEN hora_inicio IS NOT NULL AND hora_inicio <> '' AND hora_fim IS NOT NULL AND hora_fim <> '' THEN ' - ' ELSE '' END,
+                            COALESCE(hora_fim, '')
+                        ) AS horario,
+                        criado_em,
+                        atualizado_em
+                 FROM modalidades
+                 WHERE id = ?
+                 LIMIT 1`,
+                [insertResult.insertId]
+            );
             await conexao.end();
 
-            res.json({ sucesso: true });
+            res.json({ sucesso: true, data: rows[0] || null });
         } catch (e) {
             console.error(e);
             res.status(500).json({ sucesso: false });
@@ -764,6 +982,15 @@ app.put('/admin/modalidades/:id', async(req, res) => {
                WHERE id = ?`,
                 [tituloFinal, descricaoFinal, professorFinal, horaInicioFinal, horaFimFinal, id]
             );
+
+            const [cols] = await conexao.query('SHOW COLUMNS FROM modalidades');
+            const colSet = new Set(cols.map(c => c.Field));
+            if (colSet.has('atualizado_em')) {
+                await conexao.query('UPDATE modalidades SET atualizado_em = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+            } else if (colSet.has('updated_at')) {
+                await conexao.query('UPDATE modalidades SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+            }
+
             await conexao.end();
             res.json({ sucesso: true });
         } catch (erro) {
@@ -788,19 +1015,24 @@ app.delete('/admin/modalidades/:id', async(req, res) => {
 app.get('/modalidades', async(req, res) => {
     try {
         const conexao = await conectar();
-        const [rows] = await conexao.query('SELECT * FROM modalidades');
-        await conexao.end();
-        res.json(rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json([]);
-    }
-});
-
-app.get('/modalidades', async(req, res) => {
-    try {
-        const conexao = await conectar();
-        const [rows] = await conexao.query('SELECT * FROM modalidades ORDER BY titulo');
+        const [rows] = await conexao.query(`
+            SELECT id,
+                   titulo AS nome,
+                   titulo,
+                   descricao,
+                   professor,
+                   hora_inicio,
+                   hora_fim,
+                   CONCAT(
+                     COALESCE(hora_inicio, ''),
+                     CASE WHEN hora_inicio IS NOT NULL AND hora_inicio <> '' AND hora_fim IS NOT NULL AND hora_fim <> '' THEN ' - ' ELSE '' END,
+                     COALESCE(hora_fim, '')
+                   ) AS horario,
+                   criado_em,
+                   atualizado_em
+            FROM modalidades
+            ORDER BY titulo
+        `);
         await conexao.end();
 
         res.json(rows);
@@ -1417,12 +1649,58 @@ app.get('/dashboard/aluno/avisos', async(_req, res) => {
 
 ensureAlunosRoleColumn()
     .then(ensureAdminsSchema)
+    .then(ensureModalidadesSchema)
+    .then(ensureSorteioSchema)
     .then(() => {
-        httpServer.listen(3005, () => {
-            console.log('Servidor rodando em http://localhost:3005');
+        httpServer.listen(PORT, () => {
+            console.log(`Servidor rodando na porta ${PORT}: http://localhost:${PORT}`);
         });
     })
     .catch((err) => {
         console.error('Erro ao preparar o banco:', err);
         process.exit(1);
     });
+
+let shuttingDown = false;
+async function gracefulShutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[shutdown] Sinal recebido: ${signal}. Encerrando servidor...`);
+
+    const forceExit = setTimeout(() => {
+        console.error('[shutdown] Timeout ao encerrar. Finalizando processo.');
+        process.exit(1);
+    }, 12000);
+    forceExit.unref();
+
+    let closeErr = null;
+    if (httpServer.listening) {
+        await new Promise((resolve) => {
+            httpServer.close((err) => {
+                closeErr = err || null;
+                if (closeErr) {
+                    console.error('[shutdown] Erro ao fechar servidor HTTP:', closeErr);
+                }
+                resolve();
+            });
+        });
+    }
+
+    try {
+        await pool.end();
+    } catch (dbErr) {
+        console.error('[shutdown] Erro ao fechar pool do banco:', dbErr);
+    }
+
+    process.exit(closeErr ? 1 : 0);
+}
+
+process.on('SIGINT', () => { gracefulShutdown('SIGINT'); });
+process.on('SIGTERM', () => { gracefulShutdown('SIGTERM'); });
+process.on('unhandledRejection', (err) => {
+    console.error('[process] UnhandledRejection:', err);
+});
+process.on('uncaughtException', (err) => {
+    console.error('[process] UncaughtException:', err);
+    gracefulShutdown('uncaughtException');
+});

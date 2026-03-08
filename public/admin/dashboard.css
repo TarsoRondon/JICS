@@ -1,13 +1,27 @@
-﻿:root{
-  --bg:#f4fbf8;
-  --panel:#ffffff;
-  --muted:#4d6f67;
-  --text:#0b302b;
-  --brand:#0a5d54;
-  --accent:#00a877;
-  --line:#d3e7df;
+﻿@import url('/css/palette.css');
+@import url('/css/system-unified.css');
+
+:root{
+  --bg: var(--ifro-bg);
+  --panel: var(--ifro-card);
+  --muted: var(--ifro-muted);
+  --text: var(--ifro-text);
+  --brand: var(--ifro-primary-700);
+  --accent: var(--ifro-primary-500);
+  --line: var(--ifro-border);
   --r:16px;
-  --shadow:0 18px 40px rgba(16,60,52,0.12);
+  --shadow: var(--ifro-shadow-md);
+}
+
+body[data-theme="dark"]{
+  --bg: var(--ifro-bg);
+  --panel: var(--ifro-card);
+  --muted: var(--ifro-muted);
+  --text: var(--ifro-text);
+  --brand: var(--ifro-primary-700);
+  --accent: var(--ifro-primary-500);
+  --line: var(--ifro-border);
+  --shadow: var(--ifro-shadow-md);
 }
 *{ box-sizing:border-box; }
 body{
@@ -23,7 +37,7 @@ body{
   display:flex;
   flex-direction:column;
   gap:14px;
-  background: #ffffff;
+  background: var(--panel);
 }
 .brand{ font-weight:900; font-size:20px; letter-spacing:.6px; }
 .menu{ display:grid; gap:6px; }
@@ -47,23 +61,23 @@ body{
   align-items:center;
   padding:18px 22px;
   border-bottom:1px solid var(--line);
-  background:rgba(15,23,42,0.7);
-  backdrop-filter: blur(8px);
+  background:var(--panel);
+  backdrop-filter:none;
 }
 .topbar-left{ display:grid; gap:6px; }
 .topbar-actions{ display:flex; gap:12px; align-items:center; }
 .btn{
   padding:10px 14px;
   border-radius:12px;
-  border:1px solid rgba(255,255,255,.12);
+  border:1px solid rgba(11,77,69,.22);
   background:var(--brand);
   color:#fff;
   font-weight:800;
   cursor:pointer;
-  transition:.2s;
+  transition:background-color .2s ease,border-color .2s ease,transform .2s ease;
 }
-.btn:hover{ background:#084b43; }
-.btn.ghost{ background:transparent; }
+.btn:hover{ background:#083f38; }
+.btn.ghost{ background:transparent; color:var(--brand); }
 .profile-pill{
   display:flex;
   align-items:center;
@@ -71,7 +85,7 @@ body{
   padding:8px 12px;
   border-radius:999px;
   border:1px solid var(--line);
-  background:rgba(255,255,255,.04);
+  background:rgba(0,168,119,.08);
 }
 .profile-pill .dot{
   width:8px;
@@ -95,8 +109,8 @@ body{
 .list-item{
   padding:12px;
   border-radius:14px;
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.03);
+  border:1px solid rgba(10,93,84,.12);
+  background:rgba(10,93,84,.04);
 }
 .item-title{ font-weight:800; }
 .item-sub{ opacity:.7; font-size:12px; margin-top:4px; }
@@ -105,10 +119,10 @@ body{
   opacity:.75;
   padding:12px;
   border-radius:14px;
-  border:1px dashed rgba(255,255,255,.12);
+  border:1px dashed rgba(10,93,84,.2);
 }
 .skeleton-line{
-  height:10px; border-radius:999px; background:rgba(255,255,255,.08);
+  height:10px; border-radius:999px; background:rgba(10,93,84,.12);
 }
 .skeleton-line.lg{ height:18px; width:120px; }
 .toast-stack{
@@ -120,7 +134,7 @@ body{
   border-radius:14px;
   padding:10px 12px;
   display:grid; gap:4px;
-  transform:translateY(12px); opacity:0; transition:.2s;
+  transform:translateY(12px); opacity:0; transition:background-color .2s ease,border-color .2s ease,transform .2s ease;
 }
 .toast-item.show{ transform:translateY(0); opacity:1; }
 .toast-item[data-type="err"]{ border-color: rgba(217,45,32,.5); }
@@ -133,4 +147,59 @@ body{
   .sidebar{ display:none; }
   .kpis{ grid-template-columns:repeat(2, minmax(0,1fr)); }
 }
+
+
+@media (update: slow), (prefers-reduced-motion: reduce){
+  .card,
+  .list-item,
+  .topbar{
+    box-shadow:0 6px 14px rgba(16,60,52,.08)!important;
+  }
+  .btn,
+  .toast-item{
+    transition:none!important;
+  }
+}
+
+/* Cross-device responsive hardening */
+@media (max-width: 640px){
+  .topbar{
+    padding:12px;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+
+  .topbar-actions{
+    width:100%;
+    justify-content:stretch;
+    flex-wrap:wrap;
+  }
+
+  .topbar-actions .btn{
+    width:100%;
+    justify-content:center;
+  }
+
+  .content{
+    padding:12px;
+    gap:12px;
+  }
+
+  .kpis{
+    grid-template-columns:1fr;
+  }
+
+  .toast-stack{
+    left:10px;
+    right:10px;
+    bottom:10px;
+  }
+
+  .toast-item{
+    width:100%;
+  }
+}
+
+
 

@@ -1,0 +1,192 @@
+﻿@import url('/css/palette.css');
+@import url('/css/system-unified.css');
+
+body[data-page="sorteios-salvos"] {
+  --ss-bg: var(--ifro-bg);
+  --ss-surface: var(--ifro-surface);
+  --ss-card: var(--ifro-card);
+  --ss-border: var(--ifro-border);
+  --ss-text: var(--ifro-text);
+  --ss-muted: var(--ifro-muted);
+  --ss-accent: var(--ifro-primary-500);
+  --ss-accent-strong: var(--ifro-primary-700);
+  background:
+    radial-gradient(920px 420px at -8% -10%, rgba(19, 184, 134, 0.13), transparent 64%),
+    radial-gradient(840px 340px at 108% 0%, rgba(9, 86, 67, 0.2), transparent 66%),
+    var(--ss-bg);
+  color: var(--ss-text);
+}
+
+body[data-page="sorteios-salvos"] .card {
+  background: var(--ss-card);
+  border-color: var(--ss-border);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
+}
+
+.sorteios-shell {
+  min-height: 100vh;
+  width: 100%;
+  padding: 18px clamp(12px, 2vw, 28px) 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.sorteios-header {
+  padding: 18px;
+  border-radius: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--ss-border);
+  background: linear-gradient(135deg, rgba(19, 184, 134, 0.15), rgba(18, 34, 30, 0.5));
+}
+
+.sorteios-header h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 2.7vw, 2.3rem);
+}
+
+.sorteios-header p {
+  margin: 6px 0 0;
+  color: var(--ss-muted);
+  max-width: 64ch;
+}
+
+.sorteios-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sorteios-filtros {
+  padding: 14px;
+}
+
+.sorteios-filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr)) minmax(280px, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.sorteios-field {
+  display: grid;
+  gap: 6px;
+}
+
+.sorteios-field label {
+  font-weight: 700;
+  color: var(--ss-muted);
+  font-size: 0.88rem;
+}
+
+.sorteios-field select {
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--ss-border);
+  background: #0f1d1a;
+  color: var(--ss-text);
+  padding: 0 12px;
+}
+
+.sorteios-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sorteios-actions .btn-primary,
+.sorteios-actions .btn-outline {
+  min-height: 42px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.sorteios-lista-card {
+  padding: 12px;
+}
+
+.sorteios-table-wrap {
+  max-height: calc(100vh - 280px);
+}
+
+.sorteios-table th,
+.sorteios-table td {
+  vertical-align: middle;
+}
+
+.sorteios-table td:last-child {
+  min-width: 420px;
+}
+
+.sorteios-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sorteios-row-actions .btn-outline,
+.sorteios-row-actions .btn-primary,
+.sorteios-row-actions .btn-danger {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+}
+
+.btn-danger {
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+  font-weight: 700;
+}
+
+.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.24);
+}
+
+.sorteios-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid var(--ss-border);
+  background: rgba(19, 184, 134, 0.12);
+  color: var(--ss-text);
+}
+
+@media (max-width: 1180px) {
+  .sorteios-filtros-grid {
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+
+  .sorteios-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 840px) {
+  .sorteios-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sorteios-filtros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sorteios-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .sorteios-table td:last-child {
+    min-width: 280px;
+  }
+}
+
+

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -13,14 +13,15 @@
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="/assets/success-feedback.css" />
     <script defer src="/assets/success-feedback.js"></script>
-</head>
 
-<body data-page="admin" data-theme="light" class="admin-shell admin-ui">
+  <link rel="stylesheet" href="/css/dark-theme.css" />
+</head>
+<body data-page="admin" class="admin-shell admin-ui" data-theme="dark">
     <div id="appShell">
         <nav class="navbar">
             <div class="navbar-left">
                 <button class="icon-btn nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
-                <button class="navbar-brand" onclick="scrollToTop()">IFRO ESPORTES - ADMIN</button>
+                <button class="navbar-brand" onclick="window.location.href='/admin.html'">IFRO ESPORTES - ADMIN</button>
             </div>
             <div class="navbar-right">
                 <button class="icon-btn" onclick="toggleAdminMenu(event)"><span class="material-symbols-outlined">settings</span></button>
@@ -62,8 +63,9 @@
                     <a class="side-link active" data-tab="tabDashboard" href="admin.html" onclick="openAdminTab('tabDashboard'); return false;">Visão geral</a>
                     <a class="side-link" data-tab="tabInscricoes" href="admin.html" onclick="openAdminTab('tabInscricoes'); return false;">Inscrições</a>
                     <a class="side-link staff-only" data-tab="tabSorteio" href="admin.html" onclick="openAdminTab('tabSorteio'); return false;">Sorteio</a>
+                    <a class="side-link staff-only" href="/sorteios-salvos.html">Sorteios salvos</a>
                     <a class="side-link" data-tab="tabBuscarAluno" href="admin.html" onclick="openAdminTab('tabBuscarAluno'); return false;">Buscar aluno</a>
-                    <a class="side-link staff-only" href="#" onclick="openSumulaFromSelection(); return false;">Súmula</a>
+                    <a class="side-link staff-only" href="/sumula.html" onclick="if (typeof openSumulaFromSelection === 'function') { openSumulaFromSelection(); return false; }">Súmula</a>
                 </div>
 
                 <div class="side-divider"></div>
@@ -95,6 +97,29 @@
             </aside>
 
             <main class="page admin-panel">
+                <section class="card admin-quick-nav">
+                    <div class="admin-quick-nav-head">
+                        <div>
+                            <div class="page-title">Painel Administrativo</div>
+                            <div class="page-subtitle" id="adminCrumb">Visão geral</div>
+                        </div>
+                        <a class="btn-link admin-only" href="admin-cadastro.html">Novo administrador</a>
+                    </div>
+                    <div class="admin-tabs admin-quick-tabs">
+                        <button class="pill-tab active pill-tab-active" type="button" data-tab="tabDashboard" onclick="switchAdminTab('tabDashboard', this)">Visão geral</button>
+                        <button class="pill-tab" type="button" data-tab="tabInscricoes" onclick="switchAdminTab('tabInscricoes', this)">Inscrições</button>
+                        <button class="pill-tab staff-only" type="button" data-tab="tabSorteio" onclick="switchAdminTab('tabSorteio', this)">Sorteio</button>
+                        <button class="pill-tab" type="button" data-tab="tabBuscarAluno" onclick="switchAdminTab('tabBuscarAluno', this)">Buscar aluno</button>
+                        <button class="pill-tab" type="button" data-tab="tabUsuarios" onclick="switchAdminTab('tabUsuarios', this)">Usuários</button>
+                        <button class="pill-tab" type="button" data-tab="tabNoticias" onclick="switchAdminTab('tabNoticias', this)">Notícias</button>
+                        <button class="pill-tab" type="button" data-tab="tabModalidades" onclick="switchAdminTab('tabModalidades', this)">Modalidades</button>
+                        <button class="pill-tab staff-only" type="button" data-tab="tabEventos" onclick="switchAdminTab('tabEventos', this)">Eventos</button>
+                        <button class="pill-tab staff-only" type="button" data-tab="tabOrganizadores" onclick="switchAdminTab('tabOrganizadores', this)">Organizadores</button>
+                        <button class="pill-tab staff-only" type="button" data-tab="tabGraficos" onclick="switchAdminTab('tabGraficos', this)">Gráficos</button>
+                        <button class="pill-tab staff-only" type="button" data-tab="tabRanking" onclick="switchAdminTab('tabRanking', this)">Ranking</button>
+                        <button class="pill-tab admin-only" type="button" data-tab="tabLogs" onclick="switchAdminTab('tabLogs', this)">Logs</button>
+                    </div>
+                </section>
                 <section id="tabDashboard" class="tab-content active">
                     <section class="hero">
                         <h1 id="heroGreeting">Bem-vindo ao IFRO ESPORTES</h1>
@@ -185,31 +210,6 @@
                         </div>
                     </section>
 
-                    <section class="page-header">
-                        <div>
-                            <div class="page-title">Painel Administrativo</div>
-                            <div class="page-subtitle" id="adminCrumb">Visão geral</div>
-                        </div>
-                    </section>
-
-                    <section class="form-row">
-                        <div class="card">
-                            <div class="stat-number" id="metricUsuarios">-</div>
-                            <div class="stat-label">Usuários</div>
-                        </div>
-                        <div class="card">
-                            <div class="stat-number" id="metricInscricoes">-</div>
-                            <div class="stat-label">Inscrições</div>
-                        </div>
-                        <div class="card">
-                            <div class="stat-number" id="metricModalidades">-</div>
-                            <div class="stat-label">Modalidades</div>
-                        </div>
-                        <div class="card">
-                            <div class="stat-number" id="metricComunicados">-</div>
-                            <div class="stat-label">Comunicados</div>
-                        </div>
-                    </section>
                 </section>
 
                 <section id="tabGraficos" class="tab-content">
@@ -359,7 +359,7 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Buscar usuário</label>
-                                <input id="searchUser" type="text" placeholder="Nome ou matricula" />
+                                <input id="searchUser" type="text" placeholder="Nome ou matrícula" />
                             </div>
                             <div class="form-group" style="align-self:end;">
                                 <button class="btn-outline" onclick="loadUsuariosAdmin()">Buscar</button>
@@ -440,9 +440,9 @@
 
                 <section id="tabNoticias" class="tab-content">
                     <div class="card form-grid">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Titulo</label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                <label>Título</label>
                                 <input id="newsTitulo" />
                             </div>
                             <div class="form-group">
@@ -455,7 +455,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label>Descricao</label>
+                            <label>Descrição</label>
                             <textarea id="newsDescricao" rows="4"></textarea>
                         </div>
                         <button class="btn-primary" onclick="saveNews(event)">Publicar noticia</button>
@@ -464,7 +464,7 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Titulo</th>
+                                    <th>Título</th>
                                     <th>Autor</th>
                                     <th>Data</th>
                                     <th>Ações</th>
@@ -481,14 +481,19 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Nome da modalidade</label>
-                                    <input id="modNome" />
+                                    <input id="modNome" type="search" list="modNomeSuggestions" autocomplete="off" placeholder="Digite para filtrar modalidades..." />
+                                    <datalist id="modNomeSuggestions"></datalist>
                                 </div>
                                 <div class="form-group">
                                     <label>Horário</label>
                                     <input id="modHorario" />
                                 </div>
                             </div>
-                            <button class="btn-primary" onclick="saveMod(event)">Salvar modalidade</button>
+                            <small class="muted">Use o ícone de lápis na tabela para editar uma modalidade existente.</small>
+                            <div class="admin-modalidade-actions">
+                                <button id="modSaveBtn" class="btn-primary" onclick="saveMod(event)">Salvar modalidade</button>
+                                <button id="modCancelBtn" class="btn-outline hidden" type="button" onclick="cancelModEdit()">Cancelar edição</button>
+                            </div>
                         </div>
                         <div class="card table-responsive">
                             <table class="table">
@@ -496,6 +501,8 @@
                                     <tr>
                                         <th>Modalidade</th>
                                         <th>Horário</th>
+                                        <th>Postado em</th>
+                                        <th>Editado em</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -506,57 +513,83 @@
                 </section>
 
                 <section id="tabSorteio" class="tab-content">
-                    <div class="card form-grid sorteio-form-card">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Evento</label>
-                                <select id="sorteioEvento">
+                    <div class="card sorteio-form-card sorteio-filter-panel">
+                        <div class="sorteio-filter-head">
+                            <span class="sorteio-filter-badge">Sorteio</span>
+                            <div>
+                                <h3 class="sorteio-filter-title">Painel de filtros</h3>
+                                <p class="sorteio-filter-subtitle">Configure os parâmetros e execute as ações da tabela.</p>
+                            </div>
+                        </div>
+
+                        <div class="sorteio-filter-body">
+                            <section class="sorteio-filter-cluster">
+                                <h4>Configuração geral</h4>
+                                <div class="sorteio-filter-grid sorteio-filter-grid-main">
+                                    <div class="sorteio-filter-field">
+                                        <label for="sorteioEvento">Evento</label>
+                                        <select id="sorteioEvento">
                   <option value="">Evento</option>
                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Modalidade</label>
-                                <select id="sorteioModalidade"></select>
-                            </div>
-                            <div class="form-group">
-                                <label>Sexo</label>
-                                <select id="sorteioSexo">
+                                    </div>
+
+                                    <div class="sorteio-filter-field">
+                                        <label for="sorteioModalidade">Modalidade</label>
+                                        <select id="sorteioModalidade"></select>
+                                    </div>
+
+                                    <div class="sorteio-filter-field">
+                                        <label for="sorteioSexo">Sexo</label>
+                                        <select id="sorteioSexo">
                   <option value="M">Masculino</option>
                   <option value="F">Feminino</option>
                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Chave</label>
-                                <select id="sorteioChave">
+                                    </div>
+
+                                    <div class="sorteio-filter-field">
+                                        <label for="sorteioChave">Chave</label>
+                                        <select id="sorteioChave">
                   <option value="">Todas</option>
                   <option value="CH A">CH A</option>
                   <option value="CH B">CH B</option>
                   <option value="CH C">CH C</option>
                   <option value="CH D">CH D</option>
                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Local</label>
-                                <input id="sorteioLocal" value="Quadra A" />
-                            </div>
-                            <div class="form-group">
-                                <label>Modo</label>
-                                <select id="sorteioModo">
+                                    </div>
+
+                                    <div class="sorteio-filter-field">
+                                        <label for="sorteioLocal">Local</label>
+                                        <input id="sorteioLocal" value="Quadra A" />
+                                    </div>
+
+                                    <div class="sorteio-filter-field">
+                                        <label for="sorteioModo">Modo</label>
+                                        <select id="sorteioModo">
                   <option value="GRUPOS">Grupos</option>
                   <option value="MATA_MATA">Mata-mata</option>
                 </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Hora inicio</label>
-                                <input id="sorteioHoraInicio" type="time" value="07:30" />
-                            </div>
-                            <div class="form-group">
-                                <label>Intervalo (min)</label>
-                                <input id="sorteioIntervalo" type="number" value="10" />
-                            </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="sorteio-filter-cluster">
+                                <h4>Horários</h4>
+                                <div class="sorteio-filter-grid sorteio-filter-grid-time">
+                                    <div class="sorteio-filter-field">
+                                        <label for="sorteioHoraInicio">Hora início</label>
+                                        <input id="sorteioHoraInicio" type="time" value="07:30" />
+                                    </div>
+                                    <div class="sorteio-filter-field">
+                                        <label for="sorteioIntervalo">Intervalo (min)</label>
+                                        <input id="sorteioIntervalo" type="number" value="10" />
+                                    </div>
+                                </div>
+                            </section>
                         </div>
-                        <div class="form-row">
+
+                        <div class="sorteio-filter-actions">
                             <button class="btn-primary" onclick="gerarTabelaSorteio()">Gerar tabela</button>
+                            <button id="sorteioSaveBtn" class="btn-outline" onclick="salvarSorteio()">Salvar sorteio</button>
                             <button class="btn-outline" onclick="aplicarHorariosSorteio()">Aplicar horários</button>
                             <button class="btn-outline" onclick="limparSorteio()">Limpar</button>
                         </div>
@@ -700,7 +733,7 @@
                                     <input id="evtId" placeholder="Gerado automaticamente" disabled />
                                 </div>
                                 <div class="form-group">
-                                    <label>Organization ID</label>
+                                    <label>ID da organização</label>
                                     <input id="evtOrgId" type="number" placeholder="organization_id" />
                                 </div>
                                 <div class="form-group">
@@ -979,7 +1012,7 @@
                                     <tr>
                                         <th>Data</th>
                                         <th>Admin</th>
-                                        <th>Acao</th>
+                                        <th>Ação</th>
                                         <th>Entidade</th>
                                         <th>ID</th>
                                         <th>IP</th>
@@ -1518,8 +1551,12 @@
 
         document.addEventListener('DOMContentLoaded', loadAdminDashboard);
     </script>
-</body>
 
+  <script defer src="/js/global-footer.js"></script>
+</body>
 </html>
+
+
+
 
 

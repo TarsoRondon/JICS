@@ -1,8 +1,8 @@
 (function(){
   const DEFAULTS = {
-    title: "Concluido!",
-    message: "Acao realizada com sucesso.",
-    duration: 2200
+    title: "Concluído!",
+    message: "Ação realizada com sucesso.",
+    duration: 2600
   };
 
   let timer = null;
@@ -31,8 +31,8 @@
           <div class="sf-sparkles" aria-hidden="true"></div>
         </div>
 
-        <h3 class="sf-title" id="sf-title">Concluido!</h3>
-        <p class="sf-message" id="sf-message">Acao realizada com sucesso.</p>
+        <h3 class="sf-title" id="sf-title">Concluído!</h3>
+        <p class="sf-message" id="sf-message">Ação realizada com sucesso.</p>
 
         <div class="sf-actions">
           <button class="sf-btn" type="button">OK</button>

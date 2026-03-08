@@ -5,76 +5,56 @@ import {
   resolveNextColumns,
   resolveNextSlotValues,
 } from './jogosAdapter.service.js';
+import { calcularRankingPorChave, getModalityProfileById } from './sorteio.service.js';
 
 let cachedHasJogoJogadoresTable = null;
 let cachedInscricoesHasNumeroCamisa = null;
 let cachedAlunosHasSexo = null;
 
-export async function getStandings({ modalidadeId, sexo, chave }) {
+export async function getStandings({ modalidadeId, sexo, chave, organizationId = null, eventoId = null }) {
   const cols = await getJogosColumns();
-  const { done } = await resolveStatusValues();
-  const statusFilter = cols.has('status') ? 'AND status = :doneStatus' : '';
-  const sql = `
-    SELECT
-      equipe,
-      SUM(jogos) AS jogos,
-      SUM(vitorias) AS vitorias,
-      SUM(empates) AS empates,
-      SUM(derrotas) AS derrotas,
-      SUM(gols_pro) AS pro,
-      SUM(gols_contra) AS contra,
-      SUM(gols_pro - gols_contra) AS saldo,
-      SUM(pontos) AS pontos
-    FROM (
-      SELECT
-        equipe_a AS equipe,
-        1 AS jogos,
-        CASE WHEN placar_a > placar_b THEN 1 ELSE 0 END AS vitorias,
-        CASE WHEN placar_a = placar_b THEN 1 ELSE 0 END AS empates,
-        CASE WHEN placar_a < placar_b THEN 1 ELSE 0 END AS derrotas,
-        placar_a AS gols_pro,
-        placar_b AS gols_contra,
-        CASE WHEN placar_a > placar_b THEN 3 WHEN placar_a = placar_b THEN 1 ELSE 0 END AS pontos
-      FROM jogos
-      WHERE modalidade_id = :m1
-        AND sexo = :s1
-        AND fase = 'GRUPOS'
-        AND chave = :c1
-        ${statusFilter}
-        AND placar_a IS NOT NULL AND placar_b IS NOT NULL
+  const params = {
+    modalidade_id: Number(modalidadeId),
+    sexo: String(sexo || '').trim().toUpperCase(),
+    chave: String(chave || '').trim(),
+  };
+  const where = [
+    'modalidade_id = :modalidade_id',
+    'UPPER(sexo) = :sexo',
+    "UPPER(fase) = 'GRUPOS'",
+    'chave = :chave',
+  ];
 
-      UNION ALL
+  if (cols.has('organization_id') && organizationId != null) {
+    where.push('organization_id = :organization_id');
+    params.organization_id = Number(organizationId);
+  }
+  if (cols.has('evento_id') && eventoId != null) {
+    where.push('evento_id = :evento_id');
+    params.evento_id = Number(eventoId);
+  }
 
-      SELECT
-        equipe_b AS equipe,
-        1 AS jogos,
-        CASE WHEN placar_b > placar_a THEN 1 ELSE 0 END AS vitorias,
-        CASE WHEN placar_b = placar_a THEN 1 ELSE 0 END AS empates,
-        CASE WHEN placar_b < placar_a THEN 1 ELSE 0 END AS derrotas,
-        placar_b AS gols_pro,
-        placar_a AS gols_contra,
-        CASE WHEN placar_b > placar_a THEN 3 WHEN placar_b = placar_a THEN 1 ELSE 0 END AS pontos
-      FROM jogos
-      WHERE modalidade_id = :m2
-        AND sexo = :s2
-        AND fase = 'GRUPOS'
-        AND chave = :c2
-        ${statusFilter}
-        AND placar_a IS NOT NULL AND placar_b IS NOT NULL
-    ) t
-    GROUP BY equipe
-    ORDER BY pontos DESC, saldo DESC, pro DESC, vitorias DESC, equipe ASC
-  `;
+  const jogos = await dbQuery(
+    `SELECT * FROM jogos
+     WHERE ${where.join(' AND ')}
+     ORDER BY id ASC`,
+    params
+  );
 
-  return dbQuery(sql, {
-    m1: modalidadeId,
-    s1: sexo,
-    c1: chave,
-    m2: modalidadeId,
-    s2: sexo,
-    c2: chave,
-    doneStatus: done,
-  });
+  const profile = await getModalityProfileById(Number(modalidadeId));
+  const ranking = calcularRankingPorChave(jogos, profile);
+  const key = String(chave || '').trim();
+  return (ranking[key] || []).map((item) => ({
+    equipe: item.equipe,
+    jogos: Number(item.jogos || 0),
+    vitorias: Number(item.vitorias || 0),
+    empates: Number(item.empates || 0),
+    derrotas: Number(item.derrotas || 0),
+    pro: Number(item.pro || 0),
+    contra: Number(item.contra || 0),
+    saldo: Number(item.saldo || 0),
+    pontos: Number(item.pontos || 0),
+  }));
 }
 
 function normalizeTeamLabel(value) {
@@ -531,7 +511,14 @@ export async function saveSumula({
     const updated = updatedRows[0];
     return {
       jogo: updated,
-      meta: { modalidade_id: jogo.modalidade_id, sexo: jogo.sexo, chave: jogo.chave, fase: jogo.fase },
+      meta: {
+        modalidade_id: jogo.modalidade_id,
+        sexo: jogo.sexo,
+        chave: jogo.chave,
+        fase: jogo.fase,
+        evento_id: jogo.evento_id,
+        organization_id: jogo.organization_id,
+      },
       advanced,
     };
   } catch (err) {

@@ -1,0 +1,111 @@
+<svg width="1024" height="683" viewBox="0 0 1024 683" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1024" height="683" fill="#1A6140"/>
+<g id="Tablet_UI">
+<rect x="100" y="130" width="200" height="400" rx="10" fill="#2E3436"/>
+<rect x="104" y="134" width="192" height="392" rx="8" fill="#1C1F21"/>
+<path d="M190 514C190 509.582 193.582 506 198 506C202.418 506 206 509.582 206 514C206 518.418 202.418 522 198 522C193.582 522 190 518.418 190 514Z" fill="#2E3436"/>
+<path d="M198 518C200.209 518 202 516.209 202 514C202 511.791 200.209 510 198 510C195.791 510 194 511.791 194 514C194 516.209 195.791 518 198 518Z" fill="#1C1F21"/>
+<g id="Screen_Content" transform="translate(110, 140)">
+<text fill="white" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="20">ESPORTES</text>
+<g id="Toggle" transform="translate(0, 30)">
+<rect width="60" height="20" rx="10" fill="white" stroke="#68AB7C" stroke-width="1.5"/>
+<circle cx="10" cy="10" r="8" fill="#68AB7C"/>
+</g>
+<g id="Transmission" transform="translate(0, 60)">
+<text fill="#A3A3A3" font-family="Arial, Helvetica, sans-serif" font-size="10">Transmission:</text>
+</g>
+<g id="List_and_Colors" transform="translate(0, 80)">
+<g id="List" font-family="Arial, Helvetica, sans-serif" font-size="10">
+<text x="0" y="10" fill="white">Live</text>
+<text x="0" y="25" fill="#A3A3A3">Documentos e Formatação</text>
+<text x="0" y="40" fill="white">Provas</text>
+<text x="0" y="55" fill="#A3A3A3">Formação Iniciante</text>
+<text x="0" y="70" fill="white">Em Breve</text>
+<text x="0" y="85" fill="#A3A3A3">Tempo, Form, Gráfico</text>
+<text x="0" y="100" fill="white">Agenda de Atividades</text>
+<text x="0" y="115" fill="#A3A3A3">Controle e Observação</text>
+<text x="0" y="130" fill="white">Vídeo</text>
+<text x="0" y="145" fill="#A3A3A3">Vídeos mais 8.1 dias</text>
+<text x="0" y="160" fill="white">Buscando</text>
+</g>
+<g id="Color_Bars" transform="translate(130, 0)">
+<rect width="50" height="15" fill="#FF8A65"/>
+<rect x="0" y="20" width="50" height="15" fill="#FFB74D"/>
+<rect x="0" y="40" width="50" height="15" fill="#4FC3F7"/>
+<rect x="0" y="60" width="50" height="15" fill="#C0C0C0"/>
+<rect x="0" y="80" width="50" height="15" fill="#A0A0A0"/>
+</g>
+</g>
+</g>
+</g>
+<g id="UI_Elements">
+<g id="Chat_List" transform="translate(60, 110)">
+<rect width="100" height="70" rx="5" fill="#AFE3C3" stroke="#A3A3A3"/>
+<rect x="10" y="10" width="80" height="10" rx="2" fill="#88C79D"/>
+<rect x="10" y="25" width="60" height="10" rx="2" fill="#88C79D"/>
+<rect x="10" y="40" width="70" height="10" rx="2" fill="#88C79D"/>
+<circle cx="10" cy="55" r="5" fill="#88C79D"/>
+</g>
+<g id="Bell_Icon" transform="translate(290, 80)">
+<circle cx="20" cy="20" r="20" fill="#FFBFA8"/>
+<path d="M20 30V32C20 33.1046 19.1046 34 18 34H22C20.8954 34 20 33.1046 20 32V30H20Z" fill="#313A3C"/>
+<path d="M15 28H25C26.1046 28 27 27.1046 27 26V24C27 21.7909 25.2091 20 23 20V19.5C23 18.1193 21.6569 17 20 17C18.3431 17 17 18.1193 17 19.5V20C14.7909 20 13 21.7909 13 24V26C13 27.1046 13.8954 28 15 28Z" fill="#313A3C"/>
+</g>
+<g id="Analyze_Chart" transform="translate(300, 160)">
+<rect width="100" height="70" rx="5" fill="#AFE3C3" stroke="#A3A3A3"/>
+<rect x="10" y="10" width="80" height="10" rx="2" fill="#88C79D"/>
+<rect x="10" y="25" width="60" height="10" rx="2" fill="#88C79D"/>
+<rect x="10" y="40" width="70" height="10" rx="2" fill="#88C79D"/>
+</g>
+<g id="Tactic_Board" transform="translate(40, 410)">
+<circle cx="30" cy="30" r="30" fill="#AFE3C3"/>
+<rect x="15" y="15" width="30" height="30" rx="2" fill="#3A7156"/>
+<path d="M25 25C25 25.5523 24.5523 26 24 26C23.4477 26 23 25.5523 23 25C23 24.4477 23.4477 24 24 24C24.5523 24 25 24.4477 25 25Z" fill="white"/>
+<path d="M37 25C37 25.5523 36.5523 26 36 26C35.4477 26 35 25.5523 35 25C35 24.4477 35.4477 24 36 24C36.5523 24 37 24.4477 37 25Z" fill="white"/>
+<path d="M31 35C31 35.5523 30.5523 36 30 36C29.4477 36 29 35.5523 29 35C29 34.4477 29.4477 34 30 34C30.5523 34 31 34.4477 31 35Z" fill="white"/>
+<path d="M26 31L34 39" stroke="white" stroke-width="1.5"/>
+</g>
+<g id="Speech_Bubble" transform="translate(280, 410)">
+<rect width="40" height="30" rx="5" fill="#4FC3F7"/>
+<path d="M20 30L15 35L15 30" fill="#4FC3F7"/>
+<circle cx="10" cy="15" r="2" fill="white"/>
+<circle cx="20" cy="15" r="2" fill="white"/>
+<circle cx="30" cy="15" r="2" fill="white"/>
+</g>
+</g>
+<g id="Characters">
+<g id="Character1_Pointing" transform="translate(320, 270)">
+<path d="M40 30L20 40V120H50V30H40Z" fill="#DB5F51"/>
+<path d="M35 120H55V200H35V120Z" fill="#3E5EA3"/>
+<circle cx="45" cy="20" r="20" fill="#CD8C6F"/>
+<path d="M35 5L30 15H50L60 0L35 5Z" fill="#5D4037"/>
+<path d="M0 45L40 45" stroke="#CD8C6F" stroke-width="5" stroke-linecap="round"/>
+</g>
+<g id="Character2_Volleyball" transform="translate(430, 160)">
+<circle cx="110" cy="0" r="20" fill="#FDD835"/>
+<path d="M100 -10A15 15 0 0 1 120 10Z" fill="#4058B6"/>
+<ellipse cx="60" cy="110" rx="20" ry="30" fill="#91BC7B"/>
+<ellipse cx="60" cy="160" rx="15" ry="25" fill="#3E5EA3"/>
+<path d="M80 80L100 0" stroke="#CD8C6F" stroke-width="5" stroke-linecap="round"/>
+<circle cx="60" cy="80" r="15" fill="#CD8C6F"/>
+</g>
+<g id="Character3_Agachada" transform="translate(620, 310)">
+<ellipse cx="30" cy="60" rx="15" ry="25" fill="#F495BB"/>
+<ellipse cx="30" cy="100" rx="15" ry="25" fill="#91BC7B"/>
+<circle cx="30" cy="40" r="15" fill="#CD8C6F"/>
+<path d="M25 120H35V150H25V120Z" fill="white"/>
+</g>
+<g id="Character4_Walking" transform="translate(760, 240)">
+<rect width="100" height="60" fill="white"/>
+<rect y="60" width="100" height="80" fill="#3E5EA3"/>
+<rect x="110" y="50" width="60" height="90" rx="10" fill="#4058B6"/>
+<path d="M130 50L130 0L150 0L150 50" stroke="#CD8C6F" stroke-width="10" stroke-linecap="round"/>
+<path d="M0 140H20V200H0V140Z" fill="white"/>
+<circle cx="110" cy="130" r="25" fill="#E66D35"/>
+<circle cx="70" cy="300" r="25" fill="black"/>
+<circle cx="70" cy="300" r="23" fill="white"/>
+<path d="M50 300L70 280L90 300L70 320L50 300Z" fill="black"/>
+</g>
+</g>
+<path d="M960 630L963 624L966 630L972 633L966 636L963 642L960 636L954 633L960 630Z" fill="white" fill-opacity="0.5"/>
+</svg>

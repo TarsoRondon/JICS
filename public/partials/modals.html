@@ -8,7 +8,7 @@
     <div class="modal-body" id="detailContent"></div>
     <div class="modal-footer">
       <button class="btn-outline" onclick="closeModal('detailModal')">Fechar</button>
-      <button class="btn-primary" onclick="confirmInscription()">Confirmar inscricao</button>
+      <button class="btn-primary" onclick="confirmInscription()">Confirmar inscrição</button>
     </div>
   </div>
 </div>
@@ -16,7 +16,7 @@
 <div id="modalVerNoticia" class="modal hidden">
   <div class="modal-card">
     <div class="modal-header">
-      <h2 id="verTitulo">Noticia</h2>
+      <h2 id="verTitulo">Notícia</h2>
       <button class="icon-btn" onclick="fecharModalVer()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
@@ -35,14 +35,14 @@
 <div id="modalEditarNoticia" class="modal hidden">
   <div class="modal-card">
     <div class="modal-header">
-      <h2>Editar noticia</h2>
+      <h2>Editar notícia</h2>
       <button class="icon-btn" onclick="fecharModalEditar()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="editNoticiaId" />
-      <label>Titulo</label>
+      <label>Título</label>
       <input type="text" id="editTitulo" />
-      <label>Descricao</label>
+      <label>Descrição</label>
       <textarea id="editDescricao" rows="5"></textarea>
     </div>
     <div class="modal-footer">
@@ -55,11 +55,11 @@
 <div id="modalExcluir" class="modal hidden">
   <div class="modal-card">
     <div class="modal-header">
-      <h2>Excluir noticia</h2>
+      <h2>Excluir notícia</h2>
       <button class="icon-btn" onclick="fecharModalExcluir()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
-      <p>Tem certeza que deseja excluir esta noticia? Essa acao nao pode ser desfeita.</p>
+      <p>Tem certeza que deseja excluir esta notícia? Essa ação não pode ser desfeita.</p>
     </div>
     <div class="modal-footer">
       <button class="btn-outline" onclick="fecharModalExcluir()">Cancelar</button>
@@ -75,7 +75,7 @@
       <button class="icon-btn" onclick="closeModalSenha()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <form id="modalSenhaForm" class="modal-body" onsubmit="event.preventDefault(); confirmarAlteracaoSenha();">
-      <label class="sr-only" for="senhaUsernameInput">Usuario</label>
+      <label class="sr-only" for="senhaUsernameInput">Usuário</label>
       <input type="text" id="senhaUsernameInput" name="username" autocomplete="username" class="sr-only" />
       <label>Senha atual</label>
       <input type="password" id="senhaAtualInput" autocomplete="current-password" />
@@ -85,14 +85,14 @@
       <input type="password" id="confirmarSenhaInput" autocomplete="new-password" />
       <div class="password-ux">
         <div id="rulesModalSenha" class="password-rules">
-          <div class="password-rule rule-bad" data-rule="length"><span class="rule-icon">?</span> minimo 8 caracteres</div>
-          <div class="password-rule rule-bad" data-rule="upper"><span class="rule-icon">?</span> pelo menos 1 letra maiuscula</div>
-          <div class="password-rule rule-bad" data-rule="number"><span class="rule-icon">?</span> pelo menos 1 numero</div>
-          <div class="password-rule rule-bad" data-rule="symbol"><span class="rule-icon">?</span> pelo menos 1 simbolo</div>
+          <div class="password-rule rule-bad" data-rule="length"><span class="rule-icon">?</span> mínimo 8 caracteres</div>
+          <div class="password-rule rule-bad" data-rule="upper"><span class="rule-icon">?</span> pelo menos 1 letra maiúscula</div>
+          <div class="password-rule rule-bad" data-rule="number"><span class="rule-icon">?</span> pelo menos 1 número</div>
+          <div class="password-rule rule-bad" data-rule="symbol"><span class="rule-icon">?</span> pelo menos 1 símbolo</div>
         </div>
         <div class="password-strength">
           <div class="strength-bar"><span id="strengthBarModalSenha" class="strength-fill"></span></div>
-          <div id="strengthTextModalSenha" class="strength-text">Forca: fraca</div>
+          <div id="strengthTextModalSenha" class="strength-text">Força: fraca</div>
         </div>
         <div id="matchModalSenha" class="password-match match-bad">? Senhas conferem</div>
       </div>
@@ -107,11 +107,11 @@
 <div id="modalConfirmarSenha" class="modal hidden">
   <div class="modal-card">
     <div class="modal-header">
-      <h2>Confirmar alteracao</h2>
+      <h2>Confirmar alteração</h2>
       <button class="icon-btn" onclick="closeModalConfirmar()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
-      <p>Tem certeza que deseja alterar sua senha? Essa acao nao podera ser desfeita.</p>
+      <p>Tem certeza que deseja alterar sua senha? Essa ação não poderá ser desfeita.</p>
     </div>
     <div class="modal-footer">
       <button class="btn-outline" onclick="closeModalConfirmar()">Cancelar</button>
@@ -123,16 +123,15 @@
 <div id="modalDangerConfirm" class="modal hidden">
   <div class="modal-card">
     <div class="modal-header">
-      <h2 id="dangerConfirmTitle">Confirmar acao</h2>
+      <h2 id="dangerConfirmTitle">Confirmar ação</h2>
       <button class="icon-btn" onclick="closeDangerConfirm()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="modal-body">
-      <p id="dangerConfirmText">Esta acao e perigosa. Digite CONFIRMAR para continuar.</p>
-      <input type="text" id="dangerConfirmInput" placeholder="Digite CONFIRMAR" />
+      <p id="dangerConfirmText">Tem certeza que deseja continuar?</p>
     </div>
     <div class="modal-footer">
       <button class="btn-outline" onclick="closeDangerConfirm()">Cancelar</button>
-      <button class="btn-danger" id="dangerConfirmBtn" onclick="confirmDangerAction()" disabled>Confirmar</button>
+      <button class="btn-danger" id="dangerConfirmBtn" onclick="confirmDangerAction()">Confirmar</button>
     </div>
   </div>
 </div>
@@ -172,29 +171,29 @@
       <button class="icon-btn" onclick="closePasswordRecoveryModal()"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="password-recovery-body">
-      <iframe id="passwordRecoveryFrame" class="password-recovery-frame" title="Recuperar senha" src="solicitar-otp.html"></iframe>
+      <iframe id="passwordRecoveryFrame" class="password-recovery-frame" title="Recuperar senha" src="/solicitar-otp.html"></iframe>
     </div>
   </div>
 </div>
 
 <div id="helpPanel" class="help-panel hidden">
   <div class="help-header">
-    <h3>Ajuda rapida</h3>
+    <h3>Ajuda rápida</h3>
     <button class="icon-btn" onclick="toggleHelpPanel()"><span class="material-symbols-outlined">close</span></button>
   </div>
   <div class="help-content">
     <div class="tutorials user-only">
       <button class="tutorial-card" onclick="startTour('inscricao')">
-        <strong>Como fazer inscricao</strong>
+        <strong>Como fazer inscrição</strong>
         <span>Tour guiado passo a passo</span>
       </button>
       <button class="tutorial-card" onclick="startTour('senha')">
         <strong>Como trocar senha</strong>
-        <span>Dica rapida e pratica</span>
+        <span>Dica rápida e prática</span>
       </button>
       <button class="tutorial-card" onclick="startTour('foto')">
         <strong>Como trocar foto</strong>
-        <span>Com previa e centralizacao</span>
+        <span>Com prévia e centralização</span>
       </button>
       <button class="tutorial-card" onclick="startTour('resultados')">
         <strong>Como ver resultados</strong>
@@ -202,25 +201,25 @@
       </button>
       <button class="tutorial-card" onclick="startTour('completo')">
         <strong>Tour completo</strong>
-        <span>Conheca todo o site</span>
+        <span>Conheça todo o site</span>
       </button>
     </div>
 
     <div class="tutorials staff-only">
       <button class="tutorial-card" onclick="startTour('completo')">
         <strong>Atalhos do admin</strong>
-        <span>Inscricoes, usuarios, noticias e modalidades.</span>
+        <span>Inscrições, usuários, notícias e modalidades.</span>
       </button>
       <button class="tutorial-card" onclick="openAdminTab('tabInscricoes')">
-        <strong>Gerenciar inscricoes</strong>
-        <span>Acesse a aba Inscricoes.</span>
+        <strong>Gerenciar inscrições</strong>
+        <span>Acesse a aba Inscrições.</span>
       </button>
       <button class="tutorial-card" onclick="openAdminTab('tabBuscarAluno')">
         <strong>Buscar aluno</strong>
         <span>Encontre e edite perfis.</span>
       </button>
       <button class="tutorial-card" onclick="openAdminTab('tabNoticias')">
-        <strong>Publicar noticias</strong>
+        <strong>Publicar notícias</strong>
         <span>Cadastre e edite comunicados.</span>
       </button>
       <button class="tutorial-card" onclick="openAdminTab('tabModalidades')">
@@ -229,11 +228,29 @@
       </button>
     </div>
 
+    <div class="faq">
+      <h4>Sistema de competição e chaveamento (JIFRO/JICS)</h4>
+      <details>
+        <summary>Como funciona a disputa</summary>
+        <div class="faq-rich">
+          <ul>
+            <li><strong>Autoridade técnica:</strong> a <strong>Comissão Técnica</strong> define o sistema de disputa, as tabelas e os boletins oficiais.</li>
+            <li><strong>Congresso Técnico:</strong> o sorteio das chaves e a ordem dos jogos são definidos nesse encontro, com presença das delegações.</li>
+            <li><strong>Fase de grupos:</strong> as equipes são divididas em chaves (A, B, C, D...) e jogam entre si dentro do próprio grupo.</li>
+            <li><strong>Fases eliminatórias:</strong> os classificados avançam por cruzamento pré-definido (ex.: 1º da Chave A x 1º da Chave G).</li>
+            <li><strong>Melhor 2º colocado geral:</strong> quando necessário, esse critério técnico completa as vagas do mata-mata.</li>
+            <li><strong>Horários:</strong> somente o primeiro jogo de cada turno tem horário fixo; os demais acontecem em sequência, no formato <strong>"A seguir"</strong>.</li>
+            <li><strong>Regra de W.O. (Wx0):</strong> ausência de equipe gera Wx0 para o adversário e o jogo seguinte é antecipado para manter o fluxo.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
+
     <div class="faq user-only">
       <h4>Perguntas frequentes</h4>
       <details>
-        <summary>Como fazer inscricao?</summary>
-        <p>Va em "Inscricoes", escolha uma modalidade e confirme. O sistema salva automaticamente.</p>
+        <summary>Como fazer inscrição?</summary>
+        <p>Vá em "Inscrições", escolha uma modalidade e confirme. O sistema salva automaticamente.</p>
       </details>
       <details>
         <summary>Como alterar senha?</summary>
@@ -241,7 +258,7 @@
       </details>
       <details>
         <summary>Como atualizar a foto?</summary>
-        <p>Abra o menu do usuario, clique em "Alterar foto" e ajuste a previa.</p>
+        <p>Abra o menu do usuário, clique em "Alterar foto" e ajuste a prévia.</p>
       </details>
       <details>
         <summary>Como ver resultados?</summary>
@@ -252,16 +269,16 @@
     <div class="faq staff-only">
       <h4>Perguntas frequentes (admin)</h4>
       <details>
-        <summary>Como gerenciar inscricoes?</summary>
-        <p>No painel admin, abra a aba Inscricoes para ver e exportar.</p>
+        <summary>Como gerenciar inscrições?</summary>
+        <p>No painel admin, abra a aba Inscrições para ver e exportar.</p>
       </details>
       <details>
         <summary>Como buscar um aluno?</summary>
         <p>Use a aba Buscar aluno e clique em "Ver perfil".</p>
       </details>
       <details>
-        <summary>Como publicar noticias?</summary>
-        <p>Na aba Noticias, preencha titulo e descricao e publique.</p>
+        <summary>Como publicar notícias?</summary>
+        <p>Na aba Notícias, preencha título e descrição e publique.</p>
       </details>
       <details>
         <summary>Como cadastrar modalidades?</summary>
@@ -269,7 +286,7 @@
       </details>
       <details>
         <summary>Como editar modalidades?</summary>
-        <p>Na pagina de horarios, use a tabela administrativa.</p>
+        <p>Na página de horários, use a tabela administrativa.</p>
       </details>
     </div>
   </div>
@@ -282,7 +299,7 @@
     <p id="tourText"></p>
     <div class="tour-actions">
       <button class="btn-outline" onclick="prevTourStep()">Voltar</button>
-      <button class="btn-primary" onclick="nextTourStep()">Proximo</button>
+      <button class="btn-primary" onclick="nextTourStep()">Próximo</button>
       <button class="icon-btn" onclick="endTour(false)"><span class="material-symbols-outlined">close</span></button>
     </div>
   </div>
@@ -302,7 +319,7 @@
 </div>
 <div id="toastAtencao" class="toast toast-warning hidden" role="status" aria-live="polite">
   <div class="toast-content">
-    <strong>Atencao</strong>
+    <strong>Atenção</strong>
     <p id="toastAtencaoMsg"></p>
   </div>
 </div>

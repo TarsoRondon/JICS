@@ -1,8 +1,9 @@
 (() => {
+  const EMAIL_CANAIS = new Set(['email_pessoal', 'email_academico']);
+
   const state = {
     mode: 'FIRST_ACCESS',
     validated: false,
-    masked: '',
     token: '',
     cooldown: 0,
     timer: null,
@@ -27,11 +28,24 @@
   const loginBackLink = document.getElementById('loginBackLink');
   const cancelLoggedIn = document.getElementById('cancelLoggedIn');
   const cancelRecovery = document.getElementById('cancelRecovery');
-
   const stepOtp = document.getElementById('step-otp');
   const stepPassword = document.getElementById('step-password');
   const newPasswordInput = document.getElementById('newPassword');
   const confirmPasswordInput = document.getElementById('confirmPassword');
+
+  function getSelectedCanal() {
+    const radio = document.querySelector('input[name="canal"]:checked');
+    const canal = String(radio?.value || 'email_pessoal');
+    return EMAIL_CANAIS.has(canal) ? canal : 'email_pessoal';
+  }
+
+  function normalizeEmail(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
 
   function markField(input) {
     if (!input) return;
@@ -59,55 +73,6 @@
     }
   }
 
-  function getLoggedUser() {
-    try {
-      const raw = sessionStorage.getItem('usuarioLogado');
-      return raw ? JSON.parse(raw) : null;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  const loggedUser = getLoggedUser();
-  if (loggedUser && loggedUser.matricula) {
-    if (cancelLoggedIn) cancelLoggedIn.classList.remove('hidden');
-    if (loginBackLink) loginBackLink.classList.add('hidden');
-    if (cancelRecovery) {
-      cancelRecovery.addEventListener('click', () => {
-        window.location.href = '/perfil.html';
-      });
-    }
-  }
-
-  function formatPhone(value) {
-    let digits = String(value || '').replace(/\D/g, '');
-    if (digits.startsWith('55') && digits.length > 11) {
-      digits = digits.slice(2);
-    }
-    digits = digits.slice(0, 11);
-    if (!digits) return '';
-    if (digits.length < 3) return `(${digits}`;
-    const ddd = digits.slice(0, 2);
-    const rest = digits.slice(2);
-    const mobile = digits.length > 10;
-    const part1Len = mobile ? 5 : 4;
-    const part1 = rest.slice(0, part1Len);
-    const part2 = rest.slice(part1Len, part1Len + 4);
-    if (!part2) return `(${ddd}) ${part1}`;
-    return `(${ddd}) ${part1}-${part2}`;
-  }
-
-  function applyPhoneMask() {
-    if (getSelectedCanal() !== 'sms') return;
-    const formatted = formatPhone(contatoInput.value);
-    contatoInput.value = formatted;
-  }
-
-  function getSelectedCanal() {
-    const radio = document.querySelector('input[name="canal"]:checked');
-    return radio ? radio.value : 'sms';
-  }
-
   function setStatus(message, type = 'success') {
     if (!statusBox) return;
     statusBox.textContent = message || '';
@@ -128,39 +93,45 @@
     btn.textContent = isLoading ? 'Aguarde...' : btn.dataset.label;
   }
 
+  function updateContactField() {
+    if (!contatoInput) return;
+    const canal = getSelectedCanal();
+    const isAcademico = canal === 'email_academico';
+    if (contactLabel) {
+      contactLabel.textContent = isAcademico ? 'E-mail academico' : 'E-mail pessoal';
+    }
+    contatoInput.type = 'email';
+    contatoInput.autocomplete = 'email';
+    contatoInput.placeholder = isAcademico ? 'seu.email@ifro.edu.br' : 'seu.email@provedor.com';
+    const normalized = normalizeEmail(contatoInput.value);
+    if (contatoInput.value !== normalized) {
+      contatoInput.value = normalized;
+    }
+  }
+
   function resetFlow() {
     state.validated = false;
-    state.masked = '';
     state.token = '';
-    stepOtp.classList.add('hidden');
-    stepPassword.classList.add('hidden');
-    btnSendOtp.classList.add('hidden');
-    btnSendOtp.disabled = true;
-    btnResend.disabled = true;
-    otpInput.value = '';
+    if (stepOtp) stepOtp.classList.add('hidden');
+    if (stepPassword) stepPassword.classList.add('hidden');
+    if (btnSendOtp) {
+      btnSendOtp.classList.add('hidden');
+      btnSendOtp.disabled = true;
+    }
+    if (btnResend) {
+      btnResend.disabled = true;
+      btnResend.textContent = btnResend.dataset.label || 'Reenviar';
+    }
+    if (state.timer) {
+      clearInterval(state.timer);
+      state.timer = null;
+    }
+    state.cooldown = 0;
+    if (otpInput) otpInput.value = '';
+    if (otpHint) otpHint.textContent = '';
     setOtpError('');
     setStatus('', 'success');
     clearAllFieldErrors();
-  }
-
-  function updateContactField() {
-    const canal = getSelectedCanal();
-    if (canal === 'sms') {
-      contactLabel.textContent = 'Telefone';
-      contatoInput.type = 'tel';
-      contatoInput.placeholder = '(00) 00000-0000';
-      contatoInput.autocomplete = 'tel';
-    } else if (canal === 'email_academico') {
-      contactLabel.textContent = 'E-mail academico';
-      contatoInput.type = 'email';
-      contatoInput.placeholder = 'seu.email@ifro.edu.br';
-      contatoInput.autocomplete = 'email';
-    } else {
-      contactLabel.textContent = 'E-mail pessoal';
-      contatoInput.type = 'email';
-      contatoInput.placeholder = 'seu.email@provedor.com';
-      contatoInput.autocomplete = 'email';
-    }
   }
 
   function setMode(mode) {
@@ -168,13 +139,14 @@
     if (document?.body) {
       document.body.classList.toggle('is-reset', mode === 'RESET_PASSWORD');
     }
-    modeTabs.forEach(tab => {
+    modeTabs.forEach((tab) => {
       tab.classList.toggle('active', tab.dataset.mode === mode);
     });
     resetFlow();
   }
 
   function startCooldown(seconds = 60) {
+    if (!btnResend) return;
     state.cooldown = seconds;
     btnResend.disabled = true;
     btnResend.textContent = `Reenviar (${state.cooldown}s)`;
@@ -183,8 +155,9 @@
       state.cooldown -= 1;
       if (state.cooldown <= 0) {
         clearInterval(state.timer);
+        state.timer = null;
         btnResend.disabled = false;
-        btnResend.textContent = 'Reenviar';
+        btnResend.textContent = btnResend.dataset.label || 'Reenviar';
         return;
       }
       btnResend.textContent = `Reenviar (${state.cooldown}s)`;
@@ -192,14 +165,22 @@
   }
 
   async function validateData() {
-    const matricula = (matriculaInput.value || '').trim();
+    const matricula = String(matriculaInput?.value || '').trim();
     const canal = getSelectedCanal();
-    const contato = (contatoInput.value || '').trim();
+    const contato = normalizeEmail(contatoInput?.value || '');
     clearAllFieldErrors();
+
     if (!matricula || !contato) {
       if (!matricula) markField(matriculaInput);
       if (!contato) markField(contatoInput);
-      setStatus('Preencha matricula e contato.', 'error');
+      setStatus('Preencha matricula e e-mail.', 'error');
+      scrollToFirstError();
+      return;
+    }
+
+    if (!isValidEmail(contato)) {
+      markField(contatoInput);
+      setStatus('Informe um e-mail valido.', 'error');
       scrollToFirstError();
       return;
     }
@@ -215,10 +196,12 @@
       if (!res.ok || !data.ok) {
         throw new Error(data.message || 'Dados nao conferem.');
       }
+
       state.validated = true;
-      state.masked = data.masked || '';
-      btnSendOtp.classList.remove('hidden');
-      btnSendOtp.disabled = false;
+      if (btnSendOtp) {
+        btnSendOtp.classList.remove('hidden');
+        btnSendOtp.disabled = false;
+      }
       setStatus('Dados confirmados. Voce pode solicitar o codigo.', 'success');
     } catch (err) {
       resetFlow();
@@ -233,12 +216,15 @@
 
   async function sendOtp() {
     if (!state.validated) return;
-    const matricula = (matriculaInput.value || '').trim();
+
+    const matricula = String(matriculaInput?.value || '').trim();
     const canal = getSelectedCanal();
-    const contato = (contatoInput.value || '').trim();
+    const contato = normalizeEmail(contatoInput?.value || '');
+
     setLoading(btnSendOtp, true);
     setOtpError('');
     clearField(contatoInput);
+
     try {
       const res = await fetch('/auth/recovery/request-otp', {
         method: 'POST',
@@ -246,6 +232,7 @@
         body: JSON.stringify({ matricula, canal, finalidade: state.mode, contato })
       });
       const data = await res.json().catch(() => ({}));
+
       if (!res.ok || !data.ok) {
         if (data.code === 'WAIT') {
           const seconds = data.secondsLeft ? `${data.secondsLeft}s` : 'alguns segundos';
@@ -254,31 +241,25 @@
         if (data.code === 'BLOCKED') {
           throw new Error('Muitas tentativas. Aguarde alguns minutos.');
         }
-        if (data.code === 'SMS_TRIAL_UNVERIFIED') {
-          throw new Error('Conta de teste: este numero precisa estar verificado para receber SMS.');
-        }
-        if (data.code === 'SMS_NOT_CONFIGURED') {
-          throw new Error('SMS indisponivel no momento. Tente por e-mail.');
-        }
-        if (data.code === 'SMS_PROVIDER_ERROR') {
-          throw new Error('Nao foi possivel enviar o SMS agora. Tente novamente.');
-        }
-        if (data.code === 'SMS_INVALID_NUMBER') {
-          markField(contatoInput);
-          scrollToFirstError();
-          throw new Error('Telefone invalido.');
+        if (data.code === 'EMAIL_FAILED') {
+          throw new Error('Nao foi possivel enviar o codigo por e-mail agora.');
         }
         throw new Error(data.message || 'Nao foi possivel enviar o codigo.');
       }
-      stepOtp.classList.remove('hidden');
-      otpHint.textContent = data.masked ? `Codigo enviado para ${data.masked}.` : 'Codigo enviado.';
+
+      if (stepOtp) stepOtp.classList.remove('hidden');
+      if (otpHint) {
+        otpHint.textContent = data.masked ? `Codigo enviado para ${data.masked}.` : 'Codigo enviado para seu e-mail.';
+      }
       startCooldown(60);
-      const successMsg = data.masked
-        ? `Enviamos um codigo para ${data.masked}.`
-        : 'Codigo enviado. Verifique seu contato.';
       setStatus('', 'success');
+
       if (window.SuccessFeedback?.show) {
-        window.SuccessFeedback.show({ title: 'Codigo enviado', message: successMsg, duration: 2800 });
+        window.SuccessFeedback.show({
+          title: 'Codigo enviado',
+          message: data.masked ? `Enviamos um codigo para ${data.masked}.` : 'Verifique sua caixa de entrada.',
+          duration: 2600,
+        });
       }
     } catch (err) {
       setStatus(err.message || 'Nao foi possivel enviar o codigo.', 'error');
@@ -288,17 +269,19 @@
   }
 
   async function verifyOtp() {
-    const matricula = (matriculaInput.value || '').trim();
-    const otp = (otpInput.value || '').trim();
+    const matricula = String(matriculaInput?.value || '').trim();
+    const otp = String(otpInput?.value || '').trim();
     if (!otp || otp.length < 6) {
       setOtpError('Informe o codigo de 6 digitos.');
       markField(otpInput);
       scrollToFirstError();
       return;
     }
+
     setLoading(btnVerifyOtp, true);
     setOtpError('');
     clearField(otpInput);
+
     try {
       const res = await fetch('/auth/recovery/verify-otp', {
         method: 'POST',
@@ -306,12 +289,14 @@
         body: JSON.stringify({ matricula, finalidade: state.mode, otp })
       });
       const data = await res.json().catch(() => ({}));
+
       if (!res.ok || !data.ok) {
         const attemptsLeft = data.attemptsLeft !== undefined ? ` Restam ${data.attemptsLeft} tentativas.` : '';
         throw new Error((data.message || 'Codigo invalido.') + attemptsLeft);
       }
+
       state.token = data.token;
-      stepPassword.classList.remove('hidden');
+      if (stepPassword) stepPassword.classList.remove('hidden');
       setStatus('Codigo confirmado. Defina sua senha.', 'success');
     } catch (err) {
       setOtpError(err.message || 'Codigo invalido.');
@@ -328,6 +313,7 @@
       scrollToFirstError();
       return;
     }
+
     if (state.passwordUx && !state.passwordUx.isValid()) {
       setStatus('Senha fraca. Verifique as regras.', 'error');
       markField(newPasswordInput);
@@ -335,9 +321,10 @@
       scrollToFirstError();
       return;
     }
+
     setLoading(btnSavePassword, true);
     try {
-      const newPassword = document.getElementById('newPassword').value;
+      const newPassword = String(newPasswordInput?.value || '');
       const res = await fetch('/auth/recovery/set-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -347,6 +334,7 @@
       if (!res.ok || !data.ok) {
         throw new Error(data.message || 'Nao foi possivel atualizar a senha.');
       }
+
       if (window.SuccessFeedback?.show) {
         window.SuccessFeedback.show({ title: 'Senha atualizada', message: 'Voce ja pode acessar o sistema.' });
       }
@@ -361,11 +349,30 @@
   }
 
   function handleFieldChange() {
-    if (!state.validated) return;
-    resetFlow();
+    if (state.validated) resetFlow();
   }
 
-  modeTabs.forEach(tab => {
+  function getLoggedUser() {
+    try {
+      const raw = sessionStorage.getItem('usuarioLogado');
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  const loggedUser = getLoggedUser();
+  if (loggedUser?.matricula) {
+    if (cancelLoggedIn) cancelLoggedIn.classList.remove('hidden');
+    if (loginBackLink) loginBackLink.classList.add('hidden');
+    if (cancelRecovery) {
+      cancelRecovery.addEventListener('click', () => {
+        window.location.href = '/perfil.html';
+      });
+    }
+  }
+
+  modeTabs.forEach((tab) => {
     tab.addEventListener('click', () => setMode(tab.dataset.mode));
   });
 
@@ -373,33 +380,38 @@
     form.addEventListener('submit', (event) => event.preventDefault());
   }
 
-  btnValidate.addEventListener('click', validateData);
-  btnSendOtp.addEventListener('click', sendOtp);
-  btnVerifyOtp.addEventListener('click', verifyOtp);
-  btnSavePassword.addEventListener('click', savePassword);
-  btnResend.addEventListener('click', sendOtp);
+  btnValidate?.addEventListener('click', validateData);
+  btnSendOtp?.addEventListener('click', sendOtp);
+  btnVerifyOtp?.addEventListener('click', verifyOtp);
+  btnSavePassword?.addEventListener('click', savePassword);
+  btnResend?.addEventListener('click', sendOtp);
 
-  matriculaInput.addEventListener('input', handleFieldChange);
-  matriculaInput.addEventListener('input', () => clearField(matriculaInput));
-  matriculaInput.addEventListener('input', () => {
-    if (usernameHidden) usernameHidden.value = matriculaInput.value;
+  matriculaInput?.addEventListener('input', () => {
+    handleFieldChange();
+    clearField(matriculaInput);
+    if (usernameHidden) usernameHidden.value = matriculaInput.value || '';
   });
-  contatoInput.addEventListener('input', () => {
-    applyPhoneMask();
+
+  contatoInput?.addEventListener('input', () => {
+    const normalized = normalizeEmail(contatoInput.value);
+    if (contatoInput.value !== normalized) contatoInput.value = normalized;
     handleFieldChange();
     clearField(contatoInput);
   });
-  document.querySelectorAll('input[name="canal"]').forEach(radio => {
+
+  document.querySelectorAll('input[name="canal"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       updateContactField();
       handleFieldChange();
       clearField(contatoInput);
     });
   });
-  otpInput.addEventListener('input', () => {
+
+  otpInput?.addEventListener('input', () => {
     clearField(otpInput);
     setOtpError('');
   });
+
   newPasswordInput?.addEventListener('input', () => clearField(newPasswordInput));
   confirmPasswordInput?.addEventListener('input', () => clearField(confirmPasswordInput));
 
@@ -408,10 +420,11 @@
   else setMode('FIRST_ACCESS');
 
   updateContactField();
-  btnValidate.dataset.label = btnValidate.textContent;
-  btnSendOtp.dataset.label = btnSendOtp.textContent;
-  btnVerifyOtp.dataset.label = btnVerifyOtp.textContent;
-  btnSavePassword.dataset.label = btnSavePassword.textContent;
+  if (btnValidate) btnValidate.dataset.label = btnValidate.textContent;
+  if (btnSendOtp) btnSendOtp.dataset.label = btnSendOtp.textContent;
+  if (btnVerifyOtp) btnVerifyOtp.dataset.label = btnVerifyOtp.textContent;
+  if (btnSavePassword) btnSavePassword.dataset.label = btnSavePassword.textContent;
+  if (btnResend) btnResend.dataset.label = 'Reenviar';
 
   if (window.setupPasswordUX) {
     state.passwordUx = window.setupPasswordUX({
@@ -426,6 +439,6 @@
   }
 
   if (usernameHidden) {
-    usernameHidden.value = matriculaInput.value || '';
+    usernameHidden.value = matriculaInput?.value || '';
   }
 })();

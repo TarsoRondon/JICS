@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFRO Esportes - Sorteios Salvos</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/sorteios-salvos.css" />
+  <link rel="stylesheet" href="/css/dark-theme.css" />
+</head>
+<body data-page="sorteios-salvos" data-theme="dark">
+  <div class="sorteios-shell">
+    <header class="card sorteios-header">
+      <div>
+        <h1>Sorteios salvos</h1>
+        <p>Visualize, edite, abra sumulas, baixe PDF/CSV e exclua sorteios ja persistidos.</p>
+      </div>
+      <div class="sorteios-header-actions">
+        <a class="btn-outline" href="/admin.html?tab=tabSorteio">Voltar ao admin</a>
+        <a class="btn-primary" href="/painel-sorteio.html">Novo sorteio</a>
+      </div>
+    </header>
+
+    <section class="card sorteios-filtros">
+      <div class="sorteios-filtros-grid">
+        <div class="sorteios-field">
+          <label for="salvosEvento">Evento</label>
+          <select id="salvosEvento">
+            <option value="">Todos os eventos</option>
+          </select>
+        </div>
+        <div class="sorteios-field">
+          <label for="salvosModalidade">Modalidade</label>
+          <select id="salvosModalidade">
+            <option value="">Todas as modalidades</option>
+          </select>
+        </div>
+        <div class="sorteios-field">
+          <label for="salvosSexo">Sexo</label>
+          <select id="salvosSexo">
+            <option value="">Todos</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+            <option value="X">Misto</option>
+          </select>
+        </div>
+        <div class="sorteios-actions">
+          <button id="salvosFiltrarBtn" class="btn-primary" type="button">Filtrar</button>
+          <button id="salvosLimparBtn" class="btn-outline" type="button">Limpar</button>
+          <button id="salvosAtualizarBtn" class="btn-outline" type="button">Atualizar</button>
+        </div>
+      </div>
+      <div id="salvosMsg" class="form-msg" aria-live="polite"></div>
+    </section>
+
+    <section class="card sorteios-lista-card">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Lista de sorteios</div>
+          <div class="page-subtitle">Clique em editar para ajustar a tabela ou abrir as sumulas.</div>
+        </div>
+      </div>
+
+      <div class="table-responsive sorteios-table-wrap">
+        <table class="table sorteios-table">
+          <thead>
+            <tr>
+              <th>Evento</th>
+              <th>Modalidade</th>
+              <th>Sexo</th>
+              <th>Jogos</th>
+              <th>Finalizados</th>
+              <th>Atualizado em</th>
+              <th>Acoes</th>
+            </tr>
+          </thead>
+          <tbody id="salvosBody">
+            <tr>
+              <td colspan="7" class="center muted" style="padding:16px;">Carregando sorteios salvos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script defer src="/assets/success-feedback.js"></script>
+  <script defer src="/js/sorteios-salvos.js"></script>
+  <script defer src="/js/global-footer.js"></script>
+</body>
+</html>

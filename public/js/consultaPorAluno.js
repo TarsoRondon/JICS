@@ -63,6 +63,20 @@ function preencherAluno(aluno) {
 
 let alunoSelecionado = null;
 
+function notifyAlunoErro(message) {
+  const msg = String(message || 'Ocorreu um erro.');
+  if (typeof window.showToastErro === 'function') {
+    window.showToastErro(msg);
+    return;
+  }
+  if (typeof window.toast === 'function') {
+    window.toast(msg, 'err');
+    return;
+  }
+  const container = document.getElementById('resultadoBusca');
+  if (container) container.innerHTML = `<p class="muted">${msg}</p>`;
+}
+
 function verPerfilAlunoEncontrado(payload) {
   try {
     const aluno = JSON.parse(decodeURIComponent(payload));
@@ -72,13 +86,13 @@ function verPerfilAlunoEncontrado(payload) {
       .then(res => res.json())
       .then(data => {
         if (data.erro) {
-          alert(data.erro);
+          notifyAlunoErro(data.erro);
           return;
         }
         alunoSelecionado = data;
         preencherPerfilAluno(data);
       })
-      .catch(() => alert('Erro ao carregar perfil.'));
+      .catch(() => notifyAlunoErro('Erro ao carregar perfil.'));
   } catch (err) {
     console.error(err);
   }
@@ -155,13 +169,13 @@ function salvarEdicaoAluno(event) {
     .then(res => res.json())
     .then(data => {
       if (!data.sucesso) {
-        alert('Erro ao salvar alteracoes.');
+        notifyAlunoErro('Erro ao salvar alteracoes.');
         return;
       }
       alunoSelecionado = { ...alunoSelecionado, ...payload };
       preencherPerfilAluno(alunoSelecionado);
     })
-    .catch(() => alert('Erro ao salvar alteracoes.'));
+    .catch(() => notifyAlunoErro('Erro ao salvar alteracoes.'));
 }
 
 

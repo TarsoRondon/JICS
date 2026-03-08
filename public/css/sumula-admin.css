@@ -1,163 +1,444 @@
-body[data-page="sumula"] .sumula-page-shell {
+﻿@import url('/css/palette.css');
+@import url('/css/system-unified.css');
+
+body[data-page='sumula'] {
+  --sumula-bg: #f2f7f5;
+  --sumula-text: #0f3029;
+  --sumula-muted: #54736b;
+  --sumula-surface: #ffffff;
+  --sumula-surface-soft: #f8fcfa;
+  --sumula-border: #c7dbd2;
+  --sumula-border-strong: #9fcabf;
+  --sumula-field-bg: #f6fbf9;
+  --sumula-field-border: #bcd4cb;
+  --sumula-focus: rgba(18, 165, 127, 0.28);
+  --sumula-success-bg: rgba(17, 138, 82, 0.12);
+  --sumula-success-border: rgba(17, 138, 82, 0.35);
+  --sumula-success-text: #0f7a59;
+  --sumula-error-bg: rgba(187, 46, 46, 0.12);
+  --sumula-error-border: rgba(187, 46, 46, 0.35);
+  --sumula-error-text: #a01f1f;
+  --sumula-shadow-sm: 0 12px 22px rgba(10, 48, 41, 0.1);
+  --sumula-shadow-md: 0 24px 46px rgba(10, 48, 41, 0.16);
+  color: var(--sumula-text);
+  background:
+    radial-gradient(900px 500px at -10% -10%, rgba(18, 165, 127, 0.18), transparent 62%),
+    radial-gradient(920px 420px at 120% 100%, rgba(11, 93, 79, 0.16), transparent 64%),
+    var(--sumula-bg) !important;
+}
+
+body[data-page='sumula']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(11, 93, 79, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11, 93, 79, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+body[data-page='sumula'] .sumula-page-shell {
+  position: relative;
+  z-index: 1;
+  width: min(1460px, 98vw);
   min-height: 100vh;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding: 16px clamp(12px, 2vw, 28px) 22px;
+  margin: 0 auto;
+  padding: clamp(14px, 2.2vw, 28px) clamp(10px, 1.8vw, 22px) 24px;
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
-body[data-page="sumula"] .sumula-page-topbar {
+body[data-page='sumula'] .sumula-page-shell .card {
+  background: linear-gradient(180deg, var(--sumula-surface) 0%, var(--sumula-surface-soft) 100%) !important;
+  border: 1px solid var(--sumula-border) !important;
+  box-shadow: var(--sumula-shadow-sm) !important;
+  border-radius: 18px;
+}
+
+body[data-page='sumula'] .sumula-page-shell .card:hover {
+  transform: none;
+  box-shadow: var(--sumula-shadow-sm) !important;
+}
+
+body[data-page='sumula'] .sumula-page-topbar {
   display: flex;
-  justify-content: space-between;
   align-items: flex-end;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background:
+    linear-gradient(150deg, rgba(8, 83, 71, 0.95), rgba(14, 122, 99, 0.92) 58%, rgba(16, 148, 118, 0.9)) !important;
+  border: 1px solid rgba(198, 234, 222, 0.28) !important;
+  box-shadow: var(--sumula-shadow-md) !important;
+  color: #eaf8f2;
 }
 
-body[data-page="sumula"] .sumula-page-topbar h1 {
+body[data-page='sumula'] .sumula-page-topbar h1 {
   margin: 0;
-  font-size: 2rem;
-  line-height: 1.1;
+  color: #f2fcf8;
+  font-size: clamp(1.8rem, 2.5vw, 2.3rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
 }
 
-body[data-page="sumula"] .sumula-page-topbar p {
+body[data-page='sumula'] .sumula-page-topbar p {
   margin: 6px 0 0;
-  color: var(--muted);
+  color: rgba(234, 248, 242, 0.86);
 }
 
-body[data-page="sumula"] .sumula-page-loader {
+body[data-page='sumula'] .sumula-page-topbar .btn-outline {
+  border-color: rgba(234, 248, 242, 0.38) !important;
+  color: #f2fcf8 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+body[data-page='sumula'] .sumula-page-topbar .btn-outline:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+body[data-page='sumula'] .sumula-page-loader {
+  padding: 14px;
   display: grid;
   gap: 10px;
 }
 
-body[data-page="sumula"] .sumula-page-loader-row {
-  grid-template-columns: 280px auto;
+body[data-page='sumula'] .sumula-page-loader-row {
+  grid-template-columns: minmax(240px, 320px) auto;
   align-items: end;
+  gap: 10px;
 }
 
-body[data-page="sumula"] .sumula-page-content {
+body[data-page='sumula'] .sumula-page-content {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.95fr);
+  gap: 14px;
   align-items: start;
 }
 
-body[data-page="sumula"] .sumula-page-main,
-body[data-page="sumula"] .sumula-page-side {
+body[data-page='sumula'] .sumula-page-main,
+body[data-page='sumula'] .sumula-page-side {
   display: grid;
   gap: 12px;
-  min-width: 0;
-  overflow-x: hidden;
-}
-
-body[data-page="sumula"] .sumula-page-main > *,
-body[data-page="sumula"] .sumula-page-side > * {
+  padding: 14px;
   min-width: 0;
 }
 
-body[data-page="sumula"] .sumula-match-card {
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+body[data-page='sumula'] .sumula-match-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 220px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  border-radius: 14px;
+  border: 1px solid var(--sumula-border);
+  background: linear-gradient(180deg, #ffffff 0%, #f4fbf8 100%);
+  padding: 14px;
 }
 
-body[data-page="sumula"] .sumula-team-name {
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-body[data-page="sumula"] .sumula-officials-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-body[data-page="sumula"] .sumula-officials-grid > .form-group {
+body[data-page='sumula'] .sumula-team {
   min-width: 0;
 }
 
-body[data-page="sumula"] .sumula-page-main input:not(.sumula-score-input),
-body[data-page="sumula"] .sumula-page-main select,
-body[data-page="sumula"] .sumula-page-main textarea,
-body[data-page="sumula"] .sumula-page-side input,
-body[data-page="sumula"] .sumula-page-side select,
-body[data-page="sumula"] .sumula-page-side textarea {
-  width: 100%;
-  min-width: 0;
+body[data-page='sumula'] .sumula-team-label {
+  color: #376057;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
-body[data-page="sumula"] .sumula-page-main .sumula-score {
-  width: auto;
-  max-width: 100%;
+body[data-page='sumula'] .sumula-team-name {
+  margin-top: 4px;
+  color: var(--sumula-text);
+  font-size: clamp(1.2rem, 1.9vw, 1.9rem);
+  font-weight: 800;
+  line-height: 1.18;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
-body[data-page="sumula"] .sumula-page-main .sumula-score-input {
+body[data-page='sumula'] .sumula-score {
+  justify-self: center;
+  width: min(100%, 220px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--sumula-border);
+  background: #ffffff;
+  padding: 8px 10px;
+}
+
+body[data-page='sumula'] .sumula-score-input {
   width: 78px;
   min-width: 78px;
-  flex: 0 0 78px;
+  padding: 10px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--sumula-field-border) !important;
+  background: var(--sumula-field-bg) !important;
+  color: var(--sumula-text) !important;
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  font-weight: 800;
+  text-align: center;
 }
 
-body[data-page="sumula"] .sumula-page-cartoes-form {
+body[data-page='sumula'] .sumula-score-sep {
+  color: #1c5f4f;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+body[data-page='sumula'] .sumula-meta,
+body[data-page='sumula'] .sumula-panel-card,
+body[data-page='sumula'] .sumula-players-card,
+body[data-page='sumula'] .sumula-card-item,
+body[data-page='sumula'] .sumula-player-item {
+  border-radius: 14px;
+  border: 1px solid var(--sumula-border) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fcfa 100%) !important;
+  box-shadow: var(--sumula-shadow-sm);
+}
+
+body[data-page='sumula'] .sumula-meta {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+body[data-page='sumula'] .sumula-switch {
+  color: #1d5a4b;
+  font-weight: 700;
+}
+
+body[data-page='sumula'] .sumula-officials-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+body[data-page='sumula'] .sumula-panel-card,
+body[data-page='sumula'] .sumula-players-card {
+  padding: 12px;
+}
+
+body[data-page='sumula'] .sumula-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+body[data-page='sumula'] .sumula-panel-header strong {
+  color: var(--sumula-text);
+}
+
+body[data-page='sumula'] .sumula-panel-header small {
+  color: var(--sumula-muted);
+  font-size: 0.78rem;
+}
+
+body[data-page='sumula'] .sumula-page-cartoes-form {
   grid-template-columns:
-    minmax(92px, 116px)
-    minmax(0, 1.2fr)
-    minmax(126px, 160px)
-    minmax(102px, 122px)
-    minmax(70px, 92px)
+    minmax(96px, 122px)
+    minmax(0, 1.15fr)
+    minmax(126px, 168px)
+    minmax(102px, 132px)
+    minmax(72px, 94px)
     minmax(0, 1fr)
     auto;
 }
 
-body[data-page="sumula"] .sumula-page-cartoes-form > * {
-  min-width: 0;
+body[data-page='sumula'] .sumula-cards-list,
+body[data-page='sumula'] .sumula-players-list {
+  max-height: min(34vh, 340px);
+  overflow: auto;
+  padding-right: 4px;
 }
 
-body[data-page="sumula"] #sumulaPageAddCardBtn {
-  white-space: nowrap;
+body[data-page='sumula'] .sumula-card-item,
+body[data-page='sumula'] .sumula-player-item {
+  padding: 8px 10px;
 }
 
-body[data-page="sumula"] .sumula-page-footer {
-  display: flex;
-  justify-content: flex-start;
+body[data-page='sumula'] .sumula-card-badge.yellow {
+  background: rgba(245, 199, 15, 0.2);
+  color: #8a6b00;
+  border-color: rgba(245, 199, 15, 0.42);
 }
 
-body[data-page="sumula"] .sumula-page-side .sumula-players-grid {
-  grid-template-columns: 1fr;
-  margin-top: 0;
+body[data-page='sumula'] .sumula-card-badge.red {
+  background: rgba(239, 68, 68, 0.18);
+  color: #9e2525;
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
-body[data-page="sumula"] .sumula-page-side .table-responsive {
-  min-width: 0;
-  max-height: min(44vh, 500px);
+body[data-page='sumula'] .sumula-card-team,
+body[data-page='sumula'] .sumula-empty,
+body[data-page='sumula'] .sumula-player-shirt label,
+body[data-page='sumula'] .page-subtitle,
+body[data-page='sumula'] .muted,
+body[data-page='sumula'] .table thead th {
+  color: var(--sumula-muted) !important;
+}
+
+body[data-page='sumula'] .table-responsive {
+  border-radius: 12px;
+  border: 1px solid var(--sumula-border);
   overflow: auto;
 }
 
-body[data-page="sumula"] .sumula-page-side .table {
+body[data-page='sumula'] .table {
   width: max-content;
   min-width: 100%;
 }
 
-body[data-page="sumula"] .sumula-page-side .table th,
-body[data-page="sumula"] .sumula-page-side .table td {
+body[data-page='sumula'] .table th,
+body[data-page='sumula'] .table td {
+  border-color: rgba(163, 196, 186, 0.42);
   white-space: nowrap;
 }
 
+body[data-page='sumula'] .table tbody tr:hover {
+  background: rgba(var(--ifro-primary-500-rgb), 0.08);
+}
+
+body[data-page='sumula'] input,
+body[data-page='sumula'] select,
+body[data-page='sumula'] textarea {
+  background: var(--sumula-field-bg) !important;
+  border: 1px solid var(--sumula-field-border) !important;
+  color: var(--sumula-text) !important;
+}
+
+body[data-page='sumula'] input::placeholder,
+body[data-page='sumula'] textarea::placeholder {
+  color: #7a9b92;
+}
+
+body[data-page='sumula'] input:focus,
+body[data-page='sumula'] select:focus,
+body[data-page='sumula'] textarea:focus,
+body[data-page='sumula'] input:focus-visible,
+body[data-page='sumula'] select:focus-visible,
+body[data-page='sumula'] textarea:focus-visible {
+  outline: none;
+  border-color: #12a57f !important;
+  box-shadow: 0 0 0 4px var(--sumula-focus) !important;
+}
+
+body[data-page='sumula'] .btn-primary {
+  border: 1px solid transparent !important;
+  background: linear-gradient(180deg, #0f7f68 0%, #0d6a58 100%) !important;
+  color: #f2fcf8 !important;
+  box-shadow: 0 12px 24px rgba(9, 82, 68, 0.24);
+}
+
+body[data-page='sumula'] .btn-primary:hover {
+  filter: brightness(1.02);
+}
+
+body[data-page='sumula'] .btn-outline {
+  border: 1px solid var(--sumula-border-strong) !important;
+  color: #1e6152 !important;
+  background: #f5fbf9 !important;
+}
+
+body[data-page='sumula'] .btn-outline:hover {
+  border-color: #95c4b7 !important;
+  background: #eef7f3 !important;
+}
+
+body[data-page='sumula'] .form-msg {
+  display: block;
+}
+
+body[data-page='sumula'] .form-msg:empty {
+  display: none;
+}
+
+body[data-page='sumula'] .form-msg.success {
+  background: var(--sumula-success-bg);
+  border-color: var(--sumula-success-border);
+  color: var(--sumula-success-text);
+}
+
+body[data-page='sumula'] .form-msg.error {
+  background: var(--sumula-error-bg);
+  border-color: var(--sumula-error-border);
+  color: var(--sumula-error-text);
+}
+
+body[data-page='sumula'] .sumula-highlight {
+  background: rgba(var(--ifro-primary-500-rgb), 0.12);
+}
+
+body[data-page='sumula'] .sumula-leader {
+  color: #0f6f5a;
+}
+
 @media (max-width: 1320px) {
-  body[data-page="sumula"] .sumula-page-content {
+  body[data-page='sumula'] .sumula-page-content {
     grid-template-columns: 1fr;
   }
 
-  body[data-page="sumula"] .sumula-page-loader-row {
+  body[data-page='sumula'] .sumula-page-loader-row {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 780px) {
-  body[data-page="sumula"] .sumula-page-topbar {
+@media (max-width: 980px) {
+  body[data-page='sumula'] .sumula-page-topbar {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  body[data-page="sumula"] .sumula-page-cartoes-form {
+  body[data-page='sumula'] .sumula-officials-grid {
     grid-template-columns: 1fr;
   }
+
+  body[data-page='sumula'] .sumula-page-cartoes-form {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page='sumula'] .sumula-match-card {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    text-align: center;
+  }
+
+  body[data-page='sumula'] .sumula-score {
+    width: fit-content;
+    margin: 0 auto;
+  }
 }
+
+@media (max-width: 640px) {
+  body[data-page='sumula'] .sumula-page-shell {
+    width: min(560px, 96vw);
+    padding: 10px 8px 18px;
+  }
+
+  body[data-page='sumula'] .sumula-page-shell .card,
+  body[data-page='sumula'] .sumula-page-topbar {
+    border-radius: 16px;
+  }
+
+  body[data-page='sumula'] .sumula-score-input {
+    width: 72px;
+    min-width: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (update: slow) {
+  body[data-page='sumula'] * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+

@@ -1,4 +1,28 @@
+# Ambiente e segredos
 .env
+.env.*
+!.env.example
+
+# Dependencias
 node_modules/
+
+# Artefatos de build/cache
+dist/
+build/
+.cache/
+coverage/
+*.log
+*.tmp
+*.bak
+
+# Banco e dumps locais
 *.sql
 Dump*
+*.sqlite
+*.db
+
+# IDE/SO
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

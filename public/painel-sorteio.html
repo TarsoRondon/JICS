@@ -11,78 +11,116 @@
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/light-override.css" />
   <link rel="stylesheet" href="/css/painel-sorteio.css" />
+  <link rel="stylesheet" href="/css/dark-theme.css" />
 </head>
-<body data-page="painel-sorteio" data-theme="light">
+<body data-page="painel-sorteio" data-theme="dark">
   <div class="painel-sorteio-shell">
-    <header class="painel-sorteio-topbar">
+    <header class="painel-sorteio-topbar card">
       <div>
         <h1>Painel de Sorteio</h1>
-        <p>Gerencie jogos, chaves e acesso rapido a sumula em tela cheia.</p>
+        <p>Gerencie jogos, chaves e acesso rapido a sumula em uma tela unica.</p>
       </div>
       <div class="painel-sorteio-top-actions">
         <a class="btn-outline" href="/admin.html?tab=tabSorteio">Voltar ao admin</a>
+        <a class="btn-outline" href="/sorteios-salvos.html">Sorteios salvos</a>
         <a id="painelTelaoLink" class="btn-outline" href="/telao" target="_blank" rel="noopener">Abrir telao</a>
       </div>
     </header>
 
-    <section class="card sorteio-form-card painel-sorteio-filters">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="sorteioEvento">Evento</label>
-          <select id="sorteioEvento">
-            <option value="">Evento</option>
-          </select>
-        </div>
+    <section class="painel-sorteio-kpis" aria-label="Resumo do sorteio">
+      <article class="painel-sorteio-kpi card">
+        <strong id="painelKpiJogos">0</strong>
+        <span>Jogos salvos</span>
+      </article>
+      <article class="painel-sorteio-kpi card">
+        <strong id="painelKpiChaves">0</strong>
+        <span>Chaves</span>
+      </article>
+      <article class="painel-sorteio-kpi card">
+        <strong id="painelKpiFinalizados">0</strong>
+        <span>Finalizados</span>
+      </article>
+    </section>
 
-        <div class="form-group">
-          <label for="sorteioModalidade">Modalidade</label>
-          <select id="sorteioModalidade">
-            <option value="">Todas as modalidades</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="sorteioSexo">Sexo</label>
-          <select id="sorteioSexo">
-            <option value="M">Masculino</option>
-            <option value="F">Feminino</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="sorteioChave">Chave</label>
-          <select id="sorteioChave">
-            <option value="">Todas</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="sorteioLocal">Local</label>
-          <input id="sorteioLocal" value="Quadra A" />
-        </div>
-
-        <div class="form-group">
-          <label for="sorteioModo">Modo</label>
-          <select id="sorteioModo">
-            <option value="GRUPOS">Grupos</option>
-            <option value="MATA_MATA">Mata-mata</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="sorteioHoraInicio">Hora inicio</label>
-          <input id="sorteioHoraInicio" type="time" value="07:30" />
-        </div>
-
-        <div class="form-group">
-          <label for="sorteioIntervalo">Intervalo (min)</label>
-          <input id="sorteioIntervalo" type="number" value="10" min="0" />
+    <section class="card sorteio-form-card sorteio-filter-panel painel-sorteio-filters">
+      <div class="sorteio-filter-head">
+        <span class="sorteio-filter-badge">Sorteio</span>
+        <div>
+          <h3 class="sorteio-filter-title">Painel de filtros</h3>
+          <p class="sorteio-filter-subtitle">Defina os filtros e controle a geracao da tabela em tempo real.</p>
         </div>
       </div>
 
-      <div class="form-row painel-sorteio-actions">
-        <button id="painelLoadBtn" class="btn-primary" type="button">Carregar tabela</button>
+      <div class="sorteio-filter-body">
+        <section class="sorteio-filter-cluster">
+          <h4>Configuracao geral</h4>
+          <div class="sorteio-filter-grid sorteio-filter-grid-main">
+            <div class="sorteio-filter-field">
+              <label for="sorteioEvento">Evento</label>
+              <select id="sorteioEvento">
+                <option value="">Evento</option>
+              </select>
+            </div>
+
+            <div class="sorteio-filter-field">
+              <label for="sorteioModalidade">Modalidade</label>
+              <select id="sorteioModalidade">
+                <option value="">Todas as modalidades</option>
+              </select>
+            </div>
+
+            <div class="sorteio-filter-field">
+              <label for="sorteioSexo">Sexo</label>
+              <select id="sorteioSexo">
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+              </select>
+            </div>
+
+            <div class="sorteio-filter-field">
+              <label for="sorteioChave">Chave</label>
+              <select id="sorteioChave">
+                <option value="">Todas</option>
+              </select>
+            </div>
+
+            <div class="sorteio-filter-field">
+              <label for="sorteioLocal">Local</label>
+              <input id="sorteioLocal" value="Quadra A" />
+            </div>
+
+            <div class="sorteio-filter-field">
+              <label for="sorteioModo">Modo</label>
+              <select id="sorteioModo">
+                <option value="GRUPOS">Grupos</option>
+                <option value="MATA_MATA">Mata-mata</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="sorteio-filter-cluster">
+          <h4>Horarios</h4>
+          <div class="sorteio-filter-grid sorteio-filter-grid-time">
+            <div class="sorteio-filter-field">
+              <label for="sorteioHoraInicio">Hora inicio</label>
+              <input id="sorteioHoraInicio" type="time" value="07:30" />
+            </div>
+            <div class="sorteio-filter-field">
+              <label for="sorteioIntervalo">Intervalo (min)</label>
+              <input id="sorteioIntervalo" type="number" value="10" min="0" />
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="sorteio-filter-actions painel-sorteio-actions">
+        <button id="painelLoadBtn" class="btn-outline" type="button">Carregar tabela</button>
         <button id="painelGenerateBtn" class="btn-primary" type="button">Gerar tabela</button>
+        <button id="painelGenerateKnockoutBtn" class="btn-outline" type="button">Gerar mata-mata</button>
+        <button id="painelSaveBtn" class="btn-outline" type="button">Salvar sorteio</button>
+        <button id="painelDownloadCsvBtn" class="btn-outline" type="button">Baixar CSV</button>
+        <button id="painelDownloadPdfBtn" class="btn-outline" type="button">Baixar PDF</button>
         <button id="painelApplyTimeBtn" class="btn-outline" type="button">Aplicar horarios</button>
         <button id="painelClearBtn" class="btn-outline" type="button">Limpar</button>
       </div>
@@ -183,5 +221,6 @@
 
   <script defer src="/assets/success-feedback.js"></script>
   <script defer src="/js/painel-sorteio.js"></script>
+  <script defer src="/js/global-footer.js"></script>
 </body>
 </html>

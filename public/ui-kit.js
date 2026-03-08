@@ -1,7 +1,11 @@
-﻿(() => {
+(() => {
   const THEME_KEY = 'jics-theme';
   const TOAST_DURATION = 4000;
+  const LOADER_MIN_DURATION = 1200;
   let confirmCallback = null;
+  let loaderVisibleAt = 0;
+  let loaderCount = 0;
+  let loaderHideTimer = null;
 
   function applyTheme(theme) {
     const value = theme === 'dark' ? 'dark' : 'light';
@@ -35,7 +39,7 @@
 
   function showToast({ type = 'info', title, message }) {
     if ((type === 'success' || type === 'info') && window.SuccessFeedback && typeof window.SuccessFeedback.show === 'function') {
-      window.SuccessFeedback.show({ title: title || 'Concluido!', message: message || '' });
+      window.SuccessFeedback.show({ title: title || 'Concluído!', message: message || '' });
       return;
     }
     createToastStack();
@@ -69,19 +73,53 @@
     loader.innerHTML = `
       <div class="modal-card">
         <div class="loader-card">
-          <span class="spinner"></span>
-          <span>Carregando...</span>
+          <span class="spinner" aria-hidden="true"></span>
+          <div class="loader-texts">
+            <strong>Carregando</strong>
+            <small id="global-loader-text">Aguarde um instante...</small>
+          </div>
+          <div class="loader-track" aria-hidden="true"><span></span></div>
         </div>
       </div>
     `;
     document.body.appendChild(loader);
   }
 
-  function showLoading(show) {
+  function hideLoaderWithDelay() {
+    const loader = document.getElementById('global-loader');
+    if (!loader) return;
+    const elapsed = Date.now() - loaderVisibleAt;
+    const remaining = Math.max(0, LOADER_MIN_DURATION - elapsed);
+    clearTimeout(loaderHideTimer);
+    loaderHideTimer = setTimeout(() => {
+      loader.classList.add('hidden');
+      loaderHideTimer = null;
+    }, remaining);
+  }
+
+  function showLoading(show, message) {
     createLoader();
     const loader = document.getElementById('global-loader');
     if (!loader) return;
-    loader.classList.toggle('hidden', !show);
+
+    const loaderText = document.getElementById('global-loader-text');
+    if (loaderText) loaderText.textContent = message || 'Aguarde um instante...';
+
+    if (show) {
+      loaderCount += 1;
+      clearTimeout(loaderHideTimer);
+      loaderHideTimer = null;
+      if (loader.classList.contains('hidden')) {
+        loader.classList.remove('hidden');
+        loaderVisibleAt = Date.now();
+      }
+      return;
+    }
+
+    loaderCount = Math.max(0, loaderCount - 1);
+    if (loaderCount === 0) {
+      hideLoaderWithDelay();
+    }
   }
 
   function createConfirmModal() {
@@ -92,16 +130,15 @@
     modal.innerHTML = `
       <div class="modal-card">
         <div class="modal-header">
-          <h3 id="confirm-title">Confirmar acao</h3>
+          <h3 id="confirm-title">Confirmar ação</h3>
           <button class="icon-btn" id="confirm-close" aria-label="Fechar">x</button>
         </div>
         <div class="modal-body">
-          <p id="confirm-message">Digite CONFIRMAR para continuar.</p>
-          <input id="confirm-input" placeholder="CONFIRMAR" />
+          <p id="confirm-message">Tem certeza que deseja continuar?</p>
         </div>
         <div class="modal-footer">
           <button class="btn-outline" id="confirm-cancel">Cancelar</button>
-          <button class="btn-danger" id="confirm-submit" disabled>Confirmar</button>
+          <button class="btn-danger" id="confirm-submit">Confirmar</button>
         </div>
       </div>
     `;
@@ -112,26 +149,19 @@
     modal.querySelector('#confirm-cancel').addEventListener('click', close);
   }
 
-  function openConfirmModal({ title, message, confirmText = 'CONFIRMAR', onConfirm }) {
+  function openConfirmModal({ title, message, onConfirm }) {
     createConfirmModal();
     const modal = document.getElementById('confirm-modal');
     const titleEl = document.getElementById('confirm-title');
     const messageEl = document.getElementById('confirm-message');
-    const inputEl = document.getElementById('confirm-input');
     const confirmBtn = document.getElementById('confirm-submit');
 
-    titleEl.textContent = title || 'Confirmar acao';
-    messageEl.textContent = message || `Digite ${confirmText} para continuar.`;
-    inputEl.value = '';
-    confirmBtn.disabled = true;
+    titleEl.textContent = title || 'Confirmar ação';
+    messageEl.textContent = message || 'Tem certeza que deseja continuar?';
+    confirmBtn.disabled = false;
     confirmCallback = onConfirm || null;
 
-    inputEl.oninput = () => {
-      confirmBtn.disabled = inputEl.value.trim().toUpperCase() !== String(confirmText).toUpperCase();
-    };
-
     confirmBtn.onclick = () => {
-      if (confirmBtn.disabled) return;
       if (typeof confirmCallback === 'function') confirmCallback();
       closeConfirmModal();
     };

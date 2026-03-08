@@ -36,6 +36,14 @@ function isAllowedFinalidade(finalidade) {
   return ['FIRST_ACCESS', 'RESET_PASSWORD', 'CHANGE_PHONE_OLD', 'CHANGE_PHONE_NEW'].includes(finalidade);
 }
 
+function isEmailCanal(canal) {
+  return canal === 'email_pessoal' || canal === 'email_academico';
+}
+
+function requiresEmailRecovery(finalidade) {
+  return finalidade === 'FIRST_ACCESS' || finalidade === 'RESET_PASSWORD';
+}
+
 function resolveDestino(aluno, canal) {
   if (canal === 'sms') return aluno.telefone || '';
   if (canal === 'email_pessoal') return aluno.email_pessoal || '';
@@ -56,6 +64,9 @@ function maskDestino(canal, destino) {
 export async function validateRecovery({ matricula, canal, contato, finalidade }) {
   const cleanMatricula = normalizeMatricula(matricula);
   if (!cleanMatricula || !canal || !isAllowedFinalidade(finalidade)) {
+    return { ok: false, code: 'INVALID_MATCH', message: 'Dados nao conferem.' };
+  }
+  if (requiresEmailRecovery(finalidade) && !isEmailCanal(canal)) {
     return { ok: false, code: 'INVALID_MATCH', message: 'Dados nao conferem.' };
   }
 
@@ -91,6 +102,9 @@ export async function validateRecovery({ matricula, canal, contato, finalidade }
 export async function requestOtp({ matricula, canal, finalidade, contato }) {
   const cleanMatricula = normalizeMatricula(matricula);
   if (!cleanMatricula || !canal || !isAllowedFinalidade(finalidade)) {
+    return { ok: false, code: 'INVALID_REQUEST', message: 'Dados invalidos.' };
+  }
+  if (requiresEmailRecovery(finalidade) && !isEmailCanal(canal)) {
     return { ok: false, code: 'INVALID_REQUEST', message: 'Dados invalidos.' };
   }
 

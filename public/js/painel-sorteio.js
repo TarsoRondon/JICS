@@ -1,11 +1,14 @@
 (() => {
-  const SUMULA_PAGE_URL = 'http://localhost:3005/sumula.html';
+  const SUMULA_PAGE_URL = '/sumula.html';
   const state = {
     eventos: [],
     modalidades: [],
     allRows: [],
     rows: [],
   };
+  const SORTEIO_LOADING_MIN_DURATION = 1200;
+  let sorteioLoadingShownAt = 0;
+  let sorteioLoadingTimer = null;
 
   function byId(id) {
     return document.getElementById(id);
@@ -77,6 +80,25 @@
     };
   }
 
+  function serializeRowsForSave(rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    return list
+      .map((row, idx) => {
+        const equipeA = cleanLabel(row?.equipeA || row?.equipe_a || '');
+        const equipeB = cleanLabel(row?.equipeB || row?.equipe_b || '');
+        if (!equipeA || !equipeB) return null;
+        return {
+          chave: cleanLabel(row?.chave || row?.chave_grupo || 'CH A') || 'CH A',
+          equipeA,
+          equipeB,
+          ordem: Number(row?.ordem || (idx + 1)) || (idx + 1),
+          hora: cleanLabel(row?.hora || row?.hora_oficial || row?.hora_texto || ''),
+          jogo: cleanLabel(row?.jogo || row?.numero_jogo || row?.jogo_label || `Jogo ${idx + 1}`),
+        };
+      })
+      .filter(Boolean);
+  }
+
   function setMessage(message, type = 'error') {
     const box = byId('painelSorteioMsg');
     if (!box) return;
@@ -87,6 +109,25 @@
     }
     box.className = `form-msg show ${type === 'success' ? 'success' : 'error'}`;
     box.textContent = message;
+  }
+
+  function setKpi(id, value) {
+    const el = byId(id);
+    if (!el) return;
+    el.textContent = String(value ?? 0);
+  }
+
+  function updateKpis() {
+    const total = Array.isArray(state.allRows) ? state.allRows.length : 0;
+    const chaves = new Set(
+      (state.allRows || [])
+        .map((row) => String(row?.chave || '').trim())
+        .filter(Boolean)
+    ).size;
+    const finalizados = (state.allRows || []).filter((row) => normalizeStatus(row?.status) === 'DONE').length;
+    setKpi('painelKpiJogos', total);
+    setKpi('painelKpiChaves', chaves);
+    setKpi('painelKpiFinalizados', finalizados);
   }
 
   function setStandingsPlaceholder(text) {
@@ -121,6 +162,44 @@
     button.textContent = loading ? loadingLabel : idleLabel;
   }
 
+  function setSorteioLoading(visible, text = 'Gerando tabela de sorteio...') {
+    let overlay = byId('sorteioLoadingOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'sorteioLoadingOverlay';
+      overlay.className = 'sorteio-loading-overlay hidden';
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.innerHTML = `
+        <div class="sorteio-loading-card" role="status" aria-atomic="true">
+          <div class="sorteio-loading-spinner" aria-hidden="true"></div>
+          <p class="sorteio-loading-title">Sorteio em andamento</p>
+          <p class="sorteio-loading-text"></p>
+          <div class="sorteio-loading-bar" aria-hidden="true"><span></span></div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+    const textNode = overlay.querySelector('.sorteio-loading-text');
+    if (textNode) textNode.textContent = text;
+    if (visible) {
+      clearTimeout(sorteioLoadingTimer);
+      sorteioLoadingTimer = null;
+      overlay.classList.remove('hidden');
+      document.body.classList.add('sorteio-loading-active');
+      sorteioLoadingShownAt = Date.now();
+      return;
+    }
+
+    const elapsed = Date.now() - sorteioLoadingShownAt;
+    const remaining = Math.max(0, SORTEIO_LOADING_MIN_DURATION - elapsed);
+    clearTimeout(sorteioLoadingTimer);
+    sorteioLoadingTimer = setTimeout(() => {
+      overlay.classList.add('hidden');
+      document.body.classList.remove('sorteio-loading-active');
+      sorteioLoadingTimer = null;
+    }, remaining);
+  }
+
   async function requestJson(url, options = {}) {
     const response = await fetch(url, { credentials: 'include', ...options });
     let data = null;
@@ -147,6 +226,7 @@
     if (chaveSelect) chaveSelect.innerHTML = '<option value="">Todas</option>';
     byId('painelSorteioChaveLabel').textContent = '-';
     setStandingsPlaceholder('Selecione uma chave.');
+    updateKpis();
   }
 
   function updateTitle() {
@@ -200,8 +280,8 @@
 
     body.innerHTML = state.rows.map((row) => {
       const sumulaBtn = row.id
-        ? `<button class="btn-outline btn-sm" type="button" data-open-sumula="${row.id}">Sumula</button>`
-        : '<button class="btn-outline btn-sm" type="button" disabled>Sumula</button>';
+        ? `<button class="btn-outline btn-sm" type="button" data-open-sumula="${row.id}">Súmula</button>`
+        : '<button class="btn-outline btn-sm" type="button" disabled>Súmula</button>';
       return `
         <tr class="${normalizeStatus(row.status) === 'DONE' ? 'is-done' : ''}">
           <td class="sorteio-col-center">${escapeHtml(row.ordem)}</td>
@@ -326,6 +406,7 @@
   }
 
   async function refreshStandings() {
+    const eventoId = String(byId('sorteioEvento')?.value || '');
     const modalidadeId = String(byId('sorteioModalidade')?.value || '');
     const sexo = String(byId('sorteioSexo')?.value || '');
     const chave = String(byId('sorteioChave')?.value || '');
@@ -339,19 +420,19 @@
     setStandingsPlaceholder('Carregando...');
     try {
       const { response, data } = await requestJson(
-        `/sumulas/tabela?modalidade_id=${encodeURIComponent(modalidadeId)}&sexo=${encodeURIComponent(sexo)}&chave=${encodeURIComponent(chave)}`
+        `/sumulas/tabela?evento_id=${encodeURIComponent(eventoId)}&modalidade_id=${encodeURIComponent(modalidadeId)}&sexo=${encodeURIComponent(sexo)}&chave=${encodeURIComponent(chave)}`
       );
       if (response.status === 401) {
-        setMessage('Sessao expirada. Faca login novamente.', 'error');
-        setStandingsPlaceholder('Sessao expirada.');
+        setMessage('Sessão expirada. Faça login novamente.', 'error');
+        setStandingsPlaceholder('Sessão expirada.');
         return;
       }
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || 'Falha ao carregar classificacao.');
+        throw new Error(data?.message || 'Falha ao carregar classificação.');
       }
       renderStandings(data.standings || []);
     } catch (err) {
-      setStandingsPlaceholder(err.message || 'Falha ao carregar classificacao.');
+      setStandingsPlaceholder(err.message || 'Falha ao carregar classificação.');
     }
   }
 
@@ -363,6 +444,7 @@
     renderChavesTable();
     renderJogosTable();
     refreshStandings();
+    updateKpis();
   }
 
   async function fetchEventos() {
@@ -371,11 +453,11 @@
     try {
       const { response, data } = await requestJson('/eventos');
       if (response.status === 401) {
-        setMessage('Sessao expirada. Faca login novamente.', 'error');
+        setMessage('Sessão expirada. Faça login novamente.', 'error');
         return;
       }
       if (!response.ok || !data?.sucesso) {
-        throw new Error(data?.erro?.mensagem || 'Nao foi possivel carregar eventos.');
+        throw new Error(data?.erro?.mensagem || 'Não foi possível carregar eventos.');
       }
       state.eventos = Array.isArray(data.data) ? data.data : [];
       setSelectOptions(
@@ -391,7 +473,7 @@
         if (preferred) select.value = String(preferred.id);
       }
     } catch (err) {
-      setMessage(err.message || 'Nao foi possivel carregar eventos.', 'error');
+      setMessage(err.message || 'Não foi possível carregar eventos.', 'error');
       setSelectOptions(select, [], 'Evento');
     }
   }
@@ -407,7 +489,7 @@
         responseWrap = await requestJson('/modalidades');
       }
       if (!responseWrap.response.ok) {
-        throw new Error('Nao foi possivel carregar modalidades.');
+        throw new Error('Não foi possível carregar modalidades.');
       }
       const payload = responseWrap.data;
       items = Array.isArray(payload) ? payload : (Array.isArray(payload?.data) ? payload.data : []);
@@ -440,11 +522,12 @@
 
     const loadBtn = byId('painelLoadBtn');
     setButtonLoading(loadBtn, true, 'Carregar tabela', 'Carregando...');
+    setSorteioLoading(true, 'Carregando tabela de sorteio...');
     try {
       const { response, data } = await requestJson(`/sorteio/${encodeURIComponent(eventoId)}/${encodeURIComponent(modalidadeId)}/${encodeURIComponent(sexo)}`);
       if (response.status === 401) {
-        setMessage('Sessao expirada. Faca login novamente.', 'error');
-        clearTables('Sessao expirada.');
+        setMessage('Sessão expirada. Faça login novamente.', 'error');
+        clearTables('Sessão expirada.');
         return;
       }
       if (!response.ok || !data?.sucesso) {
@@ -463,6 +546,7 @@
       clearTables('Falha ao carregar tabela.');
       setMessage(err.message || 'Falha ao carregar tabela.', 'error');
     } finally {
+      setSorteioLoading(false);
       setButtonLoading(loadBtn, false, 'Carregar tabela', 'Carregando...');
     }
   }
@@ -484,6 +568,12 @@
 
     const generateBtn = byId('painelGenerateBtn');
     setButtonLoading(generateBtn, true, 'Gerar tabela', 'Gerando...');
+    setSorteioLoading(
+      true,
+      modalidadeId
+        ? 'Gerando sorteio da modalidade selecionada...'
+        : 'Gerando sorteio para todas as modalidades...'
+    );
     try {
       const payload = {
         evento_id: eventoId,
@@ -502,7 +592,7 @@
       });
 
       if (response.status === 401) {
-        setMessage('Sessao expirada. Faca login novamente.', 'error');
+        setMessage('Sessão expirada. Faça login novamente.', 'error');
         return;
       }
       if (!response.ok || !data?.sucesso) {
@@ -515,16 +605,17 @@
         syncChaveOptions();
         updateTitle();
         applyFilter();
-        setMessage('Tabela gerada com sucesso.', 'success');
+        setMessage('Tabela gerada e salva com sucesso.', 'success');
       } else {
         clearTables('Sorteio gerado para todas as modalidades. Selecione uma modalidade e clique em "Carregar tabela".');
         const total = Number(data?.data?.total_modalidades || 0);
-        const label = total > 0 ? `Sorteio gerado para ${total} modalidades.` : 'Sorteio gerado para todas as modalidades.';
+        const label = total > 0 ? `Sorteio gerado e salvo para ${total} modalidades.` : 'Sorteio gerado e salvo para todas as modalidades.';
         setMessage(label, 'success');
       }
     } catch (err) {
       setMessage(err.message || 'Falha ao gerar sorteio.', 'error');
     } finally {
+      setSorteioLoading(false);
       setButtonLoading(generateBtn, false, 'Gerar tabela', 'Gerando...');
     }
   }
@@ -537,12 +628,13 @@
     const horaInicio = String(byId('sorteioHoraInicio')?.value || '07:30');
     const intervaloMin = Number(byId('sorteioIntervalo')?.value || 0);
     if (!eventoId || !modalidadeId || !sexo) {
-      setMessage('Selecione evento, modalidade e sexo para aplicar horarios.', 'error');
+      setMessage('Selecione evento, modalidade e sexo para aplicar horários.', 'error');
       return;
     }
 
     const applyBtn = byId('painelApplyTimeBtn');
-    setButtonLoading(applyBtn, true, 'Aplicar horarios', 'Aplicando...');
+    setButtonLoading(applyBtn, true, 'Aplicar horários', 'Aplicando...');
+    setSorteioLoading(true, 'Aplicando horários nos jogos...');
     try {
       const { response, data } = await requestJson('/sorteio/horarios', {
         method: 'POST',
@@ -556,18 +648,140 @@
         }),
       });
       if (response.status === 401) {
-        setMessage('Sessao expirada. Faca login novamente.', 'error');
+        setMessage('Sessão expirada. Faça login novamente.', 'error');
         return;
       }
       if (!response.ok || !data?.sucesso) {
-        throw new Error(data?.erro?.mensagem || 'Falha ao aplicar horarios.');
+        throw new Error(data?.erro?.mensagem || 'Falha ao aplicar horários.');
       }
-      setMessage('Horarios aplicados com sucesso.', 'success');
+      setMessage('Horários aplicados com sucesso.', 'success');
       await carregarTabela();
     } catch (err) {
-      setMessage(err.message || 'Falha ao aplicar horarios.', 'error');
+      setMessage(err.message || 'Falha ao aplicar horários.', 'error');
     } finally {
-      setButtonLoading(applyBtn, false, 'Aplicar horarios', 'Aplicando...');
+      setSorteioLoading(false);
+      setButtonLoading(applyBtn, false, 'Aplicar horários', 'Aplicando...');
+    }
+  }
+
+  async function salvarTabela() {
+    setMessage('');
+    const eventoId = String(byId('sorteioEvento')?.value || '');
+    const modalidadeId = String(byId('sorteioModalidade')?.value || '');
+    const sexo = String(byId('sorteioSexo')?.value || '');
+    const localJogos = cleanLabel(byId('sorteioLocal')?.value || '') || 'Quadra A';
+    const modo = String(byId('sorteioModo')?.value || 'GRUPOS');
+    const horaInicio = String(byId('sorteioHoraInicio')?.value || '07:30');
+    const intervaloMin = Number(byId('sorteioIntervalo')?.value || 0);
+
+    if (!eventoId || !modalidadeId || !sexo) {
+      setMessage('Selecione evento, modalidade e sexo para salvar.', 'error');
+      return;
+    }
+
+    const sourceRows = state.allRows.length ? state.allRows : state.rows;
+    const jogos = serializeRowsForSave(sourceRows);
+    if (!jogos.length) {
+      setMessage('Gere ou carregue uma tabela antes de salvar.', 'error');
+      return;
+    }
+
+    const saveBtn = byId('painelSaveBtn');
+    setButtonLoading(saveBtn, true, 'Salvar sorteio', 'Salvando...');
+    setSorteioLoading(true, 'Salvando sorteio...');
+    try {
+      const { response, data } = await requestJson('/sorteio/salvar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          evento_id: eventoId,
+          modalidade_id: modalidadeId,
+          sexo,
+          local_jogos: localJogos,
+          modo,
+          hora_inicio: horaInicio,
+          intervalo_min: intervaloMin,
+          jogos,
+        }),
+      });
+      if (response.status === 401) {
+        setMessage('Sessão expirada. Faça login novamente.', 'error');
+        return;
+      }
+      if (!response.ok || !data?.sucesso) {
+        throw new Error(data?.erro?.mensagem || 'Falha ao salvar sorteio.');
+      }
+
+      const jogosPersistidos = Array.isArray(data?.data?.jogos) ? data.data.jogos : [];
+      state.allRows = jogosPersistidos.map(mapSorteioRow);
+      syncChaveOptions();
+      updateTitle();
+      applyFilter();
+      setMessage('Sorteio salvo com sucesso.', 'success');
+    } catch (err) {
+      setMessage(err.message || 'Falha ao salvar sorteio.', 'error');
+    } finally {
+      setSorteioLoading(false);
+      setButtonLoading(saveBtn, false, 'Salvar sorteio', 'Salvando...');
+    }
+  }
+
+  async function downloadTabela(formato = 'csv') {
+    setMessage('');
+    const eventoId = String(byId('sorteioEvento')?.value || '');
+    const modalidadeId = String(byId('sorteioModalidade')?.value || '');
+    const sexo = String(byId('sorteioSexo')?.value || '');
+    const formatoNorm = String(formato || 'csv').toLowerCase() === 'pdf' ? 'pdf' : 'csv';
+    const extensao = formatoNorm.toUpperCase();
+
+    if (!eventoId || !modalidadeId || !sexo) {
+      setMessage('Selecione evento, modalidade e sexo para baixar a tabela.', 'error');
+      return;
+    }
+
+    const downloadBtn = formatoNorm === 'pdf' ? byId('painelDownloadPdfBtn') : byId('painelDownloadCsvBtn');
+    setButtonLoading(downloadBtn, true, `Baixar ${extensao}`, 'Baixando...');
+    setSorteioLoading(true, `Preparando download ${extensao}...`);
+    try {
+      const response = await fetch(
+        `/sorteio/${encodeURIComponent(eventoId)}/${encodeURIComponent(modalidadeId)}/${encodeURIComponent(sexo)}/download?formato=${encodeURIComponent(formatoNorm)}`,
+        { credentials: 'include' }
+      );
+
+      if (response.status === 401) {
+        setMessage('Sessao expirada. Faca login novamente.', 'error');
+        return;
+      }
+
+      if (!response.ok) {
+        let message = 'Falha ao baixar a tabela.';
+        try {
+          const body = await response.json();
+          message = body?.erro?.mensagem || message;
+        } catch (_) {
+          // ignora parse para respostas nao-json
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const cd = response.headers.get('content-disposition') || '';
+      const filenameMatch = cd.match(/filename="?([^"]+)"?/i);
+      const filename = filenameMatch?.[1] || `tabela_sorteio_${eventoId}_${modalidadeId}_${sexo}.${formatoNorm}`;
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+      setMessage(`Download ${extensao} iniciado.`, 'success');
+    } catch (err) {
+      setMessage(err.message || 'Falha ao baixar a tabela.', 'error');
+    } finally {
+      setSorteioLoading(false);
+      setButtonLoading(downloadBtn, false, `Baixar ${extensao}`, 'Baixando...');
     }
   }
 
@@ -583,6 +797,7 @@
 
     const clearBtn = byId('painelClearBtn');
     setButtonLoading(clearBtn, true, 'Limpar', 'Limpando...');
+    setSorteioLoading(true, 'Limpando sorteio...');
     try {
       const { response, data } = await requestJson('/sorteio/limpar', {
         method: 'DELETE',
@@ -594,7 +809,7 @@
         }),
       });
       if (response.status === 401) {
-        setMessage('Sessao expirada. Faca login novamente.', 'error');
+        setMessage('Sessão expirada. Faça login novamente.', 'error');
         return;
       }
       if (!response.ok || !data?.sucesso) {
@@ -605,13 +820,69 @@
     } catch (err) {
       setMessage(err.message || 'Falha ao limpar sorteio.', 'error');
     } finally {
+      setSorteioLoading(false);
       setButtonLoading(clearBtn, false, 'Limpar', 'Limpando...');
+    }
+  }
+
+  async function gerarMataMata() {
+    setMessage('');
+    const eventoId = String(byId('sorteioEvento')?.value || '');
+    const modalidadeId = String(byId('sorteioModalidade')?.value || '');
+    const sexo = String(byId('sorteioSexo')?.value || '');
+    const localJogos = cleanLabel(byId('sorteioLocal')?.value || '') || 'Quadra A';
+    const horaInicio = String(byId('sorteioHoraInicio')?.value || '07:30');
+
+    if (!eventoId || !modalidadeId || !sexo) {
+      setMessage('Selecione evento, modalidade e sexo para gerar o mata-mata.', 'error');
+      return;
+    }
+
+    const knockoutBtn = byId('painelGenerateKnockoutBtn');
+    setButtonLoading(knockoutBtn, true, 'Gerar mata-mata', 'Gerando...');
+    setSorteioLoading(true, 'Gerando cruzamentos do mata-mata...');
+    try {
+      const { response, data } = await requestJson('/sorteio/mata-mata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          evento_id: eventoId,
+          modalidade_id: modalidadeId,
+          sexo,
+          local_jogos: localJogos,
+          hora_inicio: horaInicio,
+        }),
+      });
+
+      if (response.status === 401) {
+        setMessage('Sessão expirada. Faça login novamente.', 'error');
+        return;
+      }
+      if (!response.ok || !data?.sucesso) {
+        throw new Error(data?.erro?.mensagem || 'Falha ao gerar mata-mata.');
+      }
+
+      const jogos = Array.isArray(data?.data?.jogos) ? data.data.jogos : [];
+      state.allRows = jogos.map(mapSorteioRow);
+      syncChaveOptions();
+      updateTitle();
+      applyFilter();
+      setMessage('Mata-mata gerado com sucesso.', 'success');
+    } catch (err) {
+      setMessage(err.message || 'Falha ao gerar mata-mata.', 'error');
+    } finally {
+      setSorteioLoading(false);
+      setButtonLoading(knockoutBtn, false, 'Gerar mata-mata', 'Gerando...');
     }
   }
 
   function bindEvents() {
     byId('painelLoadBtn')?.addEventListener('click', carregarTabela);
     byId('painelGenerateBtn')?.addEventListener('click', gerarTabela);
+    byId('painelGenerateKnockoutBtn')?.addEventListener('click', gerarMataMata);
+    byId('painelSaveBtn')?.addEventListener('click', salvarTabela);
+    byId('painelDownloadCsvBtn')?.addEventListener('click', () => downloadTabela('csv'));
+    byId('painelDownloadPdfBtn')?.addEventListener('click', () => downloadTabela('pdf'));
     byId('painelApplyTimeBtn')?.addEventListener('click', aplicarHorarios);
     byId('painelClearBtn')?.addEventListener('click', limparSorteio);
     byId('painelRefreshStandingsBtn')?.addEventListener('click', refreshStandings);

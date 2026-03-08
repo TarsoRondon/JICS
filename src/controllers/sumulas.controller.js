@@ -52,6 +52,8 @@ export async function patchSumula(req, res) {
           modalidadeId: meta.modalidade_id,
           sexo: meta.sexo,
           chave: meta.chave,
+          organizationId: meta.organization_id ?? req.organizationId,
+          eventoId: meta.evento_id ?? null,
         })
       : [];
 
@@ -101,13 +103,20 @@ export async function getJogoDetalhesController(req, res) {
 
 export async function getTabela(req, res) {
   const modalidadeId = Number(req.query.modalidade_id || 0);
+  const eventoId = Number(req.query.evento_id || 0) || null;
   const sexo = String(req.query.sexo || '').trim();
   const chave = String(req.query.chave || '').trim();
   if (!modalidadeId || !sexo || !chave) {
     return jsonErro(res, 400, 'Parametros invalidos.');
   }
   try {
-    const standings = await getStandings({ modalidadeId, sexo, chave });
+    const standings = await getStandings({
+      modalidadeId,
+      sexo,
+      chave,
+      organizationId: req.organizationId ?? null,
+      eventoId,
+    });
     return res.json({ ok: true, standings });
   } catch (err) {
     console.error('sumulas.tabela', err);

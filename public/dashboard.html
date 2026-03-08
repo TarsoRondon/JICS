@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -13,9 +13,10 @@
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="/assets/success-feedback.css" />
     <script defer src="/assets/success-feedback.js"></script>
-</head>
 
-<body class="no-drawer" data-page="dashboard" data-theme="light">
+  <link rel="stylesheet" href="/css/dark-theme.css" />
+</head>
+<body class="no-drawer dashboard-v3" data-page="dashboard" data-theme="dark">
     <div id="appShell">
         <nav class="navbar">
             <div class="navbar-left">
@@ -42,58 +43,108 @@
         </nav>
 
         <div class="app-body">
-            <main class="page">
-        <section class="hero dashboard-hero">
-          <div class="hero-layout hero-single">
-            <div class="hero-copy">
-              <div class="hero-badge">JICS - IFRO Esportes</div>
-              <h1 id="heroGreeting">Bem-vindo ao IFRO ESPORTES</h1>
-              <p>Escolha modalidades, acompanhe resultados e mantenha seu perfil atualizado.</p>
-              <div class="hero-actions">
-                <a class="btn-primary user-only" href="modalidades.html">Fazer inscrição</a>
-                <a class="btn-outline" href="modalidades.html">Ver modalidades</a>
-                <a class="btn-ghost" href="noticias.html">Ver notícias</a>
-              </div>
-              <div class="hero-stats">
-                <div class="stat-box">
-                  <div class="stat-number" id="totalModalidades">0</div>
-                  <div class="stat-label">Modalidades</div>
-                </div>
-                <div class="stat-box">
-                  <div class="stat-number" id="totalInscritos">0</div>
-                  <div class="stat-label">Inscrições</div>
-                </div>
-                <div class="stat-box">
-                  <div class="stat-number" id="totalNoticias">0</div>
-                  <div class="stat-label">Notícias</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+            <main class="page dashboard-v3-page">
+                <section class="dashboard-v3-hero card">
+                    <div class="dashboard-v3-hero-copy">
+                        <span class="dashboard-v3-chip">JICS • IFRO ESPORTES</span>
+                        <h1 id="heroGreeting">Bem-vindo ao IFRO ESPORTES</h1>
+                        <p>Acompanhe inscrições, modalidades e notícias em um só painel.</p>
+                        <div class="hero-actions">
+                            <a class="btn-primary user-only" href="modalidades.html">Fazer inscrição</a>
+                            <a class="btn-outline" href="modalidades.html">Ver modalidades</a>
+                            <a class="btn-ghost" href="noticias.html">Ver notícias</a>
+                        </div>
+                    </div>
+                    <div class="dashboard-v3-stats">
+                        <article class="dashboard-v3-stat">
+                            <div class="dashboard-v3-stat-head">
+                                <small>Modalidades</small>
+                                <span class="material-symbols-outlined">sports_soccer</span>
+                            </div>
+                            <strong id="totalModalidades">0</strong>
+                            <p>Ativas no evento</p>
+                        </article>
+                        <article class="dashboard-v3-stat">
+                            <div class="dashboard-v3-stat-head">
+                                <small>Inscrições</small>
+                                <span class="material-symbols-outlined">assignment_turned_in</span>
+                            </div>
+                            <strong id="totalInscritos">0</strong>
+                            <p>Confirmadas por você</p>
+                        </article>
+                        <article class="dashboard-v3-stat">
+                            <div class="dashboard-v3-stat-head">
+                                <small>Notícias</small>
+                                <span class="material-symbols-outlined">campaign</span>
+                            </div>
+                            <strong id="totalNoticias">0</strong>
+                            <p>Comunicados recentes</p>
+                        </article>
+                    </div>
+                </section>
 
-                <div class="dashboard-content dashboard-stack">
-                    <section class="card card-principal card-modalidades">
-                        <div class="page-header">
-                            <div>
-                                <div class="page-title">Modalidades em destaque</div>
-                                <div class="page-subtitle">Veja as atividades disponíveis.</div>
-                            </div>
-                            <a class="btn-link" href="modalidades.html">Ver todas</a>
+                <section class="dashboard-v3-shortcuts cards-grid">
+                    <a class="dashboard-v3-shortcut card" href="modalidades.html">
+                        <span class="material-symbols-outlined">sports_soccer</span>
+                        <div>
+                            <strong>Modalidades</strong>
+                            <p>Veja as atividades disponíveis e faça sua inscrição.</p>
                         </div>
-                        <div id="modalidadesGrid" class="grid-cards"></div>
-                    </section>
-                    <section class="card card-principal card-noticias">
-                        <div class="page-header">
-                            <div>
-                                <div class="page-title">Notícias recentes</div>
-                                <div class="page-subtitle">Avisos e comunicados do evento.</div>
-                            </div>
-                            <a class="btn-link" href="noticias.html">Ver mural</a>
+                    </a>
+                    <a class="dashboard-v3-shortcut card" href="inscricoes.html">
+                        <span class="material-symbols-outlined">assignment</span>
+                        <div>
+                            <strong>Minhas inscrições</strong>
+                            <p>Consulte tudo o que você já confirmou no evento.</p>
                         </div>
-                        <div id="noticiasGrid" class="grid-cards noticias-horizontal"></div>
-                    </section>
-                </div>
+                    </a>
+                    <a class="dashboard-v3-shortcut card" href="resultados.html">
+                        <span class="material-symbols-outlined">leaderboard</span>
+                        <div>
+                            <strong>Resultados</strong>
+                            <p>Acompanhe placares e classificações em tempo real.</p>
+                        </div>
+                    </a>
+                </section>
+
+                <section class="card card-principal">
+                    <div class="page-header">
+                        <div>
+                            <div class="page-title">Próximos jogos</div>
+                            <div class="page-subtitle">Resumo rápido das partidas mais recentes registradas.</div>
+                        </div>
+                        <a class="btn-link" href="resultados.html">Ver resultados</a>
+                    </div>
+                    <div id="dashboardNextGames" class="dashboard-next-list"></div>
+                </section>
+
+                <section class="card card-principal card-modalidades">
+                    <div class="page-header">
+                        <div>
+                            <div class="page-title">Modalidades em destaque</div>
+                            <div class="page-subtitle">Veja as atividades disponíveis para participação.</div>
+                        </div>
+                        <a class="btn-link" href="modalidades.html">Ver todas</a>
+                    </div>
+                    <div id="dashboardModalidadeFilters" class="dashboard-v3-filter-row" role="tablist" aria-label="Filtros de modalidades">
+                        <button class="dashboard-v3-filter active" type="button" role="tab" aria-selected="true" data-mod-filter="todos">Todos</button>
+                        <button class="dashboard-v3-filter" type="button" role="tab" aria-selected="false" data-mod-filter="coletiva">Coletivos</button>
+                        <button class="dashboard-v3-filter" type="button" role="tab" aria-selected="false" data-mod-filter="individual">Individuais</button>
+                        <button class="dashboard-v3-filter" type="button" role="tab" aria-selected="false" data-mod-filter="aberta">Inscrições abertas</button>
+                    </div>
+                    <div id="modalidadesGrid" class="grid-cards"></div>
+                </section>
+
+                <section class="card card-principal card-noticias">
+                    <div class="page-header">
+                        <div>
+                            <div class="page-title">Notícias recentes</div>
+                            <div class="page-subtitle">Avisos e comunicados oficiais do evento.</div>
+                        </div>
+                        <a class="btn-link" href="noticias.html">Ver mural</a>
+                    </div>
+                    <div id="noticiasGrid" class="grid-cards noticias-horizontal"></div>
+                </section>
             </main>
         </div>
     <div id="drawerOverlay" class="overlay"></div>
@@ -103,9 +154,13 @@
   </div>
 
     <script src="js/jsdosistema.js"></script>
-</body>
 
+  <script defer src="/js/global-footer.js"></script>
+</body>
 </html>
+
+
+
 
 
 

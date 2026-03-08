@@ -1,14 +1,22 @@
 import jwt from 'jsonwebtoken';
 
 const ADMIN_COOKIE = process.env.ADMIN_AUTH_COOKIE || 'admin_token';
+let warnedInsecureSecret = false;
 
 function getJwtSecret() {
   const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    // Falha rapida: em producao isso deve ser obrigatorio.
-    return 'dev-insecure-secret-change-me';
+  if (secret) return secret;
+
+  const isProd = (process.env.NODE_ENV || '').toLowerCase() === 'production';
+  if (isProd) {
+    throw new Error('JWT_SECRET ausente em producao.');
   }
-  return secret;
+
+  if (!warnedInsecureSecret) {
+    warnedInsecureSecret = true;
+    console.warn('[auth] JWT_SECRET ausente. Usando chave de desenvolvimento temporaria.');
+  }
+  return 'dev-insecure-secret-change-me';
 }
 
 export function signAdminToken(payload, options = {}) {
@@ -49,4 +57,3 @@ export function setAuthCookie(res, token) {
 export function clearAuthCookie(res) {
   res.clearCookie(ADMIN_COOKIE, { path: '/' });
 }
-

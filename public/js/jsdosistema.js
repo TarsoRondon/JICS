@@ -20,6 +20,10 @@ let adminCache = {
 const ADMIN_SIDEBAR_COLLAPSE_KEY = 'adminSidebarCollapsed';
 let adminSidebarResizeBound = false;
 let adminSidebarStickyObserver = null;
+let dashboardModalidadeFiltroAtivo = 'todos';
+let modalidadeSuggestionsApiReady = false;
+let modalidadeSuggestionsSyncPromise = null;
+let responsiveTableRaf = null;
 
 function getPhotoStorageKey(matricula) {
   const key = String(matricula || '').trim();
@@ -77,6 +81,39 @@ function bindPhoneMasks(root = document) {
   root.querySelectorAll('input').forEach(bindPhoneMaskInput);
 }
 
+function normalizeButtonsType(root = document) {
+  if (!root) return;
+  if (root.matches && root.matches('button:not([type])')) {
+    root.type = 'button';
+  }
+  if (!root.querySelectorAll) return;
+  root.querySelectorAll('button:not([type])').forEach((button) => {
+    button.type = 'button';
+  });
+}
+
+function bindHashActionLinks(root = document) {
+  if (!root) return;
+  const bindOne = (link) => {
+    if (!link || link.dataset.hashBound === '1') return;
+    link.dataset.hashBound = '1';
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+    });
+  };
+
+  if (root.matches && root.matches('a[href="#"]')) {
+    bindOne(root);
+  }
+  if (!root.querySelectorAll) return;
+  root.querySelectorAll('a[href="#"]').forEach(bindOne);
+}
+
+function normalizeInteractiveElements(root = document) {
+  normalizeButtonsType(root);
+  bindHashActionLinks(root);
+}
+
 function renderGridSkeleton(target, count = 3) {
     if (!target) return;
     const cards = Array.from({ length: count }).map(() => `
@@ -111,6 +148,68 @@ function renderTableSkeleton(tbody, rows = 4, cols = 4) {
   tbody.innerHTML = lines;
 }
 
+const localLoaderState = {
+  count: 0,
+  shownAt: 0,
+  timer: null,
+  minDuration: 1200,
+};
+
+function createLocalLoaderFallback() {
+  let loader = document.getElementById('global-loader-fallback');
+  if (loader) return loader;
+  loader = document.createElement('div');
+  loader.id = 'global-loader-fallback';
+  loader.className = 'modal hidden';
+  loader.innerHTML = `
+    <div class="modal-card">
+      <div class="loader-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="loader-texts">
+          <strong>Carregando</strong>
+          <small id="global-loader-fallback-text">Aguarde um instante...</small>
+        </div>
+        <div class="loader-track" aria-hidden="true"><span></span></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(loader);
+  return loader;
+}
+
+function showGlobalLoading(show, message) {
+  const nativeLoader = typeof window.showLoading === 'function' ? window.showLoading : null;
+  if (nativeLoader) {
+    nativeLoader(show, message);
+    return;
+  }
+
+  const loader = createLocalLoaderFallback();
+  const text = document.getElementById('global-loader-fallback-text');
+  if (text) text.textContent = message || 'Aguarde um instante...';
+
+  if (show) {
+    localLoaderState.count += 1;
+    clearTimeout(localLoaderState.timer);
+    localLoaderState.timer = null;
+    if (loader.classList.contains('hidden')) {
+      loader.classList.remove('hidden');
+      localLoaderState.shownAt = Date.now();
+    }
+    return;
+  }
+
+  localLoaderState.count = Math.max(0, localLoaderState.count - 1);
+  if (localLoaderState.count > 0) return;
+
+  const elapsed = Date.now() - localLoaderState.shownAt;
+  const remaining = Math.max(0, localLoaderState.minDuration - elapsed);
+  clearTimeout(localLoaderState.timer);
+  localLoaderState.timer = setTimeout(() => {
+    loader.classList.add('hidden');
+    localLoaderState.timer = null;
+  }, remaining);
+}
 function sanitizeFilename(value, fallback = 'arquivo') {
   const raw = String(value || fallback || 'arquivo');
   const cleaned = raw
@@ -154,6 +253,87 @@ function setSelectOptions(select, values, placeholder) {
     select.innerHTML = `<option value="">${placeholder}</option>` + unique.map(val => `<option value="${val}">${val}</option>`).join('');
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeDisplayText(value, fallback = '-') {
+  if (value === undefined || value === null) return fallback;
+  const raw = String(value).trim();
+  if (!raw) return fallback;
+  if (!/[\u00C3\u00C2\u00E2\uFFFD]/.test(raw)) return raw;
+  try {
+    return decodeURIComponent(escape(raw));
+  } catch (_) {
+    return raw;
+  }
+}
+
+function normalizeLookupValue(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function truncateText(value, max = 140) {
+  const text = normalizeDisplayText(value, '').replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+  if (text.length <= max) return text;
+  return `${text.slice(0, max).trimEnd()}...`;
+}
+
+function resolveModalidadeMeta(nome) {
+  const normalized = normalizeLookupValue(nome);
+  const rules = [
+    { keys: ['futebol', 'futsal'], icon: 'sports_soccer', category: 'coletiva' },
+    { keys: ['basquete', 'basket'], icon: 'sports_basketball', category: 'coletiva' },
+    { keys: ['volei', 'volei de praia', 'volley'], icon: 'sports_volleyball', category: 'coletiva' },
+    { keys: ['handebol'], icon: 'sports_handball', category: 'coletiva' },
+    { keys: ['tenis', 'tenis de mesa'], icon: 'sports_tennis', category: 'individual' },
+    { keys: ['atletismo', 'corrida', 'caminhada'], icon: 'directions_run', category: 'individual' },
+    { keys: ['natacao'], icon: 'pool', category: 'individual' },
+    { keys: ['xadrez'], icon: 'chess', category: 'individual' },
+    { keys: ['judo', 'karate', 'jiu', 'capoeira', 'taekwondo'], icon: 'sports_kabaddi', category: 'individual' },
+    { keys: ['academia', 'musculacao', 'fitness'], icon: 'fitness_center', category: 'individual' },
+  ];
+  for (const rule of rules) {
+    if (rule.keys.some((k) => normalized.includes(k))) {
+      return rule;
+    }
+  }
+  return { icon: 'sports', category: 'coletiva' };
+}
+
+function bindDashboardModalidadeFilters() {
+  const root = document.getElementById('dashboardModalidadeFilters');
+  if (!root) return;
+  const syncActive = () => {
+    root.querySelectorAll('[data-mod-filter]').forEach((btn) => {
+      const isActive = btn.dataset.modFilter === dashboardModalidadeFiltroAtivo;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  };
+  if (root.dataset.bound !== '1') {
+    root.dataset.bound = '1';
+    root.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-mod-filter]');
+      if (!btn) return;
+      dashboardModalidadeFiltroAtivo = btn.dataset.modFilter || 'todos';
+      syncActive();
+      renderModalities();
+    });
+  }
+  syncActive();
+}
+
 function getModalidadeIdSelecionada() {
     const select = document.getElementById('sorteioModalidade');
     if (!select || !select.value) return null;
@@ -188,6 +368,80 @@ function isStaffUser() {
     return role === 'ADMIN' || role === 'PROFESSOR';
 }
 
+function shouldUseV0ResponsiveShell(page) {
+    const pages = new Set(['admin', 'admin-cadastro', 'dashboard', 'modalidades', 'horarios', 'inscricoes', 'noticias', 'perfil', 'conta', 'resultados']);
+    return pages.has(String(page || '').toLowerCase());
+}
+
+function ensureNavHamburgerButton() {
+    const navbarLeft = document.querySelector('.navbar-left');
+    if (!navbarLeft) return;
+    if (navbarLeft.querySelector('.nav-hamburger')) return;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'icon-btn nav-hamburger';
+    button.setAttribute('aria-label', 'Abrir menu');
+    button.innerHTML = '<span class="material-symbols-outlined">menu</span>';
+    button.addEventListener('click', toggleSideNav);
+
+    const brand = navbarLeft.querySelector('.navbar-brand');
+    if (brand) {
+        navbarLeft.insertBefore(button, brand);
+        return;
+    }
+    navbarLeft.prepend(button);
+}
+
+function buildDefaultSideNavMarkup() {
+    return `
+      <div class="side-header">
+        <span class="side-header-title">Menu</span>
+      </div>
+      <a class="side-link" href="dashboard.html">Inicio</a>
+      <a class="side-link user-only" href="inscricoes.html">Inscricoes</a>
+      <a class="side-link user-only" href="modalidades.html">Modalidades</a>
+      <a class="side-link" href="horarios.html">Horarios</a>
+      <a class="side-link" href="noticias.html">Noticias</a>
+      <a class="side-link" href="resultados.html">Resultados</a>
+      <a class="side-link" href="perfil.html">Perfil</a>
+      <a class="side-link staff-only" href="admin.html">Administracao</a>
+    `;
+}
+
+function ensureV0ShellScaffold(page) {
+    const shell = document.getElementById('appShell');
+    const appBody = shell?.querySelector('.app-body');
+    if (!shell || !appBody) return;
+    if (!shouldUseV0ResponsiveShell(page)) return;
+
+    let sideNav = document.getElementById('sideNav');
+    if (!sideNav) {
+        sideNav = document.createElement('aside');
+        sideNav.id = 'sideNav';
+        sideNav.className = 'side-drawer';
+        sideNav.innerHTML = buildDefaultSideNavMarkup();
+        appBody.insertBefore(sideNav, appBody.firstChild);
+    }
+
+    if (sideNav) {
+        document.body.classList.remove('no-drawer');
+        ensureNavHamburgerButton();
+    }
+
+    if (sideNav && !document.getElementById('sideOverlay')) {
+        const sideOverlay = document.createElement('div');
+        sideOverlay.id = 'sideOverlay';
+        sideOverlay.className = 'overlay';
+        const drawerOverlay = document.getElementById('drawerOverlay');
+        if (drawerOverlay && drawerOverlay.parentElement === shell) {
+            shell.insertBefore(sideOverlay, drawerOverlay);
+        } else {
+            shell.appendChild(sideOverlay);
+        }
+    }
+}
+
 function ensureSideNavLinks() {
     const sideNav = document.getElementById('sideNav');
     if (!sideNav) return;
@@ -202,8 +456,8 @@ function ensureSideNavLinks() {
         sideNav.appendChild(link);
     };
 
-    addLink('inscricoes.html', 'Minhas inscricoes', 'user-only');
-    addLink('admin.html', 'Administracao', 'staff-only');
+    addLink('inscricoes.html', 'Minhas inscrições', 'user-only');
+    addLink('admin.html', 'Administração', 'staff-only');
 
     sideNav.querySelectorAll('.side-link').forEach((link) => {
         const href = link.getAttribute('href') || '';
@@ -213,6 +467,73 @@ function ensureSideNavLinks() {
         if (href.includes('admin.html')) {
             link.classList.add('staff-only');
         }
+    });
+
+    const currentFile = String(location.pathname.split('/').pop() || 'dashboard.html').toLowerCase();
+    sideNav.querySelectorAll('a.side-link[href]').forEach((link) => {
+        const href = String(link.getAttribute('href') || '').toLowerCase();
+        link.classList.toggle('active', href === currentFile);
+    });
+}
+
+function normalizeLabelKey(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
+function resolveSideLinkIcon(link, label) {
+    const href = normalizeLabelKey(link?.getAttribute('href') || '');
+    const tab = normalizeLabelKey(link?.dataset?.tab || '');
+    const key = `${href} ${tab} ${normalizeLabelKey(label)}`;
+
+    if (key.includes('dashboard') || key.includes('inicio') || key.includes('visao geral')) return 'home';
+    if (key.includes('modalidade')) return 'sports_soccer';
+    if (key.includes('inscric')) return 'assignment';
+    if (key.includes('noticia')) return 'campaign';
+    if (key.includes('resultado') || key.includes('ranking')) return 'leaderboard';
+    if (key.includes('horario')) return 'schedule';
+    if (key.includes('perfil') || key.includes('aluno')) return 'person';
+    if (key.includes('sorteio')) return 'shuffle';
+    if (key.includes('sumula')) return 'fact_check';
+    if (key.includes('usuario')) return 'group';
+    if (key.includes('evento')) return 'event';
+    if (key.includes('organizad')) return 'badge';
+    if (key.includes('admin')) return 'admin_panel_settings';
+    if (key.includes('grafico')) return 'monitoring';
+    if (key.includes('log')) return 'receipt_long';
+    if (key.includes('conta')) return 'settings';
+    return 'chevron_right';
+}
+
+function enhanceSideNavIcons() {
+    const sideNav = document.getElementById('sideNav');
+    if (!sideNav) return;
+
+    sideNav.querySelectorAll('a.side-link').forEach((link) => {
+        if (link.dataset.iconReady === '1') return;
+
+        const label = String(link.textContent || '').trim() ||
+            String(link.getAttribute('aria-label') || '').trim() ||
+            'Link';
+        const iconName = resolveSideLinkIcon(link, label);
+
+        link.dataset.iconReady = '1';
+        link.textContent = '';
+
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-outlined side-link-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = iconName;
+
+        const text = document.createElement('span');
+        text.className = 'side-link-text';
+        text.textContent = label;
+
+        link.append(icon, text);
+        link.setAttribute('aria-label', label);
+        link.setAttribute('title', label);
     });
 }
 
@@ -241,6 +562,269 @@ function ensureSiteFooter() {
     shell.appendChild(footer);
 }
 
+function isTabletLandscapePinnedDrawerMode() {
+    return window.matchMedia('(min-width: 768px) and (max-width: 1024px) and (orientation: landscape)').matches;
+}
+
+function isSideDrawerOverlayMode() {
+    return !isDesktopSidebarViewport() && !isTabletLandscapePinnedDrawerMode();
+}
+
+function isUserDrawerOverlayMode() {
+    return window.matchMedia('(max-width: 1024px)').matches;
+}
+
+function closeSideNav() {
+    const nav = document.getElementById('sideNav');
+    const overlay = document.getElementById('sideOverlay');
+    if (nav) nav.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.classList.remove('side-drawer-open');
+}
+
+function closeUserDrawer() {
+    const drawer = document.getElementById('userDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (drawer) drawer.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.classList.remove('user-drawer-open');
+}
+
+function setSideNavState(open) {
+    const nav = document.getElementById('sideNav');
+    const overlay = document.getElementById('sideOverlay');
+    if (!nav) return;
+    const shouldOpen = Boolean(open) && isSideDrawerOverlayMode();
+    nav.classList.toggle('open', shouldOpen);
+    if (overlay) overlay.classList.toggle('active', shouldOpen);
+    document.body.classList.toggle('side-drawer-open', shouldOpen);
+}
+
+function setUserDrawerState(open) {
+    const drawer = document.getElementById('userDrawer');
+    const overlay = document.getElementById('drawerOverlay');
+    if (!drawer) return;
+    const shouldOpen = Boolean(open);
+    drawer.classList.toggle('open', shouldOpen);
+    document.body.classList.toggle('user-drawer-open', shouldOpen);
+    if (overlay) {
+        const shouldOverlay = shouldOpen && isUserDrawerOverlayMode();
+        overlay.classList.toggle('active', shouldOverlay);
+    }
+}
+
+function syncResponsiveLayoutMode() {
+    const body = document.body;
+    if (!body) return;
+    body.classList.toggle('side-drawer-overlay-mode', isSideDrawerOverlayMode());
+    body.classList.toggle('user-drawer-overlay-mode', isUserDrawerOverlayMode());
+    body.classList.toggle('tablet-mini-nav-mode', isTabletLandscapePinnedDrawerMode());
+
+    if (!isSideDrawerOverlayMode()) {
+        closeSideNav();
+    }
+    if (!isUserDrawerOverlayMode()) {
+        const overlay = document.getElementById('drawerOverlay');
+        if (overlay) overlay.classList.remove('active');
+    }
+}
+
+function bindDrawerGestures() {
+    const bindSwipe = (element, direction, onSwipe) => {
+        if (!element || element.dataset.swipeBound === '1') return;
+        element.dataset.swipeBound = '1';
+
+        let startX = 0;
+        let startY = 0;
+        let tracking = false;
+
+        element.addEventListener('touchstart', (event) => {
+            if (!event.touches || event.touches.length !== 1) return;
+            const touch = event.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            tracking = true;
+        }, { passive: true });
+
+        element.addEventListener('touchmove', (event) => {
+            if (!tracking || !event.touches || event.touches.length !== 1) return;
+            const touch = event.touches[0];
+            const dx = touch.clientX - startX;
+            const dy = touch.clientY - startY;
+            if (Math.abs(dx) < Math.abs(dy)) return;
+
+            if (direction === 'left' && dx <= -70) {
+                tracking = false;
+                onSwipe();
+            }
+            if (direction === 'right' && dx >= 70) {
+                tracking = false;
+                onSwipe();
+            }
+        }, { passive: true });
+
+        element.addEventListener('touchend', () => {
+            tracking = false;
+        }, { passive: true });
+    };
+
+    bindSwipe(document.getElementById('sideNav'), 'left', closeSideNav);
+    bindSwipe(document.getElementById('userDrawer'), 'right', closeUserDrawer);
+}
+
+function bindEdgeSwipeOpen() {
+    if (document.body.dataset.edgeSwipeBound === '1') return;
+    document.body.dataset.edgeSwipeBound = '1';
+
+    let edge = null;
+    let startX = 0;
+    let startY = 0;
+
+    document.addEventListener('touchstart', (event) => {
+        if (!event.touches || event.touches.length !== 1) return;
+        const touch = event.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        edge = null;
+
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+        if (startX <= 24) edge = 'left';
+        if (startX >= viewportWidth - 24) edge = 'right';
+    }, { passive: true });
+
+    document.addEventListener('touchend', (event) => {
+        if (!edge || !event.changedTouches || event.changedTouches.length !== 1) {
+            edge = null;
+            return;
+        }
+
+        const touch = event.changedTouches[0];
+        const dx = touch.clientX - startX;
+        const dy = touch.clientY - startY;
+        if (Math.abs(dy) > Math.abs(dx) || Math.abs(dx) < 72) {
+            edge = null;
+            return;
+        }
+
+        if (edge === 'left' && dx > 0 && isSideDrawerOverlayMode()) {
+            setSideNavState(true);
+            closeUserDrawer();
+        }
+
+        if (edge === 'right' && dx < 0 && isUserDrawerOverlayMode()) {
+            setUserDrawerState(true);
+            if (isSideDrawerOverlayMode()) closeSideNav();
+        }
+
+        edge = null;
+    }, { passive: true });
+}
+
+function attachDrawerShortcuts() {
+    if (document.body.dataset.drawerShortcutBound === '1') return;
+    document.body.dataset.drawerShortcutBound = '1';
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        closeSideNav();
+        closeUserDrawer();
+        closeAdminMenu();
+    });
+}
+
+function shouldRenderMobileBottomNav(page) {
+    if (!currentUser) return false;
+    if (!page) return false;
+    if (document.body.classList.contains('admin-ui')) return false;
+    const blocked = new Set([
+        'admin',
+        'painel-sorteio',
+        'sumula',
+        'sumula-mobile',
+        'sorteios-salvos',
+        'login',
+        'solicitar-otp',
+        'validar-otp',
+        'redefinir-senha',
+        'recuperar-matricula',
+        'recuperacao',
+        'gov-callback'
+    ]);
+    return !blocked.has(page);
+}
+
+function renderMobileBottomNav(page) {
+    const existing = document.getElementById('mobileBottomNav');
+    if (existing) existing.remove();
+
+    if (!shouldRenderMobileBottomNav(page)) {
+        document.body.classList.remove('with-mobile-nav');
+        return;
+    }
+
+    const items = [
+        { href: 'dashboard.html', key: 'dashboard', label: 'Inicio', icon: 'home' },
+        { href: 'modalidades.html', key: 'modalidades', label: 'Modalidades', icon: 'sports_soccer' },
+        { href: 'inscricoes.html', key: 'inscricoes', label: 'Inscricoes', icon: 'assignment' },
+        { href: 'noticias.html', key: 'noticias', label: 'Noticias', icon: 'campaign' },
+        { href: 'perfil.html', key: 'perfil', label: 'Perfil', icon: 'person' }
+    ];
+
+    const nav = document.createElement('nav');
+    nav.id = 'mobileBottomNav';
+    nav.className = 'mobile-bottom-nav';
+    nav.setAttribute('aria-label', 'Navegacao principal mobile');
+    nav.innerHTML = items.map((item) => `
+      <a href="${item.href}" class="mobile-bottom-link ${page === item.key ? 'active' : ''}">
+        <span class="material-symbols-outlined" aria-hidden="true">${item.icon}</span>
+        <span>${item.label}</span>
+      </a>
+    `).join('');
+
+    const shell = document.getElementById('appShell') || document.body;
+    shell.appendChild(nav);
+    document.body.classList.add('with-mobile-nav');
+}
+
+function enhanceTableForMobileCards(table) {
+    if (!table || table.dataset.noMobileCards === '1') return;
+    if (!table.classList.contains('table')) return;
+
+    const headers = Array.from(table.querySelectorAll('thead th'))
+        .map((th) => String(th.textContent || '').trim())
+        .filter(Boolean);
+    if (!headers.length) return;
+
+    table.classList.add('table-mobile-cards');
+    table.querySelectorAll('tbody tr').forEach((row) => {
+        row.querySelectorAll('td').forEach((cell, index) => {
+            if (cell.hasAttribute('colspan')) {
+                cell.removeAttribute('data-label');
+                return;
+            }
+            const label = headers[index] || `Coluna ${index + 1}`;
+            cell.setAttribute('data-label', label);
+        });
+    });
+}
+
+function applyResponsiveTableCards(root = document) {
+    if (!root) return;
+    const tables = [];
+    if (root.matches && root.matches('table.table')) tables.push(root);
+    if (root.querySelectorAll) {
+        root.querySelectorAll('table.table').forEach((table) => tables.push(table));
+    }
+    tables.forEach(enhanceTableForMobileCards);
+}
+
+function scheduleResponsiveTableCards() {
+    if (responsiveTableRaf) cancelAnimationFrame(responsiveTableRaf);
+    responsiveTableRaf = requestAnimationFrame(() => {
+        responsiveTableRaf = null;
+        applyResponsiveTableCards(document);
+    });
+}
+
 function applyRoleVisibility() {
     document.querySelectorAll('.admin-only').forEach(el => {
         el.classList.toggle('hidden', !isAdminUser());
@@ -254,7 +838,15 @@ function applyRoleVisibility() {
 
     if (!document.body.classList.contains('admin-ui')) {
         document.querySelectorAll('a[href="admin.html"]').forEach((link) => {
-            link.textContent = 'Administracao';
+            const label = 'Administração';
+            const textNode = link.querySelector('.side-link-text');
+            if (textNode) {
+                textNode.textContent = label;
+                link.setAttribute('aria-label', label);
+                link.setAttribute('title', label);
+                return;
+            }
+            link.textContent = label;
         });
     }
 }
@@ -277,29 +869,29 @@ const tourState = {
 
 const tourSteps = {
     inscricao: [
-        { selector: '.nav-hamburger', title: 'Menu rÃ¡pido', text: 'Use o menu lateral para navegar pelas pÃ¡ginas.' },
-        { selector: '.hero-actions .btn-primary', title: 'InscriÃ§Ã£o', text: 'Clique aqui para ir para a pÃ¡gina de modalidades.', page: 'modalidades.html' },
-        { selector: '#allModalidadesGrid', title: 'Modalidades', text: 'Escolha uma modalidade e confirme a inscriÃ§Ã£o.' },
+        { selector: '.nav-hamburger', title: 'Menu rápido', text: 'Use o menu lateral para navegar pelas páginas.' },
+        { selector: '.hero-actions .btn-primary', title: 'Inscrição', text: 'Clique aqui para ir para a página de modalidades.', page: 'modalidades.html' },
+        { selector: '#allModalidadesGrid', title: 'Modalidades', text: 'Escolha uma modalidade e confirme a inscrição.' },
     ],
     senha: [
-        { selector: '.user-trigger', title: 'Menu do usuÃ¡rio', text: 'Clique no avatar para abrir o menu.' },
+        { selector: '.user-trigger', title: 'Menu do usuário', text: 'Clique no avatar para abrir o menu.' },
         { selector: '.drawer-btn', title: 'Perfil', text: 'Acesse o perfil para alterar a senha.', page: 'perfil.html' },
         { selector: '.profile-card .btn-primary', title: 'Alterar senha', text: 'Clique para abrir o modal de troca de senha.' },
     ],
     foto: [
-        { selector: '.user-trigger', title: 'Menu do usuÃ¡rio', text: 'Abra o menu lateral do usuÃ¡rio.' },
+        { selector: '.user-trigger', title: 'Menu do usuário', text: 'Abra o menu lateral do usuário.' },
         { selector: '.drawer-sub-btn', title: 'Alterar foto', text: 'Clique em "Alterar foto" para abrir o modal.' },
-        { selector: '#photoInput', title: 'PrÃ©via', text: 'Envie a foto e ajuste com zoom e posiÃ§Ã£o.' },
+        { selector: '#photoInput', title: 'Prévia', text: 'Envie a foto e ajuste com zoom e posição.' },
     ],
     resultados: [
-        { selector: '.drawer-btn', title: 'Resultados', text: 'Acesse a pÃ¡gina de resultados pelo menu.', page: 'resultados.html' },
+        { selector: '.drawer-btn', title: 'Resultados', text: 'Acesse a página de resultados pelo menu.', page: 'resultados.html' },
         { selector: '.filter-bar', title: 'Filtros', text: 'Use filtros e busca para localizar partidas.' },
         { selector: '.btn-outline', title: 'Baixar CSV', text: 'Clique aqui para baixar os resultados.' },
     ],
     completo: [
-        { selector: '.navbar-brand', title: 'Topo rÃ¡pido', text: 'Clique no IFRO ESPORTES para voltar ao topo.' },
-        { selector: '.hero-actions .btn-primary', title: 'InscriÃ§Ãµes', text: 'Comece pelas modalidades.', page: 'modalidades.html' },
-        { selector: '.cards-grid', title: 'Modalidades', text: 'Confira as modalidades disponÃ­veis.' },
+        { selector: '.navbar-brand', title: 'Topo rápido', text: 'Clique no IFRO ESPORTES para voltar ao topo.' },
+        { selector: '.hero-actions .btn-primary', title: 'Inscrições', text: 'Comece pelas modalidades.', page: 'modalidades.html' },
+        { selector: '.cards-grid', title: 'Modalidades', text: 'Confira as modalidades disponíveis.' },
         { selector: '.drawer-btn', title: 'Resultados', text: 'Acesse os resultados no menu.', page: 'resultados.html' },
     ],
 };
@@ -329,7 +921,7 @@ async function ensureUserFromApi() {
         applyStoredPhoto(currentUser);
         sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
     } catch (_) {
-        // silencioso para nÃ£o quebrar UX se offline
+        // silencioso para não quebrar UX se offline
     }
 }
 
@@ -402,10 +994,10 @@ function scrollToTop() {
 
 function toggleSideNav() {
     const nav = document.getElementById('sideNav');
-    const overlay = document.getElementById('sideOverlay');
-    if (!nav || !overlay) return;
-    nav.classList.toggle('open');
-    overlay.classList.toggle('active');
+    if (!nav) return;
+    const willOpen = !document.body.classList.contains('side-drawer-open');
+    setSideNavState(willOpen);
+    if (willOpen) closeUserDrawer();
     closeAdminMenu();
 }
 
@@ -482,30 +1074,26 @@ function initSidebarCollapse() {
 
 function toggleUserDrawer() {
     const drawer = document.getElementById('userDrawer');
-    const overlay = document.getElementById('drawerOverlay');
-    if (!drawer || !overlay) return;
-    drawer.classList.toggle('open');
-    overlay.classList.toggle('active');
+    if (!drawer) return;
+    const willOpen = !document.body.classList.contains('user-drawer-open');
+    setUserDrawerState(willOpen);
+    if (willOpen) closeSideNav();
 }
 
 function bindDrawerOverlays() {
     const sideOverlay = document.getElementById('sideOverlay');
-    const sideNav = document.getElementById('sideNav');
-    if (sideOverlay && sideNav && sideOverlay.dataset.bound !== '1') {
+    if (sideOverlay && sideOverlay.dataset.bound !== '1') {
         sideOverlay.dataset.bound = '1';
         sideOverlay.addEventListener('click', () => {
-            sideNav.classList.remove('open');
-            sideOverlay.classList.remove('active');
+            closeSideNav();
         });
     }
 
     const drawerOverlay = document.getElementById('drawerOverlay');
-    const drawer = document.getElementById('userDrawer');
-    if (drawerOverlay && drawer && drawerOverlay.dataset.bound !== '1') {
+    if (drawerOverlay && drawerOverlay.dataset.bound !== '1') {
         drawerOverlay.dataset.bound = '1';
         drawerOverlay.addEventListener('click', () => {
-            drawer.classList.remove('open');
-            drawerOverlay.classList.remove('active');
+            closeUserDrawer();
         });
     }
 }
@@ -532,6 +1120,57 @@ function toggleHelpPanel() {
     closeAdminMenu();
 }
 
+function collectModalidadeNames(list = []) {
+  return Array.from(new Set(
+    (list || [])
+      .map((item) => {
+        if (typeof item === 'string') return item.trim();
+        return String(item?.nome || item?.titulo || '').trim();
+      })
+      .filter(Boolean)
+  )).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+}
+
+function renderModNomeSuggestions(names = []) {
+  const datalist = document.getElementById('modNomeSuggestions');
+  if (!datalist) return;
+  datalist.innerHTML = names.map((name) => `<option value="${escapeHtml(name)}"></option>`).join('');
+}
+
+function refreshModNomeSuggestionsFromCache() {
+  const names = collectModalidadeNames(adminCache.modalidades || []);
+  if (!names.length) return;
+  renderModNomeSuggestions(names);
+}
+
+async function refreshModNomeSuggestionsFromApi(force = false) {
+  const datalist = document.getElementById('modNomeSuggestions');
+  if (!datalist) return;
+  if (modalidadeSuggestionsApiReady && !force) return;
+  if (modalidadeSuggestionsSyncPromise) return modalidadeSuggestionsSyncPromise;
+
+  modalidadeSuggestionsSyncPromise = (async() => {
+    try {
+      let response = await fetch('/api/modalidades', { credentials: 'include' });
+      if (!response.ok) {
+        response = await fetch('/modalidades', { credentials: 'include' });
+      }
+      if (!response.ok) return;
+      const rows = await response.json();
+      const names = collectModalidadeNames(rows);
+      if (!names.length) return;
+      renderModNomeSuggestions(names);
+      modalidadeSuggestionsApiReady = true;
+    } catch (_) {
+      // fallback silencioso para não bloquear o fluxo do admin
+    } finally {
+      modalidadeSuggestionsSyncPromise = null;
+    }
+  })();
+
+  return modalidadeSuggestionsSyncPromise;
+}
+
 // ---------- Admin helper: fill selects ----------
 function preencherSelectsAdmin() {
   // Modalidades em filtros e sorteio
@@ -541,6 +1180,8 @@ function preencherSelectsAdmin() {
   setSelectOptions(document.getElementById('filtInscCampus'), adminCache.inscricoes.map(i => i.campus).filter(Boolean), 'Campus');
   setSelectOptions(document.getElementById('sorteioModalidade'), modOpts, 'Modalidade');
   setSelectOptions(document.getElementById('sumulaJogo'), (adminCache.jogos||[]).map(j => j.jogo || j.numero_jogo).filter(Boolean), 'Selecione o jogo');
+  refreshModNomeSuggestionsFromCache();
+  void refreshModNomeSuggestionsFromApi();
 }
 
 function toggleAdminMenu(evt) {
@@ -572,7 +1213,7 @@ function setupPasswordRecoveryModal() {
 function openPasswordRecoveryModal(targetUrl) {
     const modal = document.getElementById('passwordRecoveryModal');
     if (!modal) {
-        location.href = targetUrl || 'solicitar-otp.html';
+        location.href = targetUrl || '/solicitar-otp.html';
         return;
     }
     const card = modal.querySelector('.password-recovery-card');
@@ -582,7 +1223,7 @@ function openPasswordRecoveryModal(targetUrl) {
         card.classList.toggle('compact', !!isCompact);
     }
     const frame = document.getElementById('passwordRecoveryFrame');
-    if (frame) frame.src = targetUrl || 'solicitar-otp.html';
+    if (frame) frame.src = targetUrl || '/solicitar-otp.html';
     modal.classList.remove('hidden');
 }
 
@@ -591,7 +1232,7 @@ function closePasswordRecoveryModal() {
     if (!modal) return;
     modal.classList.add('hidden');
     const frame = document.getElementById('passwordRecoveryFrame');
-    if (frame) frame.src = 'solicitar-otp.html';
+    if (frame) frame.src = '/solicitar-otp.html';
 }
 
 function attachPasswordRecoveryLinks() {
@@ -608,7 +1249,7 @@ function attachPasswordRecoveryLinks() {
 function renderDrawer() {
     const drawer = document.getElementById('userDrawer');
     if (!drawer) return;
-    const adminLabel = 'Administracao';
+    const adminLabel = 'Administração';
     const modalidadesGroup = isStaffUser() ?
         '' :
         `
@@ -617,7 +1258,7 @@ function renderDrawer() {
         <span class="material-symbols-outlined">expand_more</span>
       </button>
       <div id="drawerModalidades" class="drawer-sub">
-        <button class="drawer-sub-btn" onclick="openMinhasInscricoes()">Minhas inscricoes</button>
+        <button class="drawer-sub-btn" onclick="openMinhasInscricoes()">Minhas inscrições</button>
         <button class="drawer-sub-btn" onclick="location.href='modalidades.html'">Ver modalidades</button>
       </div>
     `;
@@ -631,32 +1272,32 @@ function renderDrawer() {
       <div class="drawer-user">
         <img id="drawerAvatar" class="drawer-avatar" src="${currentUser?.foto || '/assets/avatar-default.png'}" alt="Avatar" onerror="this.src='/assets/avatar-default.png'" />
         <div>
-          <p id="drawerUserName">${currentUser?.nome || 'Usuario'}</p>
+          <p id="drawerUserName">${currentUser?.nome || 'Usuário'}</p>
           <small id="drawerUserMatricula">${currentUser?.matricula || ''}</small>
         </div>
       </div>
     </div>
     <div class="drawer-section">
       <div class="drawer-group-title">Menu</div>
-      <button class="drawer-btn" onclick="location.href='dashboard.html'">Inicio</button>
+      <button class="drawer-btn" onclick="location.href='dashboard.html'">Início</button>
       <button class="drawer-btn" onclick="location.href='perfil.html'">Perfil</button>
       ${modalidadesGroup}
-      <button class="drawer-btn" onclick="location.href='noticias.html'">Noticias</button>
-      <button class="drawer-btn" onclick="location.href='horarios.html'">Horarios</button>
+      <button class="drawer-btn" onclick="location.href='noticias.html'">Notícias</button>
+      <button class="drawer-btn" onclick="location.href='horarios.html'">Horários</button>
       <button class="drawer-btn" onclick="location.href='resultados.html'">Resultados</button>
       ${isStaffUser() ? `<button class="drawer-btn" onclick="location.href='admin.html'">${adminLabel}</button>` : ''}
-      ${isAdminUser() ? `<button class="drawer-btn" onclick="location.href='http://localhost:3005/sumula.html'">Sumula</button>` : ''}
+      ${isAdminUser() ? `<button class="drawer-btn" onclick="location.href='/sumula.html'">Súmula</button>` : ''}
     </div>
     <div class="drawer-footer">
-      <div class="drawer-group-title">Configuracoes</div>
+      <div class="drawer-group-title">Configurações</div>
       <button class="drawer-btn drawer-toggle" onclick="toggleDrawerGroup('drawerConfig', this)">
-        Configuracoes
+        Configurações
         <span class="material-symbols-outlined">expand_more</span>
       </button>
       <div id="drawerConfig" class="drawer-sub">
         <button class="drawer-sub-btn" onclick="openPhotoModal()">Alterar foto</button>
         <a class="drawer-sub-btn" href="recuperacao.html#reset">Recuperar senha</a>
-        <a class="drawer-sub-btn" href="recuperar-matricula.html">Recuperar matricula</a>
+        <a class="drawer-sub-btn" href="recuperar-matricula.html">Recuperar matrícula</a>
         <button class="drawer-sub-btn" onclick="editarSenha()">Alterar senha</button>
         <a class="drawer-sub-btn" href="conta.html">Alterar telefone</a>
         <button class="drawer-sub-btn" onclick="toggleHelpPanel()">FAQ / Ajuda</button>
@@ -731,7 +1372,7 @@ function entrarGovBr() {
     .then(res => res.json())
     .then(data => {
       if (!data.ok || !data.url) {
-        mostrarToastAtencao(data.message || 'Gov.br indisponÃ­vel.');
+        mostrarToastAtencao(data.message || 'Gov.br indisponível.');
         return;
       }
       window.location.href = data.url;
@@ -772,7 +1413,7 @@ function handleLogin(event) {
   if (!usuario || !senha) {
     if (!usuario) setFieldState(usuarioInput, 'error');
     if (!senha) setFieldState(senhaInput, 'error');
-    setError('Preencha matricula e senha.');
+    setError('Preencha matrícula e senha.');
     return;
   }
 
@@ -792,7 +1433,7 @@ function handleLogin(event) {
     .then(data => {
       if (!data.sucesso) {
         const motivo = data.motivo || ''; 
-        const msg = motivo === 'matricula' ? 'MatrÃ­cula invÃ¡lida.' : 'Senha incorreta.';
+        const msg = motivo === 'matricula' ? 'Matrícula inválida.' : 'Senha incorreta.';
         showToastErro(msg);
         if (motivo === 'matricula') setFieldState(usuarioInput, 'error');
         else {
@@ -859,9 +1500,10 @@ function logout() {
 }
 
 function carregarNoticias() {
+  showGlobalLoading(true, 'Carregando notícias...');
   renderGridSkeleton(document.getElementById('noticiasGrid'), 3);
   renderGridSkeleton(document.getElementById('allNoticiasGrid'), 6);
-  fetch('/noticias')
+  return fetch('/noticias')
     .then(res => res.json())
     .then(dados => {
       noticias = dados;
@@ -869,29 +1511,34 @@ function carregarNoticias() {
       atualizarDashboard();
     })
     .catch(() => {
-      renderEmptyState(document.getElementById('noticiasGrid'), 'Sem notÃ­cias', 'Nenhuma notÃ­cia foi carregada.');
-      renderEmptyState(document.getElementById('allNoticiasGrid'), 'Sem notÃ­cias', 'Nenhuma notÃ­cia foi carregada.');
-      showToastErro('NÃ£o foi possÃ­vel carregar as notÃ­cias.');
+      renderEmptyState(document.getElementById('noticiasGrid'), 'Sem notícias', 'Nenhuma notícia foi carregada.');
+      renderEmptyState(document.getElementById('allNoticiasGrid'), 'Sem notícias', 'Nenhuma notícia foi carregada.');
+      showToastErro('Não foi possível carregar as notícias.');
+    })
+    .finally(() => {
+      showGlobalLoading(false);
     });
 }
-
 function carregarModalidades() {
+  showGlobalLoading(true, 'Carregando modalidades...');
   renderGridSkeleton(document.getElementById('modalidadesGrid'), 3);
   renderGridSkeleton(document.getElementById('allModalidadesGrid'), 6);
   renderTableSkeleton(document.getElementById('tabelaHorarios'), 4, 4);
   renderTableSkeleton(document.getElementById('adminModalidadesTable'), 4, 5);
-  fetch('/modalidades')
+  return fetch('/modalidades')
     .then(res => res.json())
     .then(dados => {
       modalidades = dados.map(m => ({
         id: m.id,
-        nome: m.titulo,
+        nome: m.titulo || m.nome || '',
         professor: m.professor,
         dias: m.dias || 'A definir',
-        horario: formatarHorario(m.hora_inicio, m.hora_fim),
+        horario: m.horario || formatarHorario(m.hora_inicio, m.hora_fim),
         horaInicio: m.hora_inicio,
         horaFim: m.hora_fim,
-        descricao: m.descricao
+        descricao: m.descricao,
+        criadoEm: m.criado_em || m.created_at || m.data_publicacao || null,
+        atualizadoEm: m.atualizado_em || m.updated_at || m.data_edicao || null
       }));
       renderModalities();
       renderScheduleTable();
@@ -902,21 +1549,19 @@ function carregarModalidades() {
       atualizarDashboard();
     })
     .catch(() => {
-      renderEmptyState(document.getElementById('modalidadesGrid'), 'Sem modalidades', 'Nenhuma modalidade disponÃ­vel no momento.');
-      renderEmptyState(document.getElementById('allModalidadesGrid'), 'Sem modalidades', 'Nenhuma modalidade disponÃ­vel no momento.');
-      showToastErro('NÃ£o foi possÃ­vel carregar as modalidades.');
+      renderEmptyState(document.getElementById('modalidadesGrid'), 'Sem modalidades', 'Nenhuma modalidade disponível no momento.');
+      renderEmptyState(document.getElementById('allModalidadesGrid'), 'Sem modalidades', 'Nenhuma modalidade disponível no momento.');
+      showToastErro('Não foi possível carregar as modalidades.');
+    })
+    .finally(() => {
+      showGlobalLoading(false);
     });
 }
 
-function formatarHorario(inicio, fim) {
-  if (!inicio || !fim) return '-';
-  const hi = inicio.slice(0, 5).replace(':', 'h');
-  const hf = fim.slice(0, 5).replace(':', 'h');
-  return `${hi} Ã s ${hf}`;
-}
-
 function carregarInscricoes() {
+  showGlobalLoading(true, 'Carregando inscrições...');
   let url = '/inscricoes/jics';
+
   if (currentUser && !isAdminUser()) {
     if (currentUser.id) {
       url = `/inscricoes/jics?aluno_id=${currentUser.id}`;
@@ -924,106 +1569,224 @@ function carregarInscricoes() {
       url = `/inscricoes/jics?matricula=${encodeURIComponent(currentUser.matricula)}`;
     }
   }
+
   renderTableSkeleton(document.getElementById('tabelaInscricoes'), 4, 8);
   renderTableSkeleton(document.getElementById('tabelaMinhasInscricoes'), 3, 3);
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
+
+  return fetch(url)
+    .then((res) => res.json())
+    .then((data) => {
       inscriptions = Array.isArray(data) ? data : [];
+      renderModalities();
       applyInscricoesFilters();
       renderMinhasInscricoes();
       atualizarDashboard();
       preencherSelectSorteio();
     })
     .catch(() => {
-      showToastErro('NÃ£o foi possÃ­vel carregar as inscriÃ§Ãµes.');
+      showToastErro('Não foi possível carregar as inscrições.');
       const tbody = document.getElementById('tabelaInscricoes');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscriÃ§Ã£o disponÃ­vel.</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscrição disponível.</td></tr>';
       const minhas = document.getElementById('tabelaMinhasInscricoes');
-      if (minhas) minhas.innerHTML = '<tr><td colspan="3">Nenhuma inscriÃ§Ã£o disponÃ­vel.</td></tr>';
+      if (minhas) minhas.innerHTML = '<tr><td colspan="3">Nenhuma inscrição disponível.</td></tr>';
+    })
+    .finally(() => {
+      showGlobalLoading(false);
     });
+}
+
+function formatarHorario(inicio, fim) {
+  if (!inicio || !fim) return '-';
+  const hi = inicio.slice(0, 5).replace(':', 'h');
+  const hf = fim.slice(0, 5).replace(':', 'h');
+  return `${hi} às ${hf}`;
+}
+
+function formatDateTimeBr(value) {
+  if (!value) return '-';
+  try {
+    return new Date(value)
+      .toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+      .replace(',', ' às');
+  } catch (_) {
+    return '-';
+  }
 }
 
 function renderModalities() {
   const grid = document.getElementById('modalidadesGrid');
   const allGrid = document.getElementById('allModalidadesGrid');
+  const isDashboard = document.body?.dataset?.page === 'dashboard';
+  bindDashboardModalidadeFilters();
 
   if (!modalidades.length) {
-    renderEmptyState(grid, 'Sem modalidades', 'Nenhuma modalidade disponÃ­vel no momento.');
-    renderEmptyState(allGrid, 'Sem modalidades', 'Nenhuma modalidade disponÃ­vel no momento.');
+    renderEmptyState(grid, 'Sem modalidades', 'Nenhuma modalidade disponível no momento.');
+    renderEmptyState(allGrid, 'Sem modalidades', 'Nenhuma modalidade disponível no momento.');
     return;
   }
 
-  const getMeta = (name) => {
-    const n = String(name || '').toLowerCase();
-    const rules = [
-      { keys: ['futebol', 'futsal'], icon: 'sports_soccer', category: 'coletiva' },
-      { keys: ['basquete', 'basket'], icon: 'sports_basketball', category: 'coletiva' },
-      { keys: ['volei', 'vÃ´lei', 'volley'], icon: 'sports_volleyball', category: 'coletiva' },
-      { keys: ['handebol'], icon: 'sports_handball', category: 'coletiva' },
-      { keys: ['tenis', 'tÃªnis'], icon: 'sports_tennis', category: 'individual' },
-      { keys: ['atletismo', 'corrida', 'caminhada'], icon: 'directions_run', category: 'individual' },
-      { keys: ['natacao', 'nataÃ§Ã£o'], icon: 'pool', category: 'individual' },
-      { keys: ['xadrez'], icon: 'chess', category: 'individual' },
-      { keys: ['judo', 'judÃ´', 'karate', 'karatÃª', 'jiu', 'capoeira'], icon: 'sports_kabaddi', category: 'individual' },
-      { keys: ['academia', 'musculacao', 'musculaÃ§Ã£o', 'fitness'], icon: 'fitness_center', category: 'individual' },
-    ];
-    for (const rule of rules) {
-      if (rule.keys.some(k => n.includes(k))) return rule;
+  const normalizeInfo = (value, fallback) => {
+    const parsed = normalizeDisplayText(value, '').trim();
+    if (!parsed) return fallback;
+    const key = normalizeLookupValue(parsed);
+    if (key === 'nao informado' || key === 'não informado' || key === 'null' || key === 'undefined' || key === '-') {
+      return fallback;
     }
-    return { icon: 'sports', category: 'coletiva' };
+    return parsed;
   };
 
-  const html = modalidades.map(m => {
-    const meta = getMeta(m.nome);
+  const list = modalidades.map((mod) => {
+    const nome = normalizeDisplayText(mod.nome || mod.titulo || 'Modalidade');
+    const meta = resolveModalidadeMeta(nome);
     const categoryLabel = meta.category === 'coletiva' ? 'Coletiva' : 'Individual';
-    return `
-    <div class="card" data-name="${m.nome}" data-category="${meta.category}" data-professor="${m.professor || ''}" data-horario="${m.horario || ''}" data-icon="${meta.icon}" onclick="showModalDetails('${m.id}')">
-      <div class="card-header">
-        <div class="card-icon modalidade-icon"><span class="material-symbols-outlined">${meta.icon}</span></div>
-        <div>
-          <div class="card-title">${m.nome}</div>
-          <span class="modalidade-badge ${meta.category}">${categoryLabel}</span>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="modalidade-meta">
-          <span class="material-symbols-outlined">person</span>
-          <span>${m.professor || 'Professor a definir'}</span>
-        </div>
-        <div class="modalidade-meta">
-          <span class="material-symbols-outlined">schedule</span>
-          <span>${m.horario || 'Horario a definir'}</span>
-        </div>
-      </div>
-    </div>
-  `;
-  }).join('');
+    const professor = normalizeInfo(mod.professor, 'Professor a definir');
+    const horario = normalizeInfo(mod.horario, 'Horário a definir');
+    const inscritos = inscriptions.filter((item) => {
+      if (item?.modalidade_id && String(item.modalidade_id) === String(mod.id)) return true;
+      return normalizeLookupValue(item?.modalidade) === normalizeLookupValue(nome);
+    }).length;
+    const capacidadeRaw = Number(mod.limite_vagas || mod.vagas || mod.capacidade || 20);
+    const capacidade = Number.isFinite(capacidadeRaw) && capacidadeRaw > 0 ? capacidadeRaw : 20;
+    const abertas = inscritos < capacidade;
+    const progresso = Math.min(100, Math.round((inscritos / capacidade) * 100));
 
-  if (grid) grid.innerHTML = html;
-  if (allGrid) allGrid.innerHTML = html;
+    return {
+      id: mod.id,
+      nome,
+      meta,
+      categoryLabel,
+      professor,
+      horario,
+      inscritos,
+      capacidade,
+      abertas,
+      progresso
+    };
+  });
+
+  const filteredDashboard = list.filter((mod) => {
+    if (dashboardModalidadeFiltroAtivo === 'coletiva') return mod.meta.category === 'coletiva';
+    if (dashboardModalidadeFiltroAtivo === 'individual') return mod.meta.category === 'individual';
+    if (dashboardModalidadeFiltroAtivo === 'aberta') return mod.abertas;
+    return true;
+  });
+
+  if (grid) {
+    if (!filteredDashboard.length) {
+      renderEmptyState(
+        grid,
+        'Nenhuma modalidade neste filtro',
+        'Ajuste os filtros para visualizar outras opções.'
+      );
+    } else if (isDashboard) {
+      grid.innerHTML = filteredDashboard.map((m) => `
+        <article class="dashboard-modal-card" data-category="${m.meta.category}" data-status="${m.abertas ? 'open' : 'closed'}">
+          <div class="dashboard-modal-cover">
+            <span class="material-symbols-outlined">${m.meta.icon}</span>
+            <span class="dashboard-modal-status ${m.abertas ? 'open' : 'closed'}">${m.abertas ? 'Aberto' : 'Lotado'}</span>
+          </div>
+          <div class="dashboard-modal-body">
+            <div class="dashboard-modal-head">
+              <h3 class="dashboard-modal-title">${escapeHtml(m.nome)}</h3>
+              <span class="modalidade-badge ${m.meta.category}">${m.categoryLabel}</span>
+            </div>
+            <div class="dashboard-modal-meta">
+              <span class="line">
+                <span class="material-symbols-outlined">person</span>
+                ${escapeHtml(m.professor)}
+              </span>
+              <span class="line">
+                <span class="material-symbols-outlined">schedule</span>
+                ${escapeHtml(m.horario)}
+              </span>
+            </div>
+            <div class="dashboard-modal-progress">
+              <small>${m.inscritos}/${m.capacidade} vagas preenchidas</small>
+              <div class="bar"><span style="width: ${m.progresso}%"></span></div>
+            </div>
+            <div class="dashboard-modal-actions">
+              <button class="btn-outline" type="button" onclick="showModalDetails('${m.id}')">Ver detalhes</button>
+              ${isStaffUser() ? '' : `<button class="btn-primary" type="button" onclick="showModalDetails('${m.id}')">Inscrever-se</button>`}
+            </div>
+          </div>
+        </article>
+      `).join('');
+    } else {
+      grid.innerHTML = filteredDashboard.map((m) => `
+        <div class="card" data-name="${escapeHtml(m.nome)}" data-category="${m.meta.category}" data-professor="${escapeHtml(m.professor)}" data-horario="${escapeHtml(m.horario)}" data-icon="${m.meta.icon}" onclick="showModalDetails('${m.id}')">
+          <div class="card-header">
+            <div class="card-icon modalidade-icon"><span class="material-symbols-outlined">${m.meta.icon}</span></div>
+            <div>
+              <div class="card-title">${escapeHtml(m.nome)}</div>
+              <span class="modalidade-badge ${m.meta.category}">${m.categoryLabel}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="modalidade-meta">
+              <span class="material-symbols-outlined">person</span>
+              <span>${escapeHtml(m.professor)}</span>
+            </div>
+            <div class="modalidade-meta">
+              <span class="material-symbols-outlined">schedule</span>
+              <span>${escapeHtml(m.horario)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  if (allGrid) {
+    allGrid.innerHTML = list.map((m) => `
+      <div class="card" data-name="${escapeHtml(m.nome)}" data-category="${m.meta.category}" data-professor="${escapeHtml(m.professor)}" data-horario="${escapeHtml(m.horario)}" data-icon="${m.meta.icon}" onclick="showModalDetails('${m.id}')">
+        <div class="card-header">
+          <div class="card-icon modalidade-icon"><span class="material-symbols-outlined">${m.meta.icon}</span></div>
+          <div>
+            <div class="card-title">${escapeHtml(m.nome)}</div>
+            <span class="modalidade-badge ${m.meta.category}">${m.categoryLabel}</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="modalidade-meta">
+            <span class="material-symbols-outlined">person</span>
+            <span>${escapeHtml(m.professor)}</span>
+          </div>
+          <div class="modalidade-meta">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>${escapeHtml(m.horario)}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
 }
 
 function renderNews(lista) {
   const grid = document.getElementById('noticiasGrid');
   const allGrid = document.getElementById('allNoticiasGrid');
   if (!lista || lista.length === 0) {
-    renderEmptyState(allGrid, 'Sem notÃ­cias', 'Nenhuma notÃ­cia publicada.');
-    renderEmptyState(grid, 'Sem notÃ­cias', 'Nenhuma notÃ­cia publicada.');
+    renderEmptyState(allGrid, 'Sem notícias', 'Nenhuma notícia publicada.');
+    renderEmptyState(grid, 'Sem notícias', 'Nenhuma notícia publicada.');
     return;
   }
-  const ordered = [...lista].sort((a, b) => new Date(b.data_publicacao) - new Date(a.data_publicacao));
+  const ordered = [...lista]
+    .map((item) => ({
+      ...item,
+      titulo: normalizeDisplayText(item.titulo, 'Sem título'),
+      descricao: normalizeDisplayText(item.descricao, 'Descrição indisponível')
+    }))
+    .sort((a, b) => new Date(b.data_publicacao) - new Date(a.data_publicacao));
 
   const htmlAll = ordered.map(n => `
     <div class="card">
       <div class="card-header">
         <div class="card-icon"><span class="material-symbols-outlined">article</span></div>
-        <div class="card-title">${n.titulo}</div>
+        <div class="card-title">${escapeHtml(n.titulo)}</div>
       </div>
       <div class="card-body">
-        <p>${n.descricao}</p>
-        <small>${new Date(n.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s')}</small>
-        ${n.data_edicao ? `<small class="muted">Editado em: ${new Date(n.data_edicao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s')}</small>` : ''}
+        <p>${escapeHtml(truncateText(n.descricao, 220) || 'Sem resumo disponível.')}</p>
+        <small>${formatDateTimeBr(n.data_publicacao)}</small>
+        ${n.data_edicao ? `<small class="muted">Editado em: ${formatDateTimeBr(n.data_edicao)}</small>` : ''}
         <div class="card-actions">
           <button class="btn-view" onclick="verNoticia(${n.id})">Ver</button>
           ${isAdminUser() ? `
@@ -1036,14 +1799,14 @@ function renderNews(lista) {
   `).join('');
 
   const htmlDashboard = ordered.slice(0, 3).map(n => `
-    <div class="card">
+    <div class="card dashboard-news-card">
       <div class="card-header">
         <div class="card-icon"><span class="material-symbols-outlined">article</span></div>
-        <div class="card-title">${n.titulo}</div>
+        <div class="card-title">${escapeHtml(n.titulo)}</div>
       </div>
       <div class="card-body">
-        <p>${n.descricao}</p>
-        <small>${new Date(n.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s')}</small>
+        <p>${escapeHtml(truncateText(n.descricao, 120) || 'Sem resumo disponível.')}</p>
+        <small>${formatDateTimeBr(n.data_publicacao)}</small>
         <div class="card-actions">
           <button class="btn-view" onclick="verNoticia(${n.id})">Ver</button>
         </div>
@@ -1059,7 +1822,7 @@ function renderScheduleTable() {
   const tbody = document.getElementById('tabelaHorarios');
   if (!tbody) return;
   if (!modalidades.length) {
-    tbody.innerHTML = '<tr><td colspan="4">Nenhum horÃ¡rio disponÃ­vel.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4">Nenhum horário disponível.</td></tr>';
     return;
   }
   tbody.innerHTML = modalidades.map(m => `
@@ -1130,7 +1893,7 @@ function editarModalidade(id) {
 
   const submitBtn = document.getElementById('modalidadeSubmitBtn');
   const cancelBtn = document.getElementById('modalidadeCancelBtn');
-  if (submitBtn) submitBtn.textContent = 'Salvar alteraÃ§Ãµes';
+  if (submitBtn) submitBtn.textContent = 'Salvar alterações';
   if (cancelBtn) cancelBtn.classList.remove('hidden');
 }
 
@@ -1159,7 +1922,7 @@ function renderMinhasInscricoes() {
   });
 
   if (unicas.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3">VocÃª ainda nÃ£o estÃ¡ inscrito em nenhuma modalidade.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3">Você ainda não está inscrito em nenhuma modalidade.</td></tr>';
     return;
   }
 
@@ -1203,7 +1966,7 @@ function exportarInscricoesCsv() {
   animateButton(document.getElementById('btnExportarInscricoes'));
   const rows = filteredInscriptions.length ? filteredInscriptions : inscriptions;
   if (!rows.length) {
-    showToastErro('NÃ£o hÃ¡ inscriÃ§Ãµes para exportar.');
+    showToastErro('Não há inscrições para exportar.');
     return;
   }
   const header = ['Nome', 'Matricula', 'Turma', 'Modalidade', 'Sexo', 'Tipo', 'Data'];
@@ -1224,7 +1987,7 @@ function exportarModalidadesCsv() {
     horario: m.horario || (m.hora_inicio && m.hora_fim ? formatarHorario(m.hora_inicio, m.hora_fim) : '')
   }));
   if (!normalized.length) {
-    showToastErro('NÃ£o hÃ¡ modalidades para exportar.');
+    showToastErro('Não há modalidades para exportar.');
     return;
   }
   const header = ['Modalidade', 'Professor', 'Dias', 'Horario'];
@@ -1243,7 +2006,7 @@ function bindAdminDownloads() {
       if (type === 'modalidades') {
         exportarModalidadesCsv();
       } else {
-        showToastErro('Tipo de exportaÃ§Ã£o nÃ£o reconhecido.');
+        showToastErro('Tipo de exportação não reconhecido.');
       }
     });
   });
@@ -1265,7 +2028,7 @@ function initAdminFilters() {
   if (buscaAdmin) applyAdminInscricoesSearch();
 }
 
-function loadAdminMetrics() {
+function loadAdminMetricsLegacy() {
   fetch('/admin/metrics')
     .then(res => res.json())
     .then(data => {
@@ -1279,7 +2042,7 @@ function loadAdminMetrics() {
       set('metricNoticias', data.noticias);
     })
     .catch(() => {
-      // silencioso, evita ruÃ­do no admin
+      // silencioso, evita ruído no admin
     });
 }
 
@@ -1310,6 +2073,28 @@ function atualizarDashboard() {
   if (elModalidades) elModalidades.textContent = totalModalidades;
   if (elNoticias) elNoticias.textContent = totalNoticias;
   if (elInscritos) elInscritos.textContent = totalInscritos;
+  renderDashboardNextGames();
+}
+
+function renderDashboardNextGames() {
+  const container = document.getElementById('dashboardNextGames');
+  if (!container) return;
+
+  const base = getResultados();
+  const lista = Array.isArray(base) ? base.slice(0, 4) : [];
+
+  if (!lista.length) {
+    container.innerHTML = '<p class="muted">Ainda não há jogos registrados.</p>';
+    return;
+  }
+
+  container.innerHTML = lista.map((jogo) => `
+    <article class="dashboard-next-item">
+      <strong>${escapeHtml(jogo.equipeA || '-')} x ${escapeHtml(jogo.equipeB || '-')}</strong>
+      <span>${escapeHtml(jogo.modalidade || 'Modalidade não informada')}</span>
+      <small>${escapeHtml(jogo.data || 'Data a definir')}</small>
+    </article>
+  `).join('');
 }
 
 function showModalDetails(modalidadeId) {
@@ -1320,8 +2105,8 @@ function showModalDetails(modalidadeId) {
   document.getElementById('detailContent').innerHTML = `
     <strong>Professor:</strong> <p>${mod.professor}</p>
     <strong>Dias:</strong> <p>${mod.dias}</p>
-    <strong>HorÃ¡rio:</strong> <p>${mod.horario}</p>
-    <strong>DescriÃ§Ã£o:</strong> <p>${mod.descricao}</p>
+    <strong>Horário:</strong> <p>${mod.horario}</p>
+    <strong>Descrição:</strong> <p>${mod.descricao}</p>
   `;
   const confirmarBtn = document.querySelector('#detailModal .btn-primary');
   if (confirmarBtn) confirmarBtn.style.display = isStaffUser() ? 'none' : '';
@@ -1331,7 +2116,7 @@ function showModalDetails(modalidadeId) {
 function confirmInscription() {
   if (!currentUser || !currentInscription) return;
   if (isStaffUser()) {
-    showToastErro('Administradores e professores nÃ£o podem se inscrever.');
+    showToastErro('Administradores e professores não podem se inscrever.');
     return;
   }
   subscribeToJICS(currentInscription.id);
@@ -1339,7 +2124,7 @@ function confirmInscription() {
 
 function subscribeToJICS(modalidadeId) {
   if (isStaffUser()) {
-    showToastErro('Administradores e professores nÃ£o podem se inscrever.');
+    showToastErro('Administradores e professores não podem se inscrever.');
     return;
   }
   fetch('/inscricoes/jics', {
@@ -1350,14 +2135,14 @@ function subscribeToJICS(modalidadeId) {
     .then(res => res.json())
     .then(data => {
       if (!data.sucesso) {
-        mostrarToastAtencao(data.mensagem || 'NÃ£o foi possÃ­vel inscrever');
+        mostrarToastAtencao(data.mensagem || 'Não foi possível inscrever');
         return;
       }
-      showToastSucesso('InscriÃ§Ã£o realizada com sucesso!');
+      showToastSucesso('Inscrição realizada com sucesso!');
       closeModal('detailModal');
       carregarInscricoes();
     })
-    .catch(() => showToastErro('Erro ao realizar inscriÃ§Ã£o'));
+    .catch(() => showToastErro('Erro ao realizar inscrição'));
 }
 
 function resolveModalidadeIdByName(nome) {
@@ -1369,7 +2154,7 @@ function resolveModalidadeIdByName(nome) {
 
 function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modalidadeEnc) {
   if (!currentUser) {
-    showToastErro('Usuario nÃ£o identificado.');
+    showToastErro('Usuário não identificado.');
     return;
   }
   const inscricaoId = decodeURIComponent(inscricaoIdEnc || '').trim();
@@ -1381,13 +2166,13 @@ function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modali
     if (resolved) modalidadeId = resolved;
   }
   if (!inscricaoId && !modalidadeId && !modalidadeLabel) {
-    showToastErro('NÃ£o foi possÃ­vel identificar a inscriÃ§Ã£o.');
+    showToastErro('Não foi possível identificar a inscrição.');
     return;
   }
 
   openDangerConfirm({
-    title: 'Cancelar inscriÃ§Ã£o',
-    message: `Digite CONFIRMAR para cancelar a inscriÃ§Ã£o${modalidadeLabel ? ` em ${modalidadeLabel}` : ''}.`,
+    title: 'Cancelar inscrição',
+    message: `Tem certeza que deseja cancelar a inscrição${modalidadeLabel ? ` em ${modalidadeLabel}` : ''}?`,
     onConfirm: () => {
       const payload = {};
       if (inscricaoId) payload.inscricao_id = inscricaoId;
@@ -1405,13 +2190,13 @@ function cancelarInscricao(inscricaoIdEnc, matriculaEnc, modalidadeIdEnc, modali
           let data = null;
           try { data = await res.json(); } catch (_) { data = null; }
           if (res.ok && data && data.sucesso) {
-            showToastSucesso('InscriÃ§Ã£o cancelada.');
+            showToastSucesso('Inscrição cancelada.');
             carregarInscricoes();
           } else {
-            showToastErro(data?.mensagem || 'NÃ£o foi possÃ­vel cancelar.');
+            showToastErro(data?.mensagem || 'Não foi possível cancelar.');
           }
         })
-        .catch(() => showToastErro('Erro ao cancelar inscriÃ§Ã£o.'));
+        .catch(() => showToastErro('Erro ao cancelar inscrição.'));
     }
   });
 }
@@ -1440,20 +2225,12 @@ function openDangerConfirm({ title, message, onConfirm }) {
   if (!modal) return;
   const titleEl = document.getElementById('dangerConfirmTitle');
   const textEl = document.getElementById('dangerConfirmText');
-  const inputEl = document.getElementById('dangerConfirmInput');
   const btnEl = document.getElementById('dangerConfirmBtn');
 
   dangerConfirmAction = onConfirm || null;
-  if (titleEl) titleEl.textContent = title || 'Confirmar aÃ§Ã£o';
-  if (textEl) textEl.textContent = message || 'Digite CONFIRMAR para continuar.';
-  if (inputEl) {
-    inputEl.value = '';
-    inputEl.oninput = () => {
-      const ok = inputEl.value.trim().toUpperCase() === 'CONFIRMAR';
-      if (btnEl) btnEl.disabled = !ok;
-    };
-  }
-  if (btnEl) btnEl.disabled = true;
+  if (titleEl) titleEl.textContent = title || 'Confirmar ação';
+  if (textEl) textEl.textContent = message || 'Tem certeza que deseja continuar?';
+  if (btnEl) btnEl.disabled = false;
   modal.classList.remove('hidden');
 }
 
@@ -1464,1113 +2241,28 @@ function closeDangerConfirm() {
 }
 
 function confirmDangerAction() {
-  const inputEl = document.getElementById('dangerConfirmInput');
-  if (!inputEl || inputEl.value.trim().toUpperCase() !== 'CONFIRMAR') return;
   if (typeof dangerConfirmAction === 'function') dangerConfirmAction();
   closeDangerConfirm();
 }
 
-function verNoticia(id) {
-  const noticia = noticias.find(n => n.id === id);
-  if (!noticia) return;
-  document.getElementById('verTitulo').textContent = noticia.titulo;
-  document.getElementById('verDescricao').textContent = noticia.descricao;
-  document.getElementById('verPublicacao').textContent =
-    'Publicado em: ' + new Date(noticia.data_publicacao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s');
-  document.getElementById('verEdicao').textContent = noticia.data_edicao
-    ? 'Editado em: ' + new Date(noticia.data_edicao).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).replace(',', ' Ã s')
-    : '';
-  openModal('modalVerNoticia');
-}
-
-function fecharModalVer() {
-  closeModal('modalVerNoticia');
-}
-
-function excluirNoticia(id) {
-  if (currentUser?.role !== 'ADMIN') return;
-  openDangerConfirm({
-    title: 'Excluir notÃ­cia',
-    message: 'Digite CONFIRMAR para excluir esta notÃ­cia.',
-    onConfirm: () => confirmarExclusaoNoticia(id),
-  });
-}
-
-function fecharModalExcluir() {
-  noticiaParaExcluir = null;
-  closeModal('modalExcluir');
-}
-
-function confirmarExclusaoNoticia(id) {
-  fetch(`/noticias/${id}`, { method: 'DELETE' })
-    .then(() => {
-      carregarNoticias();
-      showToastSucesso('NotÃ­cia excluÃ­da!');
-    })
-    .catch(() => showToastErro('Erro ao excluir notÃ­cia'));
-}
-
-function switchAdminTab(tabId, btn) {
-  document.querySelectorAll('.tab-content, .admin-panel').forEach(el => {
-    el.classList.remove('active');
-    if (el.classList.contains('tab-content')) el.style.display = 'none';
-  });
-  document.querySelectorAll('.admin-tab, .pill-tab').forEach(el => el.classList.remove('active', 'pill-tab-active'));
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.add('active');
-    tab.style.display = 'block';
-  }
-  const targetBtn = btn || document.querySelector(`.admin-tab[data-tab="${tabId}"], .pill-tab[data-tab="${tabId}"]`);
-  if (targetBtn) {
-    targetBtn.classList.add('active');
-    if (targetBtn.classList.contains('pill-tab')) targetBtn.classList.add('pill-tab-active');
-  }
-  const crumb = document.getElementById('adminCrumb');
-  const sideLink = document.querySelector(`.side-link[data-tab="${tabId}"]`);
-  if (crumb) crumb.textContent = (targetBtn || sideLink) ? (targetBtn || sideLink).textContent : 'Admin';
-  localStorage.setItem('adminTab', tabId);
-  adminActiveTab = tabId;
-  if (typeof window.handleAdminTabSwitch === 'function') {
-    window.handleAdminTabSwitch(tabId);
-  }
-
-  document.querySelectorAll('.side-link[data-tab]').forEach(link => {
-    link.classList.toggle('active', link.dataset.tab === tabId);
-  });
-}
-
-function applyAdminTabVisibility() {
-  document.querySelectorAll('.admin-only').forEach(el => {
-    el.classList.toggle('hidden', !isAdminUser());
-  });
-  document.querySelectorAll('.staff-only').forEach(el => {
-    el.classList.toggle('hidden', !isStaffUser());
-  });
-
-  const active = document.querySelector('.admin-tab.active');
-  if (active && active.classList.contains('hidden')) {
-    const first = document.querySelector('.admin-tab:not(.hidden)');
-    if (first) switchAdminTab(first.dataset.tab, first);
-  }
-}
-
-function openAdminTab(tabId) {
-  if (!isStaffUser()) {
-    showToastErro('Acesso restrito.');
+function requestDangerConfirm({ title, message, onConfirm }) {
+  if (typeof openDangerConfirm === 'function') {
+    openDangerConfirm({ title, message, onConfirm });
     return;
   }
-  if (document.body.dataset.page === 'admin') {
-    switchAdminTab(tabId);
-    return;
-  }
-  localStorage.setItem('adminTab', tabId);
-  location.href = 'admin.html';
+  if (typeof onConfirm === 'function') onConfirm();
 }
 
-function publicarNoticia(event) {
-  if (event) event.preventDefault();
-  if (!isStaffUser()) return showToastErro('Acesso restrito.');
-  const titulo = document.getElementById('tituloNoticia')?.value?.trim();
-  const descricao = document.getElementById('descricaoNoticia')?.value?.trim();
-  if (!titulo || !descricao) return showToastErro('Preencha tÃ­tulo e descriÃ§Ã£o.');
-  fetch('/admin/noticias', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ titulo, descricao })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.sucesso) return showToastErro('Erro ao publicar notÃ­cia');
-      showToastSucesso('NotÃ­cia publicada!');
-      if (event && event.target?.reset) event.target.reset();
-      carregarNoticias();
-    })
-    .catch(() => showToastErro('Erro ao publicar notÃ­cia'));
-}
-
-function excluirNoticiaAdmin(id) {
-  if (!confirm('Excluir esta notÃ­cia?')) return;
-  fetch(`/noticias/${id}`, { method: 'DELETE' })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.sucesso) return showToastErro('Erro ao excluir notÃ­cia');
-      showToastSucesso('NotÃ­cia excluÃ­da!');
-      carregarNoticias();
-    })
-    .catch(() => showToastErro('Erro ao excluir notÃ­cia'));
-}
-
-function addModalidade(event) {
-  event.preventDefault();
-  if (!isStaffUser()) {
-    showToastErro('Acesso restrito.');
-    return;
-  }
-  const titulo = document.getElementById('modalidadeTitulo').value;
-  const descricao = document.getElementById('modalidadeDescricao').value;
-  const professor = document.getElementById('modalidadeProfessor').value;
-  const horaInicio = document.getElementById('horaInicio').value;
-  const horaFim = document.getElementById('horaFim').value;
-  const diasSelecionados = Array.from(document.querySelectorAll('.dias-semana input:checked')).map(el => el.value);
-
-  if (diasSelecionados.length === 0 || diasSelecionados.length > 2) {
-    mostrarToastAtencao('Selecione atÃ© 2 dias de treino.');
-    return;
-  }
-
-  const dias = diasSelecionados.join(' e ');
-
-  const endpoint = modalidadeEditId ? `/admin/modalidades/${modalidadeEditId}` : '/admin/modalidades';
-  const method = modalidadeEditId ? 'PUT' : 'POST';
-
-  fetch(endpoint, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ titulo, descricao, professor, hora_inicio: horaInicio, hora_fim: horaFim, dias })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.sucesso) {
-        showToastErro('Erro ao cadastrar modalidade');
-        return;
-      }
-      if (modalidadeEditId) {
-        showToastSucesso('Modalidade atualizada!');
-        cancelarEdicaoModalidade();
-      } else {
-        showToastSucesso('Modalidade cadastrada!');
-        event.target.reset();
-      }
-      carregarModalidades();
-    })
-    .catch(() => showToastErro('Erro ao cadastrar modalidade'));
-}
-
-function excluirModalidade(id) {
-  if (!isAdminUser()) {
-    showToastErro('Acesso restrito.');
-    return;
-  }
-  openDangerConfirm({
-    title: 'Excluir modalidade',
-    message: 'Digite CONFIRMAR para remover esta modalidade.',
-    onConfirm: () => {
-      fetch(`/admin/modalidades/${id}`, { method: 'DELETE' })
-        .then(res => res.json())
-        .then(data => {
-          if (!data.sucesso) {
-            showToastErro('Erro ao excluir modalidade');
-            return;
-          }
-          showToastSucesso('Modalidade removida!');
-          carregarModalidades();
-        })
-        .catch(() => showToastErro('Erro ao excluir modalidade'));
-    }
-  });
-}
-
-function addUser(event) {
-  event.preventDefault();
-  if (!isAdminUser()) {
-    showToastErro('Acesso restrito.');
-    return;
-  }
-
-  const form = document.getElementById('newUserForm');
-  const msg = document.getElementById('newUserMsg');
-  const matriculaInput = document.getElementById('newMatricula');
-  const nomeInput = document.getElementById('newNome');
-  const campusInput = document.getElementById('newCampus');
-  const cursoInput = document.getElementById('newCurso');
-  const turmaInput = document.getElementById('newTurma');
-  const nascimentoInput = document.getElementById('newNascimento');
-  const emailInput = document.getElementById('newEmail');
-  const senhaInput = document.getElementById('newSenha');
-
-  const setMsg = (text, type = 'error') => {
-    if (!msg) return;
-    msg.textContent = text || '';
-    msg.classList.remove('show', 'success', 'error');
-    if (text) msg.classList.add('show', type === 'success' ? 'success' : 'error');
-  };
-
-  const clearError = (input) => {
-    if (input) input.classList.remove('input-erro');
-  };
-
-  const setError = (input) => {
-    if (input) input.classList.add('input-erro');
-  };
-
-  const bindClear = (input) => {
-    if (!input || input.dataset.bound) return;
-    input.dataset.bound = '1';
-    input.addEventListener('input', () => {
-      clearError(input);
-      setMsg('');
-    });
-  };
-
-  [matriculaInput, nomeInput, campusInput, cursoInput, turmaInput, nascimentoInput, emailInput, senhaInput]
-    .forEach(bindClear);
-
-  setMsg('');
-  [matriculaInput, nomeInput, campusInput, cursoInput, turmaInput, nascimentoInput, emailInput, senhaInput]
-    .forEach(clearError);
-
-  if (matriculaInput.classList.contains('input-erro')) {
-    setMsg('Corrija a matricula antes de cadastrar.');
-    matriculaInput.focus();
-    return;
-  }
-
-  const matricula = (matriculaInput?.value || '').trim();
-  const nome = (nomeInput?.value || '').trim();
-  const campus = (campusInput?.value || '').trim();
-  const cursoRaw = (cursoInput?.value || '').trim();
-  const turma = (turmaInput?.value || '').trim();
-  const nascimento = (nascimentoInput?.value || '').trim();
-  const email = (emailInput?.value || '').trim();
-  const senha = (senhaInput?.value || '').trim();
-
-  const errors = [];
-  if (!matricula || matricula.length !== 13) { setError(matriculaInput); errors.push(matriculaInput); }
-  if (!nome) { setError(nomeInput); errors.push(nomeInput); }
-  if (!campus) { setError(campusInput); errors.push(campusInput); }
-  if (!cursoRaw) { setError(cursoInput); errors.push(cursoInput); }
-  if (!turma) { setError(turmaInput); errors.push(turmaInput); }
-  if (!nascimento) { setError(nascimentoInput); errors.push(nascimentoInput); }
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  if (!emailOk) { setError(emailInput); errors.push(emailInput); }
-  if (senha.length < 8) { setError(senhaInput); errors.push(senhaInput); }
-
-  if (errors.length) {
-    setMsg('Preencha todos os campos obrigatorios corretamente.');
-    errors[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    errors[0].focus({ preventScroll: true });
-    return;
-  }
-
-  const resolveCursoDescricao = (value) => {
-    const raw = String(value || '').trim();
-    if (!raw) return '';
-    const normalized = raw
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-    if (normalized.includes('informatica')) return 'Tecnico em Informatica Integrado ao Ensino Medio';
-    if (normalized.includes('quimica')) return 'Tecnico em Quimica Integrado ao Ensino Medio';
-    if (normalized.includes('edific')) return 'Tecnico em Edificacoes Integrado ao Ensino Medio';
-    if (normalized.includes('eletro')) return 'Tecnico em Eletrotecnica Integrado ao Ensino Medio';
-    return raw;
-  };
-
-  const aluno = {
-    matricula,
-    nome,
-    campus,
-    descricao_curso: resolveCursoDescricao(cursoRaw),
-    turma,
-    data_nascimento: nascimento,
-    email_pessoal: email,
-    senha
-  };
-
-  const roleSelect = document.getElementById('newRole');
-  if (roleSelect && isAdminUser()) {
-    aluno.role = roleSelect.value;
-  }
-
-  fetch('/admin/add-aluno', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(aluno)
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.sucesso) {
-        if (data.mensagem && String(data.mensagem).toLowerCase().includes('curso')) {
-          setError(cursoInput);
-        }
-        setMsg(data.mensagem || 'Erro ao cadastrar aluno');
-        return;
-      }
-      setMsg('Aluno cadastrado com sucesso.', 'success');
-      showToastSucesso('Aluno cadastrado com sucesso!');
-      if (form) form.reset();
-      if (roleSelect) roleSelect.value = 'ALUNO';
-      const status = document.getElementById('matriculaStatus');
-      if (status) status.textContent = '';
-    })
-    .catch(() => setMsg('Erro ao conectar com o servidor'));
-}
-
-function onMatriculaInput() {
-  const input = document.getElementById('newMatricula');
-  if (!input) return;
-  const valor = input.value.replace(/\D/g, '');
-  input.value = valor;
-  if (valor.length !== 13) return;
-  verificarMatriculaAutomatica(valor);
-}
-
-function verificarMatriculaAutomatica(matricula) {
-  const input = document.getElementById('newMatricula');
-  const status = document.getElementById('matriculaStatus');
-  fetch(`/admin/verificar-matricula/${matricula}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.existe) {
-        input.classList.add('input-erro');
-        status.textContent = 'Esta matrÃ­cula jÃ¡ possui cadastro';
-      } else {
-        input.classList.remove('input-erro');
-        status.textContent = '';
-      }
-    })
-    .catch(() => { status.textContent = ''; });
-}
-
-function editarSenha() {
-  location.href = 'recuperacao.html#reset';
-}
-
-function closeModalSenha() {
-  closeModal('modalSenha');
-  const atual = document.getElementById('senhaAtualInput');
-  const nova = document.getElementById('novaSenhaInput');
-  const confirmar = document.getElementById('confirmarSenhaInput');
-  if (atual) atual.value = '';
-  if (nova) nova.value = '';
-  if (confirmar) confirmar.value = '';
-  if (passwordUxModal && typeof passwordUxModal.evaluate === 'function') {
-    passwordUxModal.evaluate();
-  }
-}
-
-function confirmarAlteracaoSenha() {
-  const senhaAtual = document.getElementById('senhaAtualInput').value;
-  const novaSenha = document.getElementById('novaSenhaInput').value;
-  const confirmarSenha = document.getElementById('confirmarSenhaInput')?.value;
-  if (!senhaAtual || !novaSenha || !confirmarSenha) {
-    showToastErro('Preencha todos os campos');
-    return;
-  }
-  if (passwordUxModal && !passwordUxModal.isValid()) {
-    showToastErro('Senha nao atende aos requisitos.');
-    return;
-  }
-  senhaPendente = { senhaAtual, novaSenha };
-  closeModal('modalSenha');
-  openModal('modalConfirmarSenha');
-}
-
-function closeModalConfirmar() { closeModal('modalConfirmarSenha'); senhaPendente = null; }
-
-function confirmarTrocaSenha() {
-  if (!senhaPendente || !currentUser) return;
-  fetch('/alterar-senha', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ matricula: currentUser.matricula, ...senhaPendente })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.sucesso) showToastSucesso('Senha alterada com sucesso!');
-      else if (data.tipo === 'senha_atual_incorreta') showToastErro('Senha atual incorreta');
-      else if (data.tipo === 'mesma_senha') showToastErro('Essa senha jÃ¡ estÃ¡ cadastrada');
-      else showToastErro('Erro ao alterar senha');
-      closeModalConfirmar();
-    })
-    .catch(() => showToastErro('Erro ao alterar senha'));
-}
-
-let photoState = {
-  src: null,
-  scale: 1,
-  x: 0,
-  y: 0,
-  objectUrl: null,
-  dragging: false,
-  startX: 0,
-  startY: 0,
-  lastX: 0,
-  lastY: 0,
-  pinchStartDist: 0,
-  pinchStartScale: 1,
-  inited: false,
-  area: null,
-  img: null
-};
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function applyPhotoTransform() {
-  if (!photoState.img) return;
-  photoState.img.style.transform =
-    `translate(calc(-50% + ${photoState.x}px), calc(-50% + ${photoState.y}px)) scale(${photoState.scale})`;
-}
-
-function getCropperElements() {
-  return {
-    area: document.getElementById('cropArea'),
-    img: document.getElementById('cropImg')
-  };
-}
-
-function initPhotoCropper() {
-  if (photoState.inited) return;
-  const { area, img } = getCropperElements();
-  if (!area || !img) return;
-  photoState.area = area;
-  photoState.img = img;
-  photoState.inited = true;
-
-  area.style.cursor = 'grab';
-
-  area.addEventListener('dragstart', (e) => e.preventDefault());
-
-  area.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
-    photoState.dragging = true;
-    photoState.startX = e.clientX;
-    photoState.startY = e.clientY;
-    photoState.lastX = photoState.x;
-    photoState.lastY = photoState.y;
-    area.style.cursor = 'grabbing';
-  });
-
-  window.addEventListener('mouseup', () => {
-    photoState.dragging = false;
-    area.style.cursor = 'grab';
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if (!photoState.dragging) return;
-    photoState.x = photoState.lastX + (e.clientX - photoState.startX);
-    photoState.y = photoState.lastY + (e.clientY - photoState.startY);
-    applyPhotoTransform();
-  });
-
-  area.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const step = e.deltaY < 0 ? 0.08 : -0.08;
-    photoState.scale = clamp(photoState.scale + step, 1, 3);
-    applyPhotoTransform();
-  }, { passive: false });
-
-  area.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      photoState.dragging = true;
-      photoState.startX = touch.clientX;
-      photoState.startY = touch.clientY;
-      photoState.lastX = photoState.x;
-      photoState.lastY = photoState.y;
-    } else if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      photoState.pinchStartDist = Math.hypot(dx, dy);
-      photoState.pinchStartScale = photoState.scale;
-    }
-  }, { passive: false });
-
-  area.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.hypot(dx, dy);
-      if (photoState.pinchStartDist) {
-        const ratio = dist / photoState.pinchStartDist;
-        photoState.scale = clamp(photoState.pinchStartScale * ratio, 1, 3);
-        applyPhotoTransform();
-      }
-      return;
-    }
-    if (!photoState.dragging || e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    photoState.x = photoState.lastX + (touch.clientX - photoState.startX);
-    photoState.y = photoState.lastY + (touch.clientY - photoState.startY);
-    applyPhotoTransform();
-  }, { passive: false });
-
-  area.addEventListener('touchend', () => {
-    photoState.dragging = false;
-  });
-
-  const btnCenter = document.getElementById('btnCenter');
-  const btnFit = document.getElementById('btnFit');
-  if (btnCenter) {
-    btnCenter.addEventListener('click', () => {
-      photoState.x = 0;
-      photoState.y = 0;
-      applyPhotoTransform();
-    });
-  }
-  if (btnFit) {
-    btnFit.addEventListener('click', () => {
-      photoState.scale = 1;
-      photoState.x = 0;
-      photoState.y = 0;
-      applyPhotoTransform();
-    });
-  }
-}
-
-function openPhotoModal() {
-  openModal('modalFoto');
-  initPhotoCropper();
-}
-
-function closePhotoModal() {
-  closeModal('modalFoto');
-  if (photoState.objectUrl) {
-    URL.revokeObjectURL(photoState.objectUrl);
-  }
-  photoState = { ...photoState, src: null, scale: 1, x: 0, y: 0, objectUrl: null };
-  const { img } = getCropperElements();
-  if (img) img.src = '';
-}
-
-function loadPhoto(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (photoState.objectUrl) URL.revokeObjectURL(photoState.objectUrl);
-  const url = URL.createObjectURL(file);
-  photoState.objectUrl = url;
-  setPhoto(url);
-}
-
-function setPhoto(src) {
-  initPhotoCropper();
-  if (!photoState.img) return;
-  photoState.src = src;
-  photoState.img.src = src;
-  photoState.img.onload = () => {
-    photoState.scale = 1;
-    photoState.x = 0;
-    photoState.y = 0;
-    applyPhotoTransform();
-  };
-}
-
-function savePhoto() {
-  if (!photoState.src) return;
-  const canvas = document.createElement('canvas');
-  const size = 320;
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const img = new Image();
-  img.onload = () => {
-    const scale = photoState.scale;
-    const drawW = img.width * scale;
-    const drawH = img.height * scale;
-    const x = (size - drawW) / 2 + photoState.x;
-    const y = (size - drawH) / 2 + photoState.y;
-    ctx.drawImage(img, x, y, drawW, drawH);
-    const dataUrl = canvas.toDataURL('image/png');
-    if (currentUser) {
-      currentUser.foto = dataUrl;
-      sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
-      const key = getPhotoStorageKey(currentUser.matricula);
-      if (key) {
-        localStorage.setItem(key, dataUrl);
-      }
-    }
-    const avatar = document.getElementById('userAvatar');
-    const drawerAvatar = document.getElementById('drawerAvatar');
-    if (avatar) avatar.src = dataUrl;
-    if (drawerAvatar) drawerAvatar.src = dataUrl;
-    closePhotoModal();
-  };
-  img.src = photoState.src;
-}
-
-function showToastSucesso(msg) {
-  if (window.SuccessFeedback && typeof window.SuccessFeedback.show === 'function') {
-    window.SuccessFeedback.show({ title: 'Concluido!', message: msg });
-    return;
-  }
-  const toast = document.getElementById('toastSucesso');
-  if (!toast) return;
-  document.getElementById('toastSucessoMsg').textContent = msg;
-  toast.classList.remove('hidden');
-  toast.classList.add('show');
-  setTimeout(() => {
-    toast.classList.remove('show');
-    toast.classList.add('hidden');
-  }, 4000);
-}
-
-function showToastErro(msg) {
-  const toast = document.getElementById('toastErro');
-  if (!toast) return;
-  document.getElementById('toastErroMsg').textContent = msg;
-  toast.classList.remove('hidden');
-  toast.classList.add('show');
-  setTimeout(() => {
-    toast.classList.remove('show');
-    toast.classList.add('hidden');
-  }, 4000);
-}
-
-function mostrarToastAtencao(msg) {
-  const toast = document.getElementById('toastAtencao');
-  if (!toast) return;
-  document.getElementById('toastAtencaoMsg').textContent = msg;
-  toast.classList.remove('hidden');
-  toast.classList.add('show');
-  setTimeout(() => {
-    toast.classList.remove('show');
-    toast.classList.add('hidden');
-  }, 4000);
-}
-
-function populateModalidadeSelects() {
-  const selects = [
-    document.getElementById('sumulaModalidade'),
-    document.getElementById('filtroModalidade')
-  ].filter(Boolean);
-
-  selects.forEach(select => {
-    const current = select.value;
-    const placeholder = select.id === 'filtroModalidade' ? 'Modalidade' : 'Selecione...';
-    select.innerHTML = `<option value="">${placeholder}</option>` + modalidades.map(m => `<option value="${m.nome}">${m.nome}</option>`).join('');
-    select.value = current;
-  });
-}
-
-function getResultados() {
-  return JSON.parse(localStorage.getItem('resultados') || '[]');
-}
-
-function setResultados(lista) {
-  localStorage.setItem('resultados', JSON.stringify(lista));
-}
-
-function salvarSumula(event, fromMobile = false) {
-  if (event) event.preventDefault();
-  const dados = getSumulaFormData();
-
-  if (!dados.modalidade || !dados.equipeA || !dados.equipeB) {
-    showToastErro('Preencha todos os campos obrigatÃ³rios');
-    return;
-  }
-
-  const lista = getResultados();
-  lista.unshift(dados);
-  setResultados(lista);
-  renderResultadosLista();
-  renderClassification();
-  showToastSucesso('Sumula salva com sucesso!');
-  if (fromMobile) {
-    document.querySelector('form').reset();
-  }
-}
-
-// ------------------ ADMIN DATA LOADERS --------------------
-function handleAdminSessionExpired(message) {
-  if (window.__adminSessionExpired) return;
-  window.__adminSessionExpired = true;
-  try {
-    sessionStorage.setItem('adminSessionExpired', '1');
-  } catch (_) {}
-  const banner = document.getElementById('sessionBanner');
-  const text = document.getElementById('sessionBannerText');
-  if (text) text.textContent = message || 'SessÃ£o expirada. FaÃ§a login novamente.';
-  if (banner) banner.classList.remove('hidden');
-}
-
-async function adminFetch(url, fallback = []) {
-  try {
-    if (window.__adminSessionExpired) return fallback;
-    const r = await fetch(url, { credentials: 'include' });
-    if (r.status === 401) {
-      handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
-      return fallback;
-    }
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return await r.json();
-  } catch (e) {
-    console.warn('Admin fetch fallback', url, e);
-    return fallback;
-  }
-}
-
-// Toast simples
-function showToast(msg, type = 'info') {
-  if ((type === 'info' || type === 'success') && window.SuccessFeedback && typeof window.SuccessFeedback.show === 'function') {
-    window.SuccessFeedback.show({ title: 'Concluido!', message: msg });
-    return;
-  }
-  let el = document.getElementById('toast');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'toast';
-    el.className = 'toast';
-    document.body.appendChild(el);
-  }
-  el.classList.remove('toast-error', 'toast-warning');
-  if (type === 'error') el.classList.add('toast-error');
-  if (type === 'warning') el.classList.add('toast-warning');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => { if (el) el.classList.remove('show'); }, 2600);
-}
-
-function renderTableBody(tbodyId, rows, renderer, emptyCols = 4) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  if (!rows || rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="${emptyCols}" style="text-align:center;">Nenhum dado</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = rows.map(renderer).join('');
-}
-
-function renderSkeletonTable(tbodyId, rows = 5, cols = 6) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  tbody.innerHTML = Array.from({ length: rows }).map(() => `
-    <tr>
-      ${Array.from({ length: cols }).map(() => `
-        <td><div class="skeleton skeleton-line" style="width: 100%;"></div></td>
-      `).join('')}
-    </tr>
-  `).join('');
-}
-
-function renderSkeletonCards(containerId, count = 4) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = Array.from({ length: count }).map(() => `
-    <div class="skeleton-card">
-      <div class="skeleton skeleton-line" style="width: 40%;"></div>
-      <div class="skeleton skeleton-line" style="width: 70%;"></div>
-      <div class="skeleton skeleton-line" style="width: 60%;"></div>
-    </div>
-  `).join('');
-}
-
-function renderStatusPill(status) {
-  const normalized = String(status || '').toUpperCase();
-  const map = {
-    NAO_INICIADO: { label: 'NÃ£o iniciado', cls: 'status-nao_iniciado' },
-    AGENDADO: { label: 'Agendado', cls: 'status-nao_iniciado' },
-    EM_ANDAMENTO: { label: 'Em andamento', cls: 'status-em_andamento' },
-    FINALIZADO: { label: 'Finalizado', cls: 'status-finalizado' },
-  };
-  const item = map[normalized] || { label: normalized, cls: 'status-nao_iniciado' };
-  return `<span class="status-pill ${item.cls}">${item.label}</span>`;
-}
-
-async function loadAdminMetrics() {
-  const data = await adminFetch('/api/admin/metrics', null);
-  const safe = data && typeof data === 'object' ? data : {};
-  const m = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? '-'; };
-  m('metricUsuarios', safe.usuarios ?? 0);
-  m('metricInscricoes', safe.inscricoes ?? 0);
-  m('metricModalidades', safe.modalidades ?? 0);
-  m('metricComunicados', safe.comunicados ?? 0);
-}
-
-function renderAdminInscricoesTable(rows) {
-  const tbody = document.getElementById('inscBody');
-  if (!tbody) return;
-  if (!rows || rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhuma inscriÃ§Ã£o encontrada.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td>${r.aluno || '-'}</td>
-      <td>${r.matricula || '-'}</td>
-      <td>${r.turma || '-'}</td>
-      <td>${r.modalidade || '-'}</td>
-      <td>${r.sexo || '-'}</td>
-      <td>${r.data || '-'}</td>
-      <td><span class="badge-acao">Ver detalhes</span></td>
-    </tr>`).join('');
-}
-
-function applyAdminInscricoesSearch() {
-  const termo = (document.getElementById('filtInscBusca')?.value || '').trim().toLowerCase();
-  const base = Array.isArray(adminCache.inscricoes) ? adminCache.inscricoes : [];
-  if (!termo) {
-    renderAdminInscricoesTable(base);
-    return;
-  }
-  const filtrado = base.filter(r => {
-    const texto = [
-      r.aluno,
-      r.matricula,
-      r.turma,
-      r.modalidade,
-      r.sexo,
-      r.campus,
-      r.data
-    ].filter(Boolean).join(' ').toLowerCase();
-    return texto.includes(termo);
-  });
-  renderAdminInscricoesTable(filtrado);
-}
-
-async function loadInscricoesAdmin() {
-  // filtros
-  const params = new URLSearchParams();
-  const fModal = document.getElementById('filtInscModalidade');
-  const fSexo = document.getElementById('filtInscSexo');
-  const fTurma = document.getElementById('filtInscTurma');
-  const fCampus = document.getElementById('filtInscCampus');
-  if (fModal && fModal.value) params.append('modalidade', fModal.value);
-  if (fSexo && fSexo.value) params.append('sexo', fSexo.value);
-  if (fTurma && fTurma.value) params.append('turma', fTurma.value);
-  if (fCampus && fCampus.value) params.append('campus', fCampus.value);
-
-  const data = await adminFetch('/api/inscricoes' + (params.toString() ? `?${params}` : ''), []);
-  adminCache.inscricoes = data;
-  applyAdminInscricoesSearch();
-  preencherSelectsAdmin();
-}
-
-async function loadUsuariosAdmin() {
-  const q = document.getElementById('searchUser');
-  const url = q && q.value ? `/api/usuarios?busca=${encodeURIComponent(q.value)}` : '/api/usuarios';
-  const data = await adminFetch(url, []);
-  adminCache.usuarios = data;
-  renderTableBody('usersBody', data, r => `
-      <tr>
-        <td>${r.nome || '-'}</td>
-        <td>${r.matricula || '-'}</td>
-        <td>${r.turma || '-'}</td>
-        <td>
-          <span class="badge-acao" onclick="editUser('${r.matricula||''}')">Editar</span>
-          <span class="badge-acao" onclick="deleteUser('${r.matricula||''}')">Excluir</span>
-          <span class="badge-acao" onclick="resetPassUser('${r.matricula||''}')">Resetar senha</span>
-        </td>
-      </tr>`, 4);
-}
-
-async function loadNoticiasAdmin() {
-  const data = await adminFetch('/noticias', []);
-  adminCache.noticias = data;
-  renderTableBody('newsBody', data, r => `
-    <tr>
-      <td>${r.titulo || '-'}</td>
-      <td>${r.autor || '-'}</td>
-      <td>${r.data || '-'}</td>
-      <td><span class="badge-acao" onclick="editNews('${r.id||''}')">Editar</span> <span class="badge-acao" onclick="deleteNews('${r.id||''}')">Excluir</span></td>
-    </tr>`, 4);
-}
-
-async function loadModalidadesAdmin() {
-  const data = await adminFetch('/modalidades', []);
-  adminCache.modalidades = data;
-  renderTableBody('modsBody', data, r => `
-    <tr>
-      <td>${r.nome || r.titulo || '-'}</td>
-      <td>${r.horario || '-'}</td>
-      <td><span class="badge-acao" onclick="editMod('${r.id||''}')">Editar</span> <span class="badge-acao" onclick="deleteMod('${r.id||''}')">Excluir</span></td>
-    </tr>`, 3);
-  preencherSelectSorteio();
-  preencherSelectsAdmin();
-}
-
-function initAdminPage() {
-  if (adminDataLoaded) return;
-  const body = document.body;
-  if (body && body.classList.contains('admin-shell')) {
-    adminDataLoaded = true;
-    if (window.__adminSessionExpired) return;
-    // tema
-    const t = localStorage.getItem('themeAdmin');
-    if (t) body.dataset.theme = t;
-    // tab ativa
-    const tabId = localStorage.getItem('adminTab') || adminActiveTab || 'tabDashboard';
-    switchAdminTab(tabId);
-    // dados
-    loadAdminMetrics();
-    loadInscricoesAdmin();
-    loadUsuariosAdmin();
-    loadNoticiasAdmin();
-    loadModalidadesAdmin();
-    // carregamento inicial de jogos/sorteio
-    carregarTabelaSorteio();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', initAdminPage);
-
-// ------ AÃ§Ãµes rÃ¡pidas de botÃµes (CRUD simples) ------
-async function adminPost(url, body) {
-  if (window.__adminSessionExpired) throw new Error('SessÃ£o expirada.');
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body||{})
-  });
-  if (r.status === 401) {
-    handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
-    throw new Error('SessÃ£o expirada.');
-  }
-  if (!r.ok) throw new Error('HTTP '+r.status);
-  return r.json();
-}
-async function adminPut(url, body) {
-  if (window.__adminSessionExpired) throw new Error('SessÃ£o expirada.');
-  const r = await fetch(url, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body||{})
-  });
-  if (r.status === 401) {
-    handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
-    throw new Error('SessÃ£o expirada.');
-  }
-  if (!r.ok) throw new Error('HTTP '+r.status);
-  return r.json();
-}
-async function adminDelete(url) {
-  if (window.__adminSessionExpired) throw new Error('SessÃ£o expirada.');
-  const r = await fetch(url, { method: 'DELETE', credentials: 'include' });
-  if (r.status === 401) {
-    handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
-    throw new Error('SessÃ£o expirada.');
-  }
-  if (!r.ok) throw new Error('HTTP '+r.status);
-  return r.json();
-}
-
-async function createUser() {
-  const nome = prompt('Nome completo do usuÃ¡rio:');
-  const matricula = prompt('MatrÃ­cula:');
-  const turma = prompt('Turma:');
-  const role = prompt('Papel (ADMIN/PROFESSOR/ALUNO):','ALUNO');
-  if (!nome || !matricula) return;
-  try {
-    await adminPost('/admin/add-aluno', { nome, matricula, turma, role });
-    showToast('Usuario criado', 'info');
-    loadUsuariosAdmin();
-  } catch(e){ showToast('Erro ao criar usuÃ¡rio','error'); }
-}
-
-async function editUser(matricula) {
-  if (!matricula) return;
-  const nome = prompt('Novo nome (deixe vazio para manter):');
-  const turma = prompt('Nova turma (opcional):');
-  try {
-    await adminPut(`/admin/aluno/${encodeURIComponent(matricula)}`, { nome: nome||undefined, turma: turma||undefined });
-    showToast('Usuario atualizado','info');
-    loadUsuariosAdmin();
-  } catch(e){ showToast('Erro ao atualizar','error'); }
-}
-
-async function deleteUser(matricula) {
-  if (!matricula) return;
-  if (!confirm('Excluir este usuÃ¡rio?')) return;
-  try {
-    await adminDelete(`/admin/aluno/${encodeURIComponent(matricula)}`);
-    showToast('Usuario removido','info');
-    loadUsuariosAdmin();
-  } catch(e){ showToast('Erro ao remover','error'); }
-}
-
-async function resetPassUser(matricula) {
-  if (!matricula) return;
-  try {
-    await adminPost(`/admin/aluno/${encodeURIComponent(matricula)}/reset-senha`, {});
-    showToast('Senha resetada (token enviado)','info');
-  } catch(e){ showToast('Erro ao resetar','error'); }
-}
-
-async function createNews() {
-  const titulo = prompt('TÃ­tulo da notÃ­cia:');
-  const descricao = prompt('DescriÃ§Ã£o:');
-  if (!titulo || !descricao) return;
-  try {
-    await adminPost('/admin/noticias', { titulo, descricao });
-    showToast('NotÃ­cia publicada','info');
-    loadNoticiasAdmin();
-  } catch(e){ showToast('Erro ao publicar','error'); }
-}
-async function saveNews(event) {
-  if (event) event.preventDefault();
-  const titulo = document.getElementById('newsTitulo')?.value.trim();
-  const autor = document.getElementById('newsAutor')?.value.trim();
-  const data = document.getElementById('newsData')?.value;
-  const descricao = document.getElementById('newsDescricao')?.value.trim();
-  if (!titulo || !descricao) { showToast('Preencha tÃ­tulo e descriÃ§Ã£o','error'); return; }
-  try {
-    await adminPost('/admin/noticias', { titulo, descricao, autor, data });
-    showToast('NotÃ­cia publicada','info');
-    if (event && event.target?.reset) event.target.reset();
-    loadNoticiasAdmin();
-  } catch(e){ showToast('Erro ao publicar','error'); }
-}
-async function editNews(id) {
-  const titulo = prompt('Novo tÃ­tulo:');
-  const descricao = prompt('Nova descriÃ§Ã£o:');
-  try {
-    await adminPut(`/noticias/${id}`, { titulo, descricao });
-    showToast('NotÃ­cia atualizada','info');
-    loadNoticiasAdmin();
-  } catch(e){ showToast('Erro ao atualizar','error'); }
-}
-async function deleteNews(id) {
-  if (!confirm('Excluir notÃ­cia?')) return;
-  try {
-    await adminDelete(`/noticias/${id}`);
-    showToast('NotÃ­cia excluÃ­da','info');
-    loadNoticiasAdmin();
-  } catch(e){ showToast('Erro ao excluir','error'); }
-}
-
-async function createMod() {
-  const nome = prompt('Nome da modalidade:');
-  const horario = prompt('Dias/horÃ¡rios:');
-  if (!nome) return;
-  try {
-    await adminPost('/admin/modalidades', { nome, horario });
-    showToast('Modalidade criada','info');
-    loadModalidadesAdmin();
-  } catch(e){ showToast('Erro ao criar modalidade','error'); }
-}
-async function saveMod(event) {
-  if (event) event.preventDefault();
-  const nome = document.getElementById('modNome')?.value.trim();
-  const horario = document.getElementById('modHorario')?.value.trim();
-  if (!nome || !horario) { showToast('Preencha modalidade e horÃ¡rio','error'); return; }
-  try {
-    await adminPost('/admin/modalidades', { nome, horario });
-    showToast('Modalidade salva','info');
-    if (event?.target?.reset) event.target.reset();
-    loadModalidadesAdmin();
-  } catch(e){ showToast('Erro ao salvar modalidade','error'); }
-}
-async function editMod(id) {
-  const nome = prompt('Novo nome:');
-  const horario = prompt('Novo horÃ¡rio:');
-  try {
-    await adminPut(`/admin/modalidades/${id}`, { nome, horario });
-    showToast('Modalidade atualizada','info');
-    loadModalidadesAdmin();
-  } catch(e){ showToast('Erro ao atualizar','error'); }
-}
-async function deleteMod(id) {
-  if (!confirm('Excluir modalidade?')) return;
-  try {
-    await adminDelete(`/admin/modalidades/${id}`);
-    showToast('Modalidade removida','info');
-    loadModalidadesAdmin();
-  } catch(e){ showToast('Erro ao remover','error'); }
+function cancelModEdit() {
+  modalidadeEditId = null;
+  const nomeInput = document.getElementById('modNome');
+  const horarioInput = document.getElementById('modHorario');
+  const saveBtn = document.getElementById('modSaveBtn');
+  const cancelBtn = document.getElementById('modCancelBtn');
+  if (nomeInput) nomeInput.value = '';
+  if (horarioInput) horarioInput.value = '';
+  if (saveBtn) saveBtn.textContent = 'Salvar modalidade';
+  if (cancelBtn) cancelBtn.classList.add('hidden');
 }
 
 // ------------------ BUSCAR ALUNO (admin) ------------------
@@ -2579,7 +2271,7 @@ async function buscarAlunoAdmin() {
   const box = document.getElementById('buscaResultado');
   if (!box) return;
   if (!matricula) {
-    box.innerHTML = '<p class="muted">Informe a matricula.</p>';
+    box.innerHTML = '<p class="muted">Informe a matrícula.</p>';
     return;
   }
   try {
@@ -2591,7 +2283,7 @@ async function buscarAlunoAdmin() {
         <thead>
           <tr>
             <th>Nome</th>
-            <th>Matricula</th>
+            <th>Matrícula</th>
             <th>Turma</th>
             <th>Campus</th>
             <th>Sexo</th>
@@ -2611,7 +2303,7 @@ async function buscarAlunoAdmin() {
       </table>
     `;
   } catch (e) {
-    box.innerHTML = '<p class="muted">Aluno nao encontrado.</p>';
+    box.innerHTML = '<p class="muted">Aluno não encontrado.</p>';
   }
 }
 
@@ -2619,7 +2311,7 @@ function buscarAluno() {
   return buscarAlunoAdmin();
 }
 
-// ------------------ SORTEIO: carregar/horÃ¡rios ------------------
+// ------------------ SORTEIO: carregar/horários ------------------
 async function carregarTabelaSorteio() {
   const mod = document.getElementById('sorteioModalidade')?.value;
   const sexo = document.getElementById('sorteioSexo')?.value;
@@ -2655,7 +2347,7 @@ function renderSorteioTabela() {
       <td class="placar">X</td>
       <td>${j.equipeB || '-'}</td>
       <td>${renderStatusPill(j.status || 'NAO_INICIADO')}</td>
-      <td><button class="btn-outline btn-sm" onclick="preencherSumulaFromSorteio(${idx})">Sumula</button></td>
+      <td><button class="btn-outline btn-sm" onclick="preencherSumulaFromSorteio(${idx})">Súmula</button></td>
     </tr>
   `).join('');
 }
@@ -2677,7 +2369,7 @@ async function salvarSumulaResultado() {
   const placarB = document.getElementById('sumulaPlacarB')?.value || 0;
   if (!jogoLabel) { showToast('Selecione o jogo', 'error'); return; }
   const jogo = adminCache.jogos.find(j => (j.jogo || j.numero_jogo) === jogoLabel);
-  if (!jogo) { showToast('Jogo nao encontrado', 'error'); return; }
+  if (!jogo) { showToast('Jogo não encontrado', 'error'); return; }
   try {
     const res = await fetch(`/sumulas/jogos/${jogo.id}`, {
       method: 'PATCH',
@@ -2692,7 +2384,7 @@ async function salvarSumulaResultado() {
     });
     const data = await res.json();
     if (!data?.ok) throw new Error(data?.message || 'Erro');
-    showToast('Sumula salva','info');
+    showToast('Súmula salva','info');
   } catch(e){ showToast('Erro ao salvar sumula','error'); }
 }
 
@@ -2722,7 +2414,7 @@ function gerarSumulaPreview(download = false) {
     showToastErro('Preencha modalidade, fase e as duas equipes antes de gerar a previa.');
     return;
   }
-  const titulo = `Sumula - ${d.equipeA} x ${d.equipeB}`;
+  const titulo = `Súmula - ${d.equipeA} x ${d.equipeB}`;
   const html = `
     <!DOCTYPE html>
     <html><head><meta charset="UTF-8"><title>${titulo}</title>
@@ -2735,11 +2427,11 @@ function gerarSumulaPreview(download = false) {
     </head><body>
       <h3>${titulo}</h3>
       <table>
-        <tr><td colspan="2"><strong>IdentificaÃ§Ã£o do jogo</strong></td></tr>
+        <tr><td colspan="2"><strong>Identificação do jogo</strong></td></tr>
         <tr><td>Modalidade: ${d.modalidade}</td><td>Fase: ${d.fase}</td></tr>
         <tr><td>Sexo: ${d.sexo}</td><td>Etapa: ${d.etapa}</td></tr>
         <tr><td>Data: ${d.data}</td><td>Inicio: ${d.inicio}  /  Fim: ${d.fim}</td></tr>
-        <tr><td>Ãrbitro: ${d.arbitro}</td><td>MesÃ¡rios: ${d.mesarios}</td></tr>
+        <tr><td>Árbitro: ${d.arbitro}</td><td>Mesários: ${d.mesarios}</td></tr>
       </table>
       <table>
         <tr><td colspan="4"><strong>Placar</strong></td></tr>
@@ -2747,8 +2439,8 @@ function gerarSumulaPreview(download = false) {
         <tr><td colspan="2">Pontos A: ${d.pontosA}</td><td colspan="2">Pontos B: ${d.pontosB}</td></tr>
       </table>
       <table>
-        <tr><td><strong>CartÃµes</strong></td></tr>
-        <tr><td>${d.cartoes || 'â€”'}</td></tr>
+        <tr><td><strong>Cartões</strong></td></tr>
+        <tr><td>${d.cartoes || '-'}</td></tr>
       </table>
     </body></html>
   `;
@@ -2764,7 +2456,7 @@ function gerarSumulaPreview(download = false) {
       w.document.write(html);
       w.document.close();
     } else {
-      showToastErro('Popup bloqueado. Permita popups para ver a prÃ©via.');
+      showToastErro('Popup bloqueado. Permita popups para ver a prévia.');
     }
   }
 }
@@ -2790,7 +2482,7 @@ function preencherSumulaFromSorteio(idx = 0) {
   if (equipeA) equipeA.value = jogo.equipeA || '';
   if (equipeB) equipeB.value = jogo.equipeB || '';
   const fase = document.getElementById('sumulaFase');
-  if (fase) fase.value = jogo.jogo || 'ClassificatÃ³ria';
+  if (fase) fase.value = jogo.jogo || 'Classificatória';
   const data = document.getElementById('sumulaData');
   if (data && !data.value) data.valueAsDate = new Date();
   document.getElementById('tabSumula')?.scrollIntoView({ behavior: 'smooth' });
@@ -2808,7 +2500,7 @@ function renderResultadosLista() {
     <div class="result-card">
       <strong>${r.modalidade} - ${r.fase} (${r.sexo})</strong>
       <span>${r.equipeA} ${r.pontosA} x ${r.pontosB} ${r.equipeB}</span>
-      <small>Etapa: ${r.etapa} Data: ${r.data || '-'} Ãrbitro: ${r.arbitro || '-'}</small>
+      <small>Etapa: ${r.etapa} Data: ${r.data || '-'} Árbitro: ${r.arbitro || '-'}</small>
     </div>
   `).join('');
 }
@@ -2838,10 +2530,10 @@ function filtrarResultados() {
 function baixarResultados() {
   const lista = filtrarLista(getResultados());
   if (lista.length === 0) {
-    showToastErro('NÃ£o hÃ¡ resultados para exportar.');
+    showToastErro('Não há resultados para exportar.');
     return;
   }
-  const header = ['Modalidade', 'Fase', 'Sexo', 'Etapa', 'Equipe A', 'Pontos A', 'Equipe B', 'Pontos B', 'Data', 'Ãrbitro'];
+  const header = ['Modalidade', 'Fase', 'Sexo', 'Etapa', 'Equipe A', 'Pontos A', 'Equipe B', 'Pontos B', 'Data', 'Árbitro'];
   const rows = lista.map(r => [r.modalidade, r.fase, r.sexo, r.etapa, r.equipeA, r.pontosA, r.equipeB, r.pontosB, r.data, r.arbitro]);
   const csv = buildCsvContent(rows, header);
   const filename = `resultados_${new Date().toISOString().slice(0,10)}.csv`;
@@ -2870,7 +2562,7 @@ function renderClassification() {
   const ranking = Object.entries(pontos).sort((a, b) => b[1] - a[1]);
   container.innerHTML = ranking.length
     ? ranking.map(([equipe, pts], idx) => `<div class="result-card">${idx + 1}. ${equipe} - ${pts} pts</div>`).join('')
-    : '<p class="muted">Nenhuma pontuaÃ§Ã£o registrada.</p>';
+    : '<p class="muted">Nenhuma pontuação registrada.</p>';
 }
 
 function initSumula() {
@@ -2962,6 +2654,8 @@ function initPage() {
   loadUserFromStorage();
   initTheme();
   bindPhoneMasks();
+  normalizeInteractiveElements();
+  scheduleResponsiveTableCards();
   if (!window.__phoneMaskObserver) {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -2972,8 +2666,11 @@ function initPage() {
           } else {
             bindPhoneMasks(node);
           }
+          normalizeInteractiveElements(node);
+          scheduleResponsiveTableCards();
         });
       });
+      enhanceSideNavIcons();
     });
     observer.observe(document.body, { childList: true, subtree: true });
     window.__phoneMaskObserver = observer;
@@ -2999,9 +2696,17 @@ function initPage() {
     return;
   }
 
+  ensureV0ShellScaffold(page);
+  document.body.classList.toggle('v0-responsive-shell', shouldUseV0ResponsiveShell(page));
   renderDrawer();
   ensureSideNavLinks();
+  enhanceSideNavIcons();
   bindDrawerOverlays();
+  bindDrawerGestures();
+  bindEdgeSwipeOpen();
+  attachDrawerShortcuts();
+  syncResponsiveLayoutMode();
+  renderMobileBottomNav(page);
   applyRoleVisibility();
   applyHeroGreeting();
   ensureUserFromApi().then(applyHeroGreeting);
@@ -3009,7 +2714,7 @@ function initPage() {
   if (avatar) avatar.src = currentUser.foto || '/assets/avatar-default.png';
 
   if (page === 'admin' && sessionStorage.getItem('adminSessionExpired') === '1') {
-    handleAdminSessionExpired('SessÃ£o expirada. FaÃ§a login novamente.');
+    handleAdminSessionExpired('Sessão expirada. Faça login novamente.');
     return;
   }
 
@@ -3018,7 +2723,7 @@ function initPage() {
     return;
   }
 
-  if (page === 'admin' && !isStaffUser()) {
+  if ((page === 'admin' || page === 'admin-cadastro') && !isStaffUser()) {
     location.href = 'dashboard.html';
     return;
   }
@@ -3030,8 +2735,10 @@ function initPage() {
   if (page === 'perfil') carregarPerfil();
   if (page === 'sumula' || page === 'sumula-mobile') initSumula();
   if (page === 'resultados') renderResultadosLista();
-  if (page === 'admin') {
+  if (page === 'admin' || page === 'admin-cadastro') {
     initSidebarCollapse();
+  }
+  if (page === 'admin') {
     applyAdminTabVisibility();
     const pendingTab = localStorage.getItem('adminTab');
     if (pendingTab) {
@@ -3046,9 +2753,16 @@ function initPage() {
   ensureSiteFooter();
   bindAdminDownloads();
   checkTour();
+  scheduleResponsiveTableCards();
 
   window.addEventListener('resize', () => {
+    ensureV0ShellScaffold(page);
+    document.body.classList.toggle('v0-responsive-shell', shouldUseV0ResponsiveShell(page));
+    syncResponsiveLayoutMode();
+    enhanceSideNavIcons();
+    renderMobileBottomNav(page);
     if (localStorage.getItem('tourActive')) runTourStep();
+    scheduleResponsiveTableCards();
   });
   window.addEventListener('scroll', () => {
     if (localStorage.getItem('tourActive')) runTourStep();
@@ -3075,7 +2789,7 @@ function updateInscriptionsTable(list) {
   if (!tbody) return;
   const source = Array.isArray(list) ? list : inscriptions;
   if (!source.length) {
-    tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscriÃ§Ã£o encontrada.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8">Nenhuma inscrição encontrada.</td></tr>';
     if (empty) empty.classList.remove('hidden');
     return;
   }
@@ -3232,7 +2946,7 @@ async function gerarTabelaSorteio() {
 async function gerarHorariosSorteio() {
   const horaInicio = document.getElementById('sorteioHoraInicio')?.value || '07:30';
   const intervaloMin = Number(document.getElementById('sorteioIntervalo')?.value || 0);
-  if (!sorteioRows.length) { showToastErro('Gere a tabela antes de aplicar horÃ¡rios'); return; }
+  if (!sorteioRows.length) { showToastErro('Gere a tabela antes de aplicar horários'); return; }
 
   aplicarNumeracaoEHorarios(sorteioRows, horaInicio, intervaloMin);
 
@@ -3263,9 +2977,9 @@ async function gerarHorariosSorteio() {
     }));
     adminCache.jogos = sorteioRows;
     renderSorteioTabela();
-    showToastSucesso('Horarios aplicados e salvos.');
+    showToastSucesso('Horários aplicados e salvos.');
   } catch (e) {
-    showToastErro('Erro ao aplicar horÃ¡rios.');
+    showToastErro('Erro ao aplicar horários.');
   }
 }
 
@@ -3273,7 +2987,7 @@ function aplicarHorariosSorteio() {
   return gerarHorariosSorteio();
 }
 
-async function carregarTabelaSorteio() {
+async function carregarTabelaSorteioCompat() {
   const modNome = document.getElementById('sorteioModalidade')?.value || '';
   const sexo = document.getElementById('sorteioSexo')?.value || '';
   const chave = document.getElementById('sorteioChave')?.value || '';
@@ -3299,7 +3013,7 @@ function renderTabelaSorteio() {
   renderSorteioTabela();
 }
 
-function limparSorteio() {
+function limparSorteioCompat() {
   ['sorteioModalidade','sorteioSexo','sorteioChave','sorteioLocal','sorteioModo','sorteioHoraInicio','sorteioIntervalo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -3315,9 +3029,10 @@ function animateButton(btn) {
   setTimeout(() => btn.classList.remove('btn-pulse'), 700);
 }
 
-function exportarTabelaSorteioPrint() {
+function exportarTabelaSorteioPrintLegacy() {
   window.print();
 }
+
 
 
 
