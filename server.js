@@ -46,7 +46,7 @@ httpServer.headersTimeout = 66000;
 httpServer.requestTimeout = 30000;
 httpServer.on('error', (err) => {
     console.error('[http] Erro no servidor:', err);
-    if (err?.code === 'EADDRINUSE') {
+    if (err && err.code === 'EADDRINUSE') {
         process.exit(1);
     }
 });
@@ -134,7 +134,9 @@ async function ensureAlunosRoleColumn() {
         }
         await conexao.query("UPDATE alunos SET role = 'ALUNO' WHERE role IS NULL OR role = ''");
     } finally {
-        await conexao.end();
+        if (conexao) { // <-- Adicionamos esta verificação
+            await conexao.end();
+        }
     }
 }
 
@@ -172,8 +174,7 @@ async function ensureAdminsSchema() {
         const [orgRows] = await conexao.query('SELECT id FROM organizations ORDER BY id LIMIT 1');
         if (orgRows.length === 0) {
             const [orgRes] = await conexao.query(
-                'INSERT INTO organizations (nome, sigla) VALUES (?, ?)',
-                ['IFRO', 'IFRO']
+                'INSERT INTO organizations (nome, sigla) VALUES (?, ?)', ['IFRO', 'IFRO']
             );
             orgId = orgRes.insertId;
         } else {
@@ -201,8 +202,7 @@ async function ensureAdminsSchema() {
 
         if (orgId) {
             await conexao.query(
-                'UPDATE admins SET organization_id = ? WHERE organization_id IS NULL',
-                [orgId]
+                'UPDATE admins SET organization_id = ? WHERE organization_id IS NULL', [orgId]
             );
         }
         await conexao.query(
@@ -246,7 +246,7 @@ async function ensureSorteioSchema() {
     const conexao = await conectar();
     try {
         const [orgRows] = await conexao.query('SELECT id FROM organizations ORDER BY id ASC LIMIT 1');
-        const defaultOrgId = orgRows[0]?.id || null;
+        const defaultOrgId = orgRows[0] ? orgRows[0].id : null;
 
         const [jogosTables] = await conexao.query("SHOW TABLES LIKE 'jogos'");
         if (jogosTables.length) {
@@ -910,29 +910,28 @@ app.delete('/noticias/:id', async(req, res) => {
 });
 
 app.post('/admin/modalidades', async(req, res) => {
-        const { titulo, descricao, professor, hora_inicio, hora_fim, nome, horario } = req.body || {};
+    const { titulo, descricao, professor, hora_inicio, hora_fim, nome, horario } = req.body || {};
 
-        const tituloFinal = String(titulo || nome || '').trim();
-        const descricaoFinal = String(descricao || horario || 'Sem descricao').trim();
-        const professorFinal = String(professor || 'Nao informado').trim();
-        const horaInicioFinal = String(hora_inicio || '00:00').trim();
-        const horaFimFinal = String(hora_fim || '00:00').trim();
+    const tituloFinal = String(titulo || nome || '').trim();
+    const descricaoFinal = String(descricao || horario || 'Sem descricao').trim();
+    const professorFinal = String(professor || 'Nao informado').trim();
+    const horaInicioFinal = String(hora_inicio || '00:00').trim();
+    const horaFimFinal = String(hora_fim || '00:00').trim();
 
-        if (!tituloFinal) {
-            return res.status(400).json({ sucesso: false, mensagem: 'Titulo obrigatorio.' });
-        }
+    if (!tituloFinal) {
+        return res.status(400).json({ sucesso: false, mensagem: 'Titulo obrigatorio.' });
+    }
 
-        try {
-            const conexao = await conectar();
-            const [insertResult] = await conexao.query(
-                `INSERT INTO modalidades
+    try {
+        const conexao = await conectar();
+        const [insertResult] = await conexao.query(
+            `INSERT INTO modalidades
                (titulo, descricao, professor, hora_inicio, hora_fim)
-               VALUES (?, ?, ?, ?, ?)`,
-                [tituloFinal, descricaoFinal, professorFinal, horaInicioFinal, horaFimFinal]
-            );
+               VALUES (?, ?, ?, ?, ?)`, [tituloFinal, descricaoFinal, professorFinal, horaInicioFinal, horaFimFinal]
+        );
 
-            const [rows] = await conexao.query(
-                `SELECT id,
+        const [rows] = await conexao.query(
+            `SELECT id,
                         titulo AS nome,
                         titulo,
                         descricao,
@@ -948,56 +947,54 @@ app.post('/admin/modalidades', async(req, res) => {
                         atualizado_em
                  FROM modalidades
                  WHERE id = ?
-                 LIMIT 1`,
-                [insertResult.insertId]
-            );
-            await conexao.end();
+                 LIMIT 1`, [insertResult.insertId]
+        );
+        await conexao.end();
 
-            res.json({ sucesso: true, data: rows[0] || null });
-        } catch (e) {
-            console.error(e);
-            res.status(500).json({ sucesso: false });
-        }
-    });
+        res.json({ sucesso: true, data: rows[0] || null });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ sucesso: false });
+    }
+});
 
 app.put('/admin/modalidades/:id', async(req, res) => {
-        const { id } = req.params;
-        const { titulo, descricao, professor, hora_inicio, hora_fim, nome, horario } = req.body || {};
+    const { id } = req.params;
+    const { titulo, descricao, professor, hora_inicio, hora_fim, nome, horario } = req.body || {};
 
-        const tituloFinal = String(titulo || nome || '').trim();
-        const descricaoFinal = String(descricao || horario || 'Sem descricao').trim();
-        const professorFinal = String(professor || 'Nao informado').trim();
-        const horaInicioFinal = String(hora_inicio || '00:00').trim();
-        const horaFimFinal = String(hora_fim || '00:00').trim();
+    const tituloFinal = String(titulo || nome || '').trim();
+    const descricaoFinal = String(descricao || horario || 'Sem descricao').trim();
+    const professorFinal = String(professor || 'Nao informado').trim();
+    const horaInicioFinal = String(hora_inicio || '00:00').trim();
+    const horaFimFinal = String(hora_fim || '00:00').trim();
 
-        if (!tituloFinal) {
-            return res.status(400).json({ sucesso: false, mensagem: 'Titulo obrigatorio.' });
-        }
+    if (!tituloFinal) {
+        return res.status(400).json({ sucesso: false, mensagem: 'Titulo obrigatorio.' });
+    }
 
-        try {
-            const conexao = await conectar();
-            await conexao.query(
-                `UPDATE modalidades
+    try {
+        const conexao = await conectar();
+        await conexao.query(
+            `UPDATE modalidades
                SET titulo = ?, descricao = ?, professor = ?, hora_inicio = ?, hora_fim = ?
-               WHERE id = ?`,
-                [tituloFinal, descricaoFinal, professorFinal, horaInicioFinal, horaFimFinal, id]
-            );
+               WHERE id = ?`, [tituloFinal, descricaoFinal, professorFinal, horaInicioFinal, horaFimFinal, id]
+        );
 
-            const [cols] = await conexao.query('SHOW COLUMNS FROM modalidades');
-            const colSet = new Set(cols.map(c => c.Field));
-            if (colSet.has('atualizado_em')) {
-                await conexao.query('UPDATE modalidades SET atualizado_em = CURRENT_TIMESTAMP WHERE id = ?', [id]);
-            } else if (colSet.has('updated_at')) {
-                await conexao.query('UPDATE modalidades SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
-            }
-
-            await conexao.end();
-            res.json({ sucesso: true });
-        } catch (erro) {
-            console.error(erro);
-            res.status(500).json({ sucesso: false });
+        const [cols] = await conexao.query('SHOW COLUMNS FROM modalidades');
+        const colSet = new Set(cols.map(c => c.Field));
+        if (colSet.has('atualizado_em')) {
+            await conexao.query('UPDATE modalidades SET atualizado_em = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+        } else if (colSet.has('updated_at')) {
+            await conexao.query('UPDATE modalidades SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
         }
-    });
+
+        await conexao.end();
+        res.json({ sucesso: true });
+    } catch (erro) {
+        console.error(erro);
+        res.status(500).json({ sucesso: false });
+    }
+});
 
 app.delete('/admin/modalidades/:id', async(req, res) => {
     const { id } = req.params;
@@ -1282,7 +1279,7 @@ app.post('/admin/sumulas', async(req, res) => {
     try {
         const conexao = await conectar();
         const [mods] = await conexao.query('SELECT id FROM modalidades WHERE titulo = ? LIMIT 1', [modalidade]);
-        const modalidadeId = mods[0]?.id || null;
+        const modalidadeId = mods[0] ? mods[0].id : null;
         const [result] = await conexao.query(
             `INSERT INTO sumulas (jogo_id, modalidade_id, sexo, fase, etapa, data, arbitro, mesarios, inicio, fim,
                                   equipe_a, equipe_b, placar_a, placar_b, cartoes)

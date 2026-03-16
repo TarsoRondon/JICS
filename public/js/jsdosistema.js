@@ -1,3 +1,35 @@
+(function() {
+    'use strict';
+
+    function initToastShims() {
+        if (typeof window.toast === 'function') {
+            window.showToastErro = function(msg) {
+                toast(String(msg || 'Erro desconhecido'), 'error');
+            };
+            window.showToastSucesso = function(msg) {
+                toast(String(msg || 'Sucesso!'), 'success');
+            };
+            window.showToast = function(opts) {
+                const type = opts.type || 'info';
+                const message = opts.message || opts.title || 'Info';
+                toast(message, type);
+            };
+            console.log('[jsdosistema] Toast shims loaded');
+            return true;
+        }
+        return false;
+    }
+
+    // Init now and retry if toast not ready
+    if (!initToastShims()) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initToastShims);
+        } else {
+            setTimeout(initToastShims, 50);
+        }
+    }
+})();
+
 let currentUser = null;
 let modalidades = [];
 let noticias = [];
@@ -11,11 +43,11 @@ let sorteioRows = [];
 let adminDataLoaded = false;
 let adminActiveTab = localStorage.getItem('adminTab') || 'tabDashboard';
 let adminCache = {
-  inscricoes: [],
-  usuarios: [],
-  noticias: [],
-  modalidades: [],
-  jogos: []
+    inscricoes: [],
+    usuarios: [],
+    noticias: [],
+    modalidades: [],
+    jogos: []
 };
 const ADMIN_SIDEBAR_COLLAPSE_KEY = 'adminSidebarCollapsed';
 let adminSidebarResizeBound = false;
@@ -26,92 +58,92 @@ let modalidadeSuggestionsSyncPromise = null;
 let responsiveTableRaf = null;
 
 function getPhotoStorageKey(matricula) {
-  const key = String(matricula || '').trim();
-  if (!key) return null;
-  return `userPhoto:${key}`;
+    const key = String(matricula || '').trim();
+    if (!key) return null;
+    return `userPhoto:${key}`;
 }
 
 function applyStoredPhoto(user) {
-  if (!user || user.foto) return;
-  const key = getPhotoStorageKey(user.matricula);
-  if (!key) return;
-  const stored = localStorage.getItem(key);
-  if (stored) user.foto = stored;
+    if (!user || user.foto) return;
+    const key = getPhotoStorageKey(user.matricula);
+    if (!key) return;
+    const stored = localStorage.getItem(key);
+    if (stored) user.foto = stored;
 }
 
 function formatPhoneMask(value) {
-  let digits = String(value || '').replace(/\D/g, '');
-  if (digits.startsWith('55') && digits.length > 11) {
-    digits = digits.slice(2);
-  }
-  digits = digits.slice(0, 11);
-  if (!digits) return '';
-  if (digits.length < 3) return `(${digits}`;
-  const ddd = digits.slice(0, 2);
-  const rest = digits.slice(2);
-  const mobile = digits.length > 10;
-  const part1Len = mobile ? 5 : 4;
-  const part1 = rest.slice(0, part1Len);
-  const part2 = rest.slice(part1Len, part1Len + 4);
-  if (!part2) return `(${ddd}) ${part1}`;
-  return `(${ddd}) ${part1}-${part2}`;
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.startsWith('55') && digits.length > 11) {
+        digits = digits.slice(2);
+    }
+    digits = digits.slice(0, 11);
+    if (!digits) return '';
+    if (digits.length < 3) return `(${digits}`;
+    const ddd = digits.slice(0, 2);
+    const rest = digits.slice(2);
+    const mobile = digits.length > 10;
+    const part1Len = mobile ? 5 : 4;
+    const part1 = rest.slice(0, part1Len);
+    const part2 = rest.slice(part1Len, part1Len + 4);
+    if (!part2) return `(${ddd}) ${part1}`;
+    return `(${ddd}) ${part1}-${part2}`;
 }
 
 function shouldMaskPhone(input) {
-  if (!input || input.dataset.phoneMask === '1') return false;
-  if (input.dataset.mask === 'phone') return true;
-  if (input.type === 'tel') return true;
-  const key = `${input.id || ''} ${input.name || ''}`.toLowerCase();
-  return ['telefone', 'celular', 'fone', 'tel'].some((term) => key.includes(term));
+    if (!input || input.dataset.phoneMask === '1') return false;
+    if (input.dataset.mask === 'phone') return true;
+    if (input.type === 'tel') return true;
+    const key = `${input.id || ''} ${input.name || ''}`.toLowerCase();
+    return ['telefone', 'celular', 'fone', 'tel'].some((term) => key.includes(term));
 }
 
 function bindPhoneMaskInput(input) {
-  if (!shouldMaskPhone(input)) return;
-  input.dataset.phoneMask = '1';
-  input.addEventListener('input', () => {
-    input.value = formatPhoneMask(input.value);
-  });
-  input.addEventListener('blur', () => {
-    input.value = formatPhoneMask(input.value);
-  });
+    if (!shouldMaskPhone(input)) return;
+    input.dataset.phoneMask = '1';
+    input.addEventListener('input', () => {
+        input.value = formatPhoneMask(input.value);
+    });
+    input.addEventListener('blur', () => {
+        input.value = formatPhoneMask(input.value);
+    });
 }
 
 function bindPhoneMasks(root = document) {
-  if (!root || !root.querySelectorAll) return;
-  root.querySelectorAll('input').forEach(bindPhoneMaskInput);
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('input').forEach(bindPhoneMaskInput);
 }
 
 function normalizeButtonsType(root = document) {
-  if (!root) return;
-  if (root.matches && root.matches('button:not([type])')) {
-    root.type = 'button';
-  }
-  if (!root.querySelectorAll) return;
-  root.querySelectorAll('button:not([type])').forEach((button) => {
-    button.type = 'button';
-  });
+    if (!root) return;
+    if (root.matches && root.matches('button:not([type])')) {
+        root.type = 'button';
+    }
+    if (!root.querySelectorAll) return;
+    root.querySelectorAll('button:not([type])').forEach((button) => {
+        button.type = 'button';
+    });
 }
 
 function bindHashActionLinks(root = document) {
-  if (!root) return;
-  const bindOne = (link) => {
-    if (!link || link.dataset.hashBound === '1') return;
-    link.dataset.hashBound = '1';
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-    });
-  };
+    if (!root) return;
+    const bindOne = (link) => {
+        if (!link || link.dataset.hashBound === '1') return;
+        link.dataset.hashBound = '1';
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+        });
+    };
 
-  if (root.matches && root.matches('a[href="#"]')) {
-    bindOne(root);
-  }
-  if (!root.querySelectorAll) return;
-  root.querySelectorAll('a[href="#"]').forEach(bindOne);
+    if (root.matches && root.matches('a[href="#"]')) {
+        bindOne(root);
+    }
+    if (!root.querySelectorAll) return;
+    root.querySelectorAll('a[href="#"]').forEach(bindOne);
 }
 
 function normalizeInteractiveElements(root = document) {
-  normalizeButtonsType(root);
-  bindHashActionLinks(root);
+    normalizeButtonsType(root);
+    bindHashActionLinks(root);
 }
 
 function renderGridSkeleton(target, count = 3) {
@@ -145,23 +177,23 @@ function renderTableSkeleton(tbody, rows = 4, cols = 4) {
     `).join('');
         return `<tr>${cells}</tr>`;
     }).join('');
-  tbody.innerHTML = lines;
+    tbody.innerHTML = lines;
 }
 
 const localLoaderState = {
-  count: 0,
-  shownAt: 0,
-  timer: null,
-  minDuration: 1200,
+    count: 0,
+    shownAt: 0,
+    timer: null,
+    minDuration: 1200,
 };
 
 function createLocalLoaderFallback() {
-  let loader = document.getElementById('global-loader-fallback');
-  if (loader) return loader;
-  loader = document.createElement('div');
-  loader.id = 'global-loader-fallback';
-  loader.className = 'modal hidden';
-  loader.innerHTML = `
+    let loader = document.getElementById('global-loader-fallback');
+    if (loader) return loader;
+    loader = document.createElement('div');
+    loader.id = 'global-loader-fallback';
+    loader.className = 'modal hidden';
+    loader.innerHTML = `
     <div class="modal-card">
       <div class="loader-card">
         <span class="spinner" aria-hidden="true"></span>
@@ -173,78 +205,79 @@ function createLocalLoaderFallback() {
       </div>
     </div>
   `;
-  document.body.appendChild(loader);
-  return loader;
+    document.body.appendChild(loader);
+    return loader;
 }
 
 function showGlobalLoading(show, message) {
-  const nativeLoader = typeof window.showLoading === 'function' ? window.showLoading : null;
-  if (nativeLoader) {
-    nativeLoader(show, message);
-    return;
-  }
-
-  const loader = createLocalLoaderFallback();
-  const text = document.getElementById('global-loader-fallback-text');
-  if (text) text.textContent = message || 'Aguarde um instante...';
-
-  if (show) {
-    localLoaderState.count += 1;
-    clearTimeout(localLoaderState.timer);
-    localLoaderState.timer = null;
-    if (loader.classList.contains('hidden')) {
-      loader.classList.remove('hidden');
-      localLoaderState.shownAt = Date.now();
+    const nativeLoader = typeof window.showLoading === 'function' ? window.showLoading : null;
+    if (nativeLoader) {
+        nativeLoader(show, message);
+        return;
     }
-    return;
-  }
 
-  localLoaderState.count = Math.max(0, localLoaderState.count - 1);
-  if (localLoaderState.count > 0) return;
+    const loader = createLocalLoaderFallback();
+    const text = document.getElementById('global-loader-fallback-text');
+    if (text) text.textContent = message || 'Aguarde um instante...';
 
-  const elapsed = Date.now() - localLoaderState.shownAt;
-  const remaining = Math.max(0, localLoaderState.minDuration - elapsed);
-  clearTimeout(localLoaderState.timer);
-  localLoaderState.timer = setTimeout(() => {
-    loader.classList.add('hidden');
-    localLoaderState.timer = null;
-  }, remaining);
+    if (show) {
+        localLoaderState.count += 1;
+        clearTimeout(localLoaderState.timer);
+        localLoaderState.timer = null;
+        if (loader.classList.contains('hidden')) {
+            loader.classList.remove('hidden');
+            localLoaderState.shownAt = Date.now();
+        }
+        return;
+    }
+
+    localLoaderState.count = Math.max(0, localLoaderState.count - 1);
+    if (localLoaderState.count > 0) return;
+
+    const elapsed = Date.now() - localLoaderState.shownAt;
+    const remaining = Math.max(0, localLoaderState.minDuration - elapsed);
+    clearTimeout(localLoaderState.timer);
+    localLoaderState.timer = setTimeout(() => {
+        loader.classList.add('hidden');
+        localLoaderState.timer = null;
+    }, remaining);
 }
+
 function sanitizeFilename(value, fallback = 'arquivo') {
-  const raw = String(value || fallback || 'arquivo');
-  const cleaned = raw
-    .replace(/[\\/:*?"<>|]+/g, '')
-    .replace(/\s+/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '');
-  return cleaned || fallback || 'arquivo';
+    const raw = String(value || fallback || 'arquivo');
+    const cleaned = raw
+        .replace(/[\\/:*?"<>|]+/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '');
+    return cleaned || fallback || 'arquivo';
 }
 
 function escapeCsvValue(value) {
-  const text = String(value ?? '');
-  return `"${text.replace(/"/g, '""')}"`;
+    const text = String(value ? ? '');
+    return `"${text.replace(/"/g, '""')}"`;
 }
 
 function buildCsvContent(rows, header) {
-  const data = header ? [header, ...rows] : rows;
-  const lines = data.map(row => row.map(escapeCsvValue).join(';')).join('\n');
-  return `\uFEFF${lines}`;
+    const data = header ? [header, ...rows] : rows;
+    const lines = data.map(row => row.map(escapeCsvValue).join(';')).join('\n');
+    return `\uFEFF${lines}`;
 }
 
 function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function downloadTextFile(content, filename, type) {
-  const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8;' });
-  downloadBlob(blob, filename);
+    const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8;' });
+    downloadBlob(blob, filename);
 }
 
 function setSelectOptions(select, values, placeholder) {
@@ -254,84 +287,84 @@ function setSelectOptions(select, values, placeholder) {
 }
 
 function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    return String(value ? ? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function normalizeDisplayText(value, fallback = '-') {
-  if (value === undefined || value === null) return fallback;
-  const raw = String(value).trim();
-  if (!raw) return fallback;
-  if (!/[\u00C3\u00C2\u00E2\uFFFD]/.test(raw)) return raw;
-  try {
-    return decodeURIComponent(escape(raw));
-  } catch (_) {
-    return raw;
-  }
+    if (value === undefined || value === null) return fallback;
+    const raw = String(value).trim();
+    if (!raw) return fallback;
+    if (!/[\u00C3\u00C2\u00E2\uFFFD]/.test(raw)) return raw;
+    try {
+        return decodeURIComponent(escape(raw));
+    } catch (_) {
+        return raw;
+    }
 }
 
 function normalizeLookupValue(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 }
 
 function truncateText(value, max = 140) {
-  const text = normalizeDisplayText(value, '').replace(/\s+/g, ' ').trim();
-  if (!text) return '';
-  if (text.length <= max) return text;
-  return `${text.slice(0, max).trimEnd()}...`;
+    const text = normalizeDisplayText(value, '').replace(/\s+/g, ' ').trim();
+    if (!text) return '';
+    if (text.length <= max) return text;
+    return `${text.slice(0, max).trimEnd()}...`;
 }
 
 function resolveModalidadeMeta(nome) {
-  const normalized = normalizeLookupValue(nome);
-  const rules = [
-    { keys: ['futebol', 'futsal'], icon: 'sports_soccer', category: 'coletiva' },
-    { keys: ['basquete', 'basket'], icon: 'sports_basketball', category: 'coletiva' },
-    { keys: ['volei', 'volei de praia', 'volley'], icon: 'sports_volleyball', category: 'coletiva' },
-    { keys: ['handebol'], icon: 'sports_handball', category: 'coletiva' },
-    { keys: ['tenis', 'tenis de mesa'], icon: 'sports_tennis', category: 'individual' },
-    { keys: ['atletismo', 'corrida', 'caminhada'], icon: 'directions_run', category: 'individual' },
-    { keys: ['natacao'], icon: 'pool', category: 'individual' },
-    { keys: ['xadrez'], icon: 'chess', category: 'individual' },
-    { keys: ['judo', 'karate', 'jiu', 'capoeira', 'taekwondo'], icon: 'sports_kabaddi', category: 'individual' },
-    { keys: ['academia', 'musculacao', 'fitness'], icon: 'fitness_center', category: 'individual' },
-  ];
-  for (const rule of rules) {
-    if (rule.keys.some((k) => normalized.includes(k))) {
-      return rule;
+    const normalized = normalizeLookupValue(nome);
+    const rules = [
+        { keys: ['futebol', 'futsal'], icon: 'sports_soccer', category: 'coletiva' },
+        { keys: ['basquete', 'basket'], icon: 'sports_basketball', category: 'coletiva' },
+        { keys: ['volei', 'volei de praia', 'volley'], icon: 'sports_volleyball', category: 'coletiva' },
+        { keys: ['handebol'], icon: 'sports_handball', category: 'coletiva' },
+        { keys: ['tenis', 'tenis de mesa'], icon: 'sports_tennis', category: 'individual' },
+        { keys: ['atletismo', 'corrida', 'caminhada'], icon: 'directions_run', category: 'individual' },
+        { keys: ['natacao'], icon: 'pool', category: 'individual' },
+        { keys: ['xadrez'], icon: 'chess', category: 'individual' },
+        { keys: ['judo', 'karate', 'jiu', 'capoeira', 'taekwondo'], icon: 'sports_kabaddi', category: 'individual' },
+        { keys: ['academia', 'musculacao', 'fitness'], icon: 'fitness_center', category: 'individual' },
+    ];
+    for (const rule of rules) {
+        if (rule.keys.some((k) => normalized.includes(k))) {
+            return rule;
+        }
     }
-  }
-  return { icon: 'sports', category: 'coletiva' };
+    return { icon: 'sports', category: 'coletiva' };
 }
 
 function bindDashboardModalidadeFilters() {
-  const root = document.getElementById('dashboardModalidadeFilters');
-  if (!root) return;
-  const syncActive = () => {
-    root.querySelectorAll('[data-mod-filter]').forEach((btn) => {
-      const isActive = btn.dataset.modFilter === dashboardModalidadeFiltroAtivo;
-      btn.classList.toggle('active', isActive);
-      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
-  };
-  if (root.dataset.bound !== '1') {
-    root.dataset.bound = '1';
-    root.addEventListener('click', (event) => {
-      const btn = event.target.closest('[data-mod-filter]');
-      if (!btn) return;
-      dashboardModalidadeFiltroAtivo = btn.dataset.modFilter || 'todos';
-      syncActive();
-      renderModalities();
-    });
-  }
-  syncActive();
+    const root = document.getElementById('dashboardModalidadeFilters');
+    if (!root) return;
+    const syncActive = () => {
+        root.querySelectorAll('[data-mod-filter]').forEach((btn) => {
+            const isActive = btn.dataset.modFilter === dashboardModalidadeFiltroAtivo;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+    };
+    if (root.dataset.bound !== '1') {
+        root.dataset.bound = '1';
+        root.addEventListener('click', (event) => {
+            const btn = event.target.closest('[data-mod-filter]');
+            if (!btn) return;
+            dashboardModalidadeFiltroAtivo = btn.dataset.modFilter || 'todos';
+            syncActive();
+            renderModalities();
+        });
+    }
+    syncActive();
 }
 
 function getModalidadeIdSelecionada() {
@@ -411,7 +444,7 @@ function buildDefaultSideNavMarkup() {
 
 function ensureV0ShellScaffold(page) {
     const shell = document.getElementById('appShell');
-    const appBody = shell?.querySelector('.app-body');
+    const appBody = shell ? .querySelector('.app-body');
     if (!shell || !appBody) return;
     if (!shouldUseV0ResponsiveShell(page)) return;
 
@@ -484,8 +517,8 @@ function normalizeLabelKey(value) {
 }
 
 function resolveSideLinkIcon(link, label) {
-    const href = normalizeLabelKey(link?.getAttribute('href') || '');
-    const tab = normalizeLabelKey(link?.dataset?.tab || '');
+    const href = normalizeLabelKey(link ? .getAttribute('href') || '');
+    const tab = normalizeLabelKey(link ? .dataset ? .tab || '');
     const key = `${href} ${tab} ${normalizeLabelKey(label)}`;
 
     if (key.includes('dashboard') || key.includes('inicio') || key.includes('visao geral')) return 'home';
@@ -911,13 +944,13 @@ function loadUserFromStorage() {
 }
 
 async function ensureUserFromApi() {
-    if (!currentUser || currentUser?.sexo) return;
+    if (!currentUser || currentUser ? .sexo) return;
     if (!currentUser.matricula) return;
     try {
         const res = await fetch(`/admin/aluno/${encodeURIComponent(currentUser.matricula)}`);
         if (!res.ok) return;
         const data = await res.json();
-        currentUser = { ...currentUser, ...data };
+        currentUser = {...currentUser, ...data };
         applyStoredPhoto(currentUser);
         sessionStorage.setItem('usuarioLogado', JSON.stringify(currentUser));
     } catch (_) {
@@ -1006,7 +1039,7 @@ function isDesktopSidebarViewport() {
 }
 
 function updateAdminSidebarStickyOffset() {
-    if (document.body?.dataset?.page !== 'admin') return;
+    if (document.body ? .dataset ? .page !== 'admin') return;
     const navbar = document.querySelector('.navbar');
     const banner = document.getElementById('sessionBanner');
     const navHeight = navbar ? Math.ceil(navbar.getBoundingClientRect().height) : 0;
@@ -1018,7 +1051,7 @@ function updateAdminSidebarStickyOffset() {
 }
 
 function setSidebarCollapsed(collapsed, persist = true) {
-    if (document.body?.dataset?.page !== 'admin') return;
+    if (document.body ? .dataset ? .page !== 'admin') return;
 
     const shouldCollapse = Boolean(collapsed) && isDesktopSidebarViewport();
     document.body.classList.toggle('admin-sidebar-collapsed', shouldCollapse);
@@ -1039,13 +1072,13 @@ function setSidebarCollapsed(collapsed, persist = true) {
 }
 
 function toggleSidebarCollapse() {
-    if (document.body?.dataset?.page !== 'admin') return;
+    if (document.body ? .dataset ? .page !== 'admin') return;
     const next = !document.body.classList.contains('admin-sidebar-collapsed');
     setSidebarCollapsed(next, true);
 }
 
 function initSidebarCollapse() {
-    if (document.body?.dataset?.page !== 'admin') return;
+    if (document.body ? .dataset ? .page !== 'admin') return;
     updateAdminSidebarStickyOffset();
     const storedCollapsed = localStorage.getItem(ADMIN_SIDEBAR_COLLAPSE_KEY) === '1';
     setSidebarCollapsed(storedCollapsed, false);
@@ -1064,7 +1097,7 @@ function initSidebarCollapse() {
     if (!adminSidebarResizeBound) {
         adminSidebarResizeBound = true;
         window.addEventListener('resize', () => {
-            if (document.body?.dataset?.page !== 'admin') return;
+            if (document.body ? .dataset ? .page !== 'admin') return;
             updateAdminSidebarStickyOffset();
             const preferredCollapsed = localStorage.getItem(ADMIN_SIDEBAR_COLLAPSE_KEY) === '1';
             setSidebarCollapsed(preferredCollapsed, false);
@@ -1121,67 +1154,67 @@ function toggleHelpPanel() {
 }
 
 function collectModalidadeNames(list = []) {
-  return Array.from(new Set(
-    (list || [])
-      .map((item) => {
-        if (typeof item === 'string') return item.trim();
-        return String(item?.nome || item?.titulo || '').trim();
-      })
-      .filter(Boolean)
-  )).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+    return Array.from(new Set(
+        (list || [])
+        .map((item) => {
+            if (typeof item === 'string') return item.trim();
+            return String(item ? .nome || item ? .titulo || '').trim();
+        })
+        .filter(Boolean)
+    )).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
 }
 
 function renderModNomeSuggestions(names = []) {
-  const datalist = document.getElementById('modNomeSuggestions');
-  if (!datalist) return;
-  datalist.innerHTML = names.map((name) => `<option value="${escapeHtml(name)}"></option>`).join('');
+    const datalist = document.getElementById('modNomeSuggestions');
+    if (!datalist) return;
+    datalist.innerHTML = names.map((name) => `<option value="${escapeHtml(name)}"></option>`).join('');
 }
 
 function refreshModNomeSuggestionsFromCache() {
-  const names = collectModalidadeNames(adminCache.modalidades || []);
-  if (!names.length) return;
-  renderModNomeSuggestions(names);
+    const names = collectModalidadeNames(adminCache.modalidades || []);
+    if (!names.length) return;
+    renderModNomeSuggestions(names);
 }
 
 async function refreshModNomeSuggestionsFromApi(force = false) {
-  const datalist = document.getElementById('modNomeSuggestions');
-  if (!datalist) return;
-  if (modalidadeSuggestionsApiReady && !force) return;
-  if (modalidadeSuggestionsSyncPromise) return modalidadeSuggestionsSyncPromise;
+    const datalist = document.getElementById('modNomeSuggestions');
+    if (!datalist) return;
+    if (modalidadeSuggestionsApiReady && !force) return;
+    if (modalidadeSuggestionsSyncPromise) return modalidadeSuggestionsSyncPromise;
 
-  modalidadeSuggestionsSyncPromise = (async() => {
-    try {
-      let response = await fetch('/api/modalidades', { credentials: 'include' });
-      if (!response.ok) {
-        response = await fetch('/modalidades', { credentials: 'include' });
-      }
-      if (!response.ok) return;
-      const rows = await response.json();
-      const names = collectModalidadeNames(rows);
-      if (!names.length) return;
-      renderModNomeSuggestions(names);
-      modalidadeSuggestionsApiReady = true;
-    } catch (_) {
-      // fallback silencioso para não bloquear o fluxo do admin
-    } finally {
-      modalidadeSuggestionsSyncPromise = null;
-    }
-  })();
+    modalidadeSuggestionsSyncPromise = (async() => {
+        try {
+            let response = await fetch('/api/modalidades', { credentials: 'include' });
+            if (!response.ok) {
+                response = await fetch('/modalidades', { credentials: 'include' });
+            }
+            if (!response.ok) return;
+            const rows = await response.json();
+            const names = collectModalidadeNames(rows);
+            if (!names.length) return;
+            renderModNomeSuggestions(names);
+            modalidadeSuggestionsApiReady = true;
+        } catch (_) {
+            // fallback silencioso para não bloquear o fluxo do admin
+        } finally {
+            modalidadeSuggestionsSyncPromise = null;
+        }
+    })();
 
-  return modalidadeSuggestionsSyncPromise;
+    return modalidadeSuggestionsSyncPromise;
 }
 
 // ---------- Admin helper: fill selects ----------
 function preencherSelectsAdmin() {
-  // Modalidades em filtros e sorteio
-  const modOpts = (adminCache.modalidades || []).map(m => m.nome || m.titulo).filter(Boolean);
-  setSelectOptions(document.getElementById('filtInscModalidade'), modOpts, 'Modalidade');
-  setSelectOptions(document.getElementById('filtInscTurma'), adminCache.inscricoes.map(i => i.turma).filter(Boolean), 'Turma');
-  setSelectOptions(document.getElementById('filtInscCampus'), adminCache.inscricoes.map(i => i.campus).filter(Boolean), 'Campus');
-  setSelectOptions(document.getElementById('sorteioModalidade'), modOpts, 'Modalidade');
-  setSelectOptions(document.getElementById('sumulaJogo'), (adminCache.jogos||[]).map(j => j.jogo || j.numero_jogo).filter(Boolean), 'Selecione o jogo');
-  refreshModNomeSuggestionsFromCache();
-  void refreshModNomeSuggestionsFromApi();
+    // Modalidades em filtros e sorteio
+    const modOpts = (adminCache.modalidades || []).map(m => m.nome || m.titulo).filter(Boolean);
+    setSelectOptions(document.getElementById('filtInscModalidade'), modOpts, 'Modalidade');
+    setSelectOptions(document.getElementById('filtInscTurma'), adminCache.inscricoes.map(i => i.turma).filter(Boolean), 'Turma');
+    setSelectOptions(document.getElementById('filtInscCampus'), adminCache.inscricoes.map(i => i.campus).filter(Boolean), 'Campus');
+    setSelectOptions(document.getElementById('sorteioModalidade'), modOpts, 'Modalidade');
+    setSelectOptions(document.getElementById('sumulaJogo'), (adminCache.jogos || []).map(j => j.jogo || j.numero_jogo).filter(Boolean), 'Selecione o jogo');
+    refreshModNomeSuggestionsFromCache();
+    void refreshModNomeSuggestionsFromApi();
 }
 
 function toggleAdminMenu(evt) {
@@ -3032,11 +3065,3 @@ function animateButton(btn) {
 function exportarTabelaSorteioPrintLegacy() {
   window.print();
 }
-
-
-
-
-
-
-
-

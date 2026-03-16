@@ -2,13 +2,12 @@ import mysql from 'mysql2/promise';
 import 'dotenv/config';
 
 export async function conectar() {
-    const conexao = await mysql.createConnection({
-        host: process.env.DB_HOST || 'localhost',
-        port: Number(process.env.DB_PORT || 3308),
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || '251030',
-        database: process.env.DB_NAME || 'banco_dados'
+    // Dentro do seu arquivo testeConexao.js
+    const connection = await mysql.createConnection({
+        host: '192.185.176.152',
+        user: 'gesste92_admin',
+        password: 'GESSTEC2026.',
+        database: 'gesste92_banco_dados'
     });
-
-    return conexao;
+    return connection;
 }
