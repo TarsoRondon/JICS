@@ -51,6 +51,9 @@ io.on('connection', (socket) => {
     socket.on('join_evento', ({ eventoId } = {}) => {
         if (eventoId) socket.join(`evento:${eventoId}`);
     });
+    socket.on('join_jogo', (jogoId) => {
+        if (jogoId) socket.join(`jogo:${jogoId}`);
+    });
 });
 
 app.use(express.json({ limit: '1mb' }));

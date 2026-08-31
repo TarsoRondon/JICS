@@ -1,146 +1,90 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modalidades · JICS IFRO</title>
-    <link rel="icon" type="image/png" href="/assets/ifro.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
-    <link rel="stylesheet" href="/aluno/shell.css" />
-</head>
-
-<body class="aluno-app" data-page="modalidades" data-theme="dark">
-    <div id="appShell">
-
-        <!-- ═══ NAVBAR ═══ -->
-        <nav class="navbar" aria-label="Navegação Principal">
-            <div class="navbar-left">
-                <button class="navbar-brand" onclick="window.location.href='/aluno/dashboard.html'" title="Início">
-                    <img src="/assets/ifro.png" alt="IFRO" class="brand-logo" />
-                    <span>IFRO ESPORTES</span>
-                </button>
-            </div>
-            <div class="navbar-center navbar-links">
-                <a href="/aluno/dashboard.html" class="nav-link">Início</a>
-                <a href="/aluno/modalidades.html" class="nav-link active">Modalidades</a>
-                <a href="/aluno/inscricoes.html" class="nav-link">Inscrições</a>
-                <a href="/aluno/horarios.html" class="nav-link">Horários</a>
-                <a href="/aluno/noticias.html" class="nav-link">Notícias</a>
-                <a href="/aluno/resultados.html" class="nav-link">Resultados</a>
-            </div>
-            <div class="navbar-right">
-                <button class="icon-btn help-btn" onclick="toggleHelpPanel()" title="Ajuda" aria-label="Ajuda">
-                    <span class="material-symbols-outlined">help_outline</span>
-                </button>
-                <div class="user-menu">
-                    <button class="user-trigger" onclick="toggleUserDrawer()" id="userTrigger" aria-label="Menu do Usuário">
-                        <img id="userAvatar" class="user-avatar" src="/assets/avatar-default.png" alt="Foto de perfil" onerror="this.src='/assets/avatar-default.png'" />
-                        <span id="userNameNavbar" class="user-name">Aluno</span>
-                    </button>
-                </div>
-            </div>
-        </nav>
-
-        <!-- ═══ APP BODY ═══ -->
-        <div class="app-body">
-            <aside id="sideNav" class="side-drawer" aria-label="Menu Lateral">
-                <div class="side-header"><span class="side-header-title">Menu do Aluno</span></div>
-                <a class="side-link" href="/aluno/dashboard.html">
-                    <span class="material-symbols-outlined">dashboard</span> Início
-                </a>
-                <a class="side-link active" href="/aluno/modalidades.html">
-                    <span class="material-symbols-outlined">sports_soccer</span> Modalidades
-                </a>
-                <a class="side-link user-only" href="/aluno/inscricoes.html">
-                    <span class="material-symbols-outlined">assignment</span> Minhas Inscrições
-                </a>
-                <a class="side-link" href="/aluno/horarios.html">
-                    <span class="material-symbols-outlined">schedule</span> Cronograma
-                </a>
-                <a class="side-link" href="/aluno/noticias.html">
-                    <span class="material-symbols-outlined">campaign</span> Notícias
-                </a>
-                <a class="side-link" href="/aluno/resultados.html">
-                    <span class="material-symbols-outlined">emoji_events</span> Resultados
-                </a>
-                <a class="side-link" href="/aluno/perfil.html">
-                    <span class="material-symbols-outlined">person</span> Meu Perfil
-                </a>
-                <div class="side-divider staff-only"></div>
-                <a class="side-link staff-only" href="/admin/dashboard.html">
-                    <span class="material-symbols-outlined">admin_panel_settings</span> Painel Admin
-                </a>
-            </aside>
-
-            <!-- ═══ MAIN CONTENT ═══ -->
-            <main class="page">
-
-                <section class="page-hero">
-                    <div class="page-hero__copy">
-                        <span class="page-hero__badge">Competições JICS</span>
-                        <h1>Catálogo de Modalidades</h1>
-                        <p>Explore as modalidades disponíveis no JICS, conheça as regras, vagas e faça sua inscrição.</p>
-                    </div>
-                    <div class="page-hero__panel">
-                        <div class="page-search">
-                            <span class="material-symbols-outlined">search</span>
-                            <input id="modalidadeSearch" type="search" placeholder="Buscar por modalidade, professor ou esporte..." />
-                        </div>
-                        <div class="page-actions">
-                            <button id="modalidadeClear" class="btn-outline btn-sm" type="button">Limpar Busca</button>
-                        </div>
-                        <div id="modalidadeCount" class="page-subtitle">Carregando modalidades disponíveis...</div>
-                    </div>
-                </section>
-
-                <!-- Cards Grid gerado pelo jsdosistema -->
-                <div id="allModalidadesGrid" class="cards-grid"></div>
-
-                <!-- Modal Detalhe da Modalidade -->
-                <div id="detailModal" class="modal hidden">
-                    <div class="modal-card">
-                        <div class="modal-header">
-                            <h3 id="detailTitle">Detalhes da Modalidade</h3>
-                            <button class="close-btn" onclick="closeModal('detailModal')" type="button" aria-label="Fechar">
-                                <span class="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div id="detailContent"></div>
-                        </div>
-                        <div class="modal-footer">
-                            <button class="btn-outline" onclick="closeModal('detailModal')" type="button">Fechar</button>
-                            <button class="btn-primary user-only" onclick="confirmInscription()" type="button">
-                                <span class="material-symbols-outlined">how_to_reg</span> Confirmar Inscrição
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
-        </div>
-
-        <div id="sideOverlay" class="overlay"></div>
-        <div id="drawerOverlay" class="overlay"></div>
-        <div id="userDrawer" class="user-drawer"></div>
-        <div id="globalModals"></div>
-
-        <div id="helpPanel" class="hidden">
-            <details class="faq-item">
-                <summary>Como me inscrever em uma modalidade?</summary>
-                <p>Clique sobre o card da modalidade desejada para abrir os detalhes e clique em <strong>Confirmar Inscrição</strong>.</p>
-            </details>
-            <details class="faq-item">
-                <summary>Quantas modalidades posso participar?</summary>
-                <p>O regulamento do JICS permite participação em modalidades coletivas e individuais de acordo com as regras de cada campus.</p>
-            </details>
-        </div>
+﻿<!DOCTYPE html><html lang="pt-BR" data-theme="dark"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Modalidades - JICS IFRO</title><link rel="icon" type="image/png" href="/assets/ifro.png"/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link rel="stylesheet" href="/aluno/shell.css"/><script src="/js/jics-ui.js" defer></script><script src="/js/jsdosistema.js" defer></script><style>
+.mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--s5)}
+.mod-card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-xl);overflow:hidden;transition:transform var(--duration-fast),box-shadow var(--duration-fast);cursor:pointer}
+.mod-card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.25)}
+.mod-card-banner{height:90px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#062E27,#0A5D54)}
+.mod-card-banner .material-symbols-outlined{font-size:44px;color:#4DC98C}
+.mod-card-body{padding:var(--s5)}
+.mod-card-title{font-family:var(--font-display);font-size:var(--t-lg);font-weight:800;color:var(--text-main);margin-bottom:4px}
+.mod-card-desc{font-size:var(--t-sm);color:var(--text-secondary);margin-bottom:var(--s4)}
+.mod-meta{display:flex;gap:var(--s3);flex-wrap:wrap}
+.mod-meta-chip{display:flex;align-items:center;gap:4px;font-size:var(--t-xs);color:var(--text-muted)}
+.mod-meta-chip .material-symbols-outlined{font-size:14px}
+.mod-status-open{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(16,185,129,.12);color:#10B981;border:1px solid rgba(16,185,129,.25)}
+.mod-status-closed{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:var(--bg-surface-2);color:var(--text-muted);border:1px solid var(--border-subtle)}
+</style></head>
+<body class="aluno-app" data-page="modalidades">
+<div id="appShell">
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button type="button" class="btn-icon nav-hamburger" onclick="toggleSideNav()" aria-label="Menu"><span class="material-symbols-outlined">menu</span></button>
+      <a href="/aluno/dashboard.html" class="navbar-brand"><img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS IFRO</a>
     </div>
-
-    <script src="/js/jsdosistema.js"></script>
-</body>
-
-</html>
+    <div class="navbar-center navbar-links">
+      <a href="/aluno/dashboard.html" class="nav-link">Inicio</a>
+      <a href="/aluno/modalidades.html" class="nav-link active">Modalidades</a>
+      <a href="/aluno/inscricoes.html" class="nav-link">Inscricoes</a>
+      <a href="/aluno/horarios.html" class="nav-link">Cronograma</a>
+      <a href="/aluno/resultados.html" class="nav-link">Resultados</a>
+      <a href="/aluno/perfil.html" class="nav-link">Perfil</a>
+    </div>
+    <div class="navbar-right">
+      <button type="button" class="btn-icon theme-toggle-btn" onclick="JICS_UI.toggleTheme()" aria-label="Tema"><span class="material-symbols-outlined">light_mode</span></button>
+      <button type="button" class="btn-icon" aria-label="Notificacoes"><span class="material-symbols-outlined">notifications</span></button>
+    </div>
+  </nav>
+  <div class="app-body">
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header"><span class="side-header-title">Menu do Participante</span></div>
+      <a class="side-link" href="/aluno/dashboard.html"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a class="side-link active" href="/aluno/modalidades.html"><span class="material-symbols-outlined">sports_basketball</span> Modalidades</a>
+      <a class="side-link" href="/aluno/inscricoes.html"><span class="material-symbols-outlined">how_to_reg</span> Minhas Inscricoes</a>
+      <a class="side-link" href="/aluno/horarios.html"><span class="material-symbols-outlined">schedule</span> Cronograma</a>
+      <a class="side-link" href="/aluno/resultados.html"><span class="material-symbols-outlined">emoji_events</span> Resultados</a>
+      <a class="side-link" href="/aluno/perfil.html"><span class="material-symbols-outlined">person</span> Meu Perfil</a>
+    </aside>
+    <main class="page">
+      <section>
+        <div class="page-hero__badge">JICS 2026</div>
+        <h1 style="margin-top:var(--s2)">Modalidades</h1>
+        <p class="p-body" style="margin-top:var(--s2)">Confira todas as modalidades esportivas do JICS 2026, regulamentos e categorias disponíveis.</p>
+      </section>
+      <div class="mod-grid" id="modalidadesGrid">
+        <div style="grid-column:1/-1;padding:var(--s6);text-align:center;color:var(--text-muted)"><span class="material-symbols-outlined" style="font-size:40px;display:block;margin-bottom:var(--s3)">sports</span>Carregando modalidades...</div>
+      </div>
+    </main>
+  </div>
+  <nav class="bottom-nav">
+    <a href="/aluno/dashboard.html" class="bottom-nav-link"><span class="material-symbols-outlined">dashboard</span><span>Inicio</span></a>
+    <a href="/aluno/modalidades.html" class="bottom-nav-link active"><span class="material-symbols-outlined">sports_basketball</span><span>Modalidades</span></a>
+    <a href="/aluno/horarios.html" class="bottom-nav-link"><span class="material-symbols-outlined">schedule</span><span>Jogos</span></a>
+    <a href="/aluno/resultados.html" class="bottom-nav-link"><span class="material-symbols-outlined">emoji_events</span><span>Ranking</span></a>
+    <a href="/aluno/perfil.html" class="bottom-nav-link"><span class="material-symbols-outlined">person</span><span>Perfil</span></a>
+  </nav>
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+</div>
+<script>
+var ICONS={'Basquete':'sports_basketball','Futsal':'sports_soccer','Volei':'sports_volleyball','Handebol':'sports_handball','Natacao':'pool','Atletismo':'directions_run','Xadrez':'chess','Tenis de Mesa':'sports_tennis'};
+function getIcon(nome){for(var k in ICONS){if((nome||'').toLowerCase().includes(k.toLowerCase()))return ICONS[k];}return 'sports';}
+function toggleSideNav(){document.getElementById('sideNav').classList.toggle('is-open');document.getElementById('sideOverlay').classList.toggle('is-show');}
+function closeSideNav(){document.getElementById('sideNav').classList.remove('is-open');document.getElementById('sideOverlay').classList.remove('is-show');}
+document.addEventListener('DOMContentLoaded',function(){
+  fetch('/jics/modalidades').then(function(r){return r.json();}).then(function(d){
+    var mods=d.data||d.modalidades||[];
+    var grid=document.getElementById('modalidadesGrid');
+    if(!mods.length){
+      mods=[{nome:'Basquete Masculino',categoria:'Masculino',equipes:6,inscricoes_abertas:true,descricao:'Modalidade de basquete 5x5 com fase de grupos e mata-mata.'},
+            {nome:'Futsal Masculino',categoria:'Masculino',equipes:8,inscricoes_abertas:true,descricao:'Futsal masculino com arbitragem oficial e sumula digital.'},
+            {nome:'Volei Feminino',categoria:'Feminino',equipes:4,inscricoes_abertas:false,descricao:'Vôlei feminino 6x6 com classificacao por sets.'},
+            {nome:'Handebol Misto',categoria:'Misto',equipes:5,inscricoes_abertas:true,descricao:'Handebol com equipes mistas formadas por atletas da turma.'}];
+    }
+    grid.innerHTML=mods.map(function(m){
+      var icon=getIcon(m.nome||'');
+      var status=m.inscricoes_abertas?'<span class="mod-status-open"><span class="material-symbols-outlined" style="font-size:12px">how_to_reg</span>Inscricoes abertas</span>':'<span class="mod-status-closed"><span class="material-symbols-outlined" style="font-size:12px">lock</span>Encerradas</span>';
+      return '<div class="mod-card" onclick="window.location.href=(\'/aluno/inscricoes.html\')"><div class="mod-card-banner"><span class="material-symbols-outlined">'+icon+'</span></div><div class="mod-card-body"><div class="mod-card-title">'+esc(m.nome)+'</div><div class="mod-card-desc">'+esc(m.descricao||'')+'</div><div class="mod-meta"><div class="mod-meta-chip"><span class="material-symbols-outlined">group</span>'+esc(m.categoria||'')+'</div><div class="mod-meta-chip"><span class="material-symbols-outlined">sports_score</span>'+(m.equipes||0)+' equipes</div></div><div style="margin-top:var(--s3)">'+status+'</div></div></div>';
+    }).join('');
+  }).catch(function(){document.getElementById('modalidadesGrid').innerHTML='<div style="grid-column:1/-1;padding:var(--s6);text-align:center;color:var(--text-muted)">Nao foi possivel carregar as modalidades.</div>';});
+});
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+</script>
+</body></html>

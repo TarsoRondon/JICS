@@ -1,172 +1,93 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Minhas Inscrições · JICS IFRO</title>
-    <link rel="icon" type="image/png" href="/assets/ifro.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
-    <link rel="stylesheet" href="/aluno/shell.css" />
-</head>
-
-<body class="aluno-app" data-page="inscricoes" data-theme="dark">
-    <div id="appShell">
-
-        <!-- ═══ NAVBAR ═══ -->
-        <nav class="navbar" aria-label="Navegação Principal">
-            <div class="navbar-left">
-                <button class="navbar-brand" onclick="window.location.href='/aluno/dashboard.html'" title="Início">
-                    <img src="/assets/ifro.png" alt="IFRO" class="brand-logo" />
-                    <span>IFRO ESPORTES</span>
-                </button>
-            </div>
-            <div class="navbar-center navbar-links">
-                <a href="/aluno/dashboard.html" class="nav-link">Início</a>
-                <a href="/aluno/modalidades.html" class="nav-link">Modalidades</a>
-                <a href="/aluno/inscricoes.html" class="nav-link active">Inscrições</a>
-                <a href="/aluno/horarios.html" class="nav-link">Horários</a>
-                <a href="/aluno/noticias.html" class="nav-link">Notícias</a>
-                <a href="/aluno/resultados.html" class="nav-link">Resultados</a>
-            </div>
-            <div class="navbar-right">
-                <button class="icon-btn help-btn" onclick="toggleHelpPanel()" title="Ajuda" aria-label="Ajuda">
-                    <span class="material-symbols-outlined">help_outline</span>
-                </button>
-                <div class="user-menu">
-                    <button class="user-trigger" onclick="toggleUserDrawer()" id="userTrigger" aria-label="Menu do Usuário">
-                        <img id="userAvatar" class="user-avatar" src="/assets/avatar-default.png" alt="Foto de perfil" onerror="this.src='/assets/avatar-default.png'" />
-                        <span id="userNameNavbar" class="user-name">Aluno</span>
-                    </button>
-                </div>
-            </div>
-        </nav>
-
-        <!-- ═══ APP BODY ═══ -->
-        <div class="app-body">
-            <aside id="sideNav" class="side-drawer" aria-label="Menu Lateral">
-                <div class="side-header"><span class="side-header-title">Menu do Aluno</span></div>
-                <a class="side-link" href="/aluno/dashboard.html">
-                    <span class="material-symbols-outlined">dashboard</span> Início
-                </a>
-                <a class="side-link" href="/aluno/modalidades.html">
-                    <span class="material-symbols-outlined">sports_soccer</span> Modalidades
-                </a>
-                <a class="side-link active user-only" href="/aluno/inscricoes.html">
-                    <span class="material-symbols-outlined">assignment</span> Minhas Inscrições
-                </a>
-                <a class="side-link" href="/aluno/horarios.html">
-                    <span class="material-symbols-outlined">schedule</span> Cronograma
-                </a>
-                <a class="side-link" href="/aluno/noticias.html">
-                    <span class="material-symbols-outlined">campaign</span> Notícias
-                </a>
-                <a class="side-link" href="/aluno/resultados.html">
-                    <span class="material-symbols-outlined">emoji_events</span> Resultados
-                </a>
-                <a class="side-link" href="/aluno/perfil.html">
-                    <span class="material-symbols-outlined">person</span> Meu Perfil
-                </a>
-                <div class="side-divider staff-only"></div>
-                <a class="side-link staff-only" href="/admin/dashboard.html">
-                    <span class="material-symbols-outlined">admin_panel_settings</span> Painel Admin
-                </a>
-            </aside>
-
-            <!-- ═══ MAIN CONTENT ═══ -->
-            <main class="page">
-
-                <section class="page-hero">
-                    <div class="page-hero__copy">
-                        <span class="page-hero__badge">Gestão de Participação</span>
-                        <h1>Minhas Inscrições</h1>
-                        <p>Consulte as modalidades em que você está inscrito, verifique o status de confirmação e horários.</p>
-                    </div>
-                    <div class="page-hero__panel">
-                        <div class="page-search">
-                            <span class="material-symbols-outlined">search</span>
-                            <input id="filtroBuscaInscricoes" type="search" placeholder="Filtrar por modalidade ou status..." />
-                        </div>
-                        <div class="page-actions">
-                            <button class="btn-outline btn-sm" type="button" onclick="limparFiltrosInscricoes()">Limpar</button>
-                            <a href="/aluno/modalidades.html" class="btn-primary btn-sm">
-                                <span class="material-symbols-outlined">add</span> Nova Inscrição
-                            </a>
-                        </div>
-                        <div id="inscricoesCount" class="page-subtitle"></div>
-                    </div>
-                </section>
-
-                <!-- MINHAS INSCRIÇÕES -->
-                <section class="card user-only">
-                    <div class="card-header">
-                        <div class="card-icon"><span class="material-symbols-outlined">bookmark</span></div>
-                        <div class="card-title">Modalidades Confirmadas</div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Modalidade</th>
-                                    <th>Tipo</th>
-                                    <th>Data de Inscrição</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaMinhasInscricoes"></tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <!-- LISTAGEM GERAL DE INSCRIÇÕES -->
-                <section class="card">
-                    <div class="card-header">
-                        <div class="card-icon"><span class="material-symbols-outlined">assignment</span></div>
-                        <div class="card-title">Inscrições Gerais do Evento</div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Aluno</th>
-                                    <th>Matrícula</th>
-                                    <th>Modalidade</th>
-                                    <th>Curso / Turma</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabelaInscricoes"></tbody>
-                        </table>
-                    </div>
-                    <div id="inscricoesEmpty" class="empty-state hidden">
-                        <span class="material-symbols-outlined">assignment_late</span>
-                        <h3>Nenhuma inscrição encontrada</h3>
-                        <p>Não há inscrições correspondentes aos filtros selecionados.</p>
-                    </div>
-                </section>
-            </main>
-        </div>
-
-        <div id="sideOverlay" class="overlay"></div>
-        <div id="drawerOverlay" class="overlay"></div>
-        <div id="userDrawer" class="user-drawer"></div>
-        <div id="globalModals"></div>
-
-        <div id="helpPanel" class="hidden">
-            <details class="faq-item">
-                <summary>Como confirmar minha presença?</summary>
-                <p>O status "Confirmado" indica que sua inscrição foi aceita pela coordenação esportiva.</p>
-            </details>
-            <details class="faq-item">
-                <summary>Como me inscrever em outra modalidade?</summary>
-                <p>Basta clicar no botão "Nova Inscrição" ou acessar o menu <strong>Modalidades</strong>.</p>
-            </details>
-        </div>
+﻿<!DOCTYPE html><html lang="pt-BR" data-theme="dark"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Minhas Inscricoes - JICS IFRO</title><link rel="icon" type="image/png" href="/assets/ifro.png"/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link rel="stylesheet" href="/aluno/shell.css"/><script src="/js/jics-ui.js" defer></script><script src="/js/jsdosistema.js" defer></script><style>
+.insc-card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-xl);overflow:hidden}
+.insc-card-head{display:flex;align-items:center;justify-content:space-between;padding:var(--s4) var(--s5);border-bottom:1px solid var(--border-subtle)}
+.insc-card-title{display:flex;align-items:center;gap:var(--s3);font-family:var(--font-display);font-size:var(--t-base);font-weight:700;color:var(--text-main)}
+.insc-card-title .material-symbols-outlined{font-size:20px;color:var(--p-secondary)}
+.insc-row{display:flex;align-items:center;justify-content:space-between;padding:var(--s4) var(--s5);border-bottom:1px solid var(--border-subtle);gap:var(--s4);flex-wrap:wrap}
+.insc-row:last-child{border-bottom:none}
+.insc-sport{display:flex;align-items:center;gap:var(--s3)}
+.sport-icon-sm{width:36px;height:36px;border-radius:var(--r-md);background:var(--p-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sport-icon-sm .material-symbols-outlined{font-size:20px;color:var(--p-secondary)}
+.insc-name{font-size:var(--t-sm);font-weight:700;color:var(--text-main)}
+.insc-sub{font-size:var(--t-xs);color:var(--text-muted)}
+.insc-badge-conf{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(16,185,129,.12);color:#10B981;border:1px solid rgba(16,185,129,.25)}
+.insc-badge-pend{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(245,158,11,.12);color:#F59E0B;border:1px solid rgba(245,158,11,.25)}
+.insc-empty{padding:var(--s8);text-align:center;color:var(--text-muted)}
+.insc-empty .material-symbols-outlined{font-size:48px;display:block;margin-bottom:var(--s4);color:var(--text-muted)}
+</style></head>
+<body class="aluno-app" data-page="inscricoes">
+<div id="appShell">
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button type="button" class="btn-icon nav-hamburger" onclick="toggleSideNav()" aria-label="Menu"><span class="material-symbols-outlined">menu</span></button>
+      <a href="/aluno/dashboard.html" class="navbar-brand"><img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS IFRO</a>
     </div>
-
-    <script src="/js/jsdosistema.js"></script>
-</body>
-
-</html>
+    <div class="navbar-center navbar-links">
+      <a href="/aluno/dashboard.html" class="nav-link">Inicio</a>
+      <a href="/aluno/modalidades.html" class="nav-link">Modalidades</a>
+      <a href="/aluno/inscricoes.html" class="nav-link active">Inscricoes</a>
+      <a href="/aluno/horarios.html" class="nav-link">Cronograma</a>
+      <a href="/aluno/resultados.html" class="nav-link">Resultados</a>
+      <a href="/aluno/perfil.html" class="nav-link">Perfil</a>
+    </div>
+    <div class="navbar-right">
+      <button type="button" class="btn-icon theme-toggle-btn" onclick="JICS_UI.toggleTheme()" aria-label="Tema"><span class="material-symbols-outlined">light_mode</span></button>
+      <button type="button" class="btn-icon" aria-label="Notificacoes"><span class="material-symbols-outlined">notifications</span></button>
+    </div>
+  </nav>
+  <div class="app-body">
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header"><span class="side-header-title">Menu do Participante</span></div>
+      <a class="side-link" href="/aluno/dashboard.html"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a class="side-link" href="/aluno/modalidades.html"><span class="material-symbols-outlined">sports_basketball</span> Modalidades</a>
+      <a class="side-link active" href="/aluno/inscricoes.html"><span class="material-symbols-outlined">how_to_reg</span> Minhas Inscricoes</a>
+      <a class="side-link" href="/aluno/horarios.html"><span class="material-symbols-outlined">schedule</span> Cronograma</a>
+      <a class="side-link" href="/aluno/resultados.html"><span class="material-symbols-outlined">emoji_events</span> Resultados</a>
+      <a class="side-link" href="/aluno/perfil.html"><span class="material-symbols-outlined">person</span> Meu Perfil</a>
+    </aside>
+    <main class="page">
+      <section>
+        <div class="page-hero__badge">Participacao</div>
+        <h1 style="margin-top:var(--s2)">Minhas Inscricoes</h1>
+        <p class="p-body" style="margin-top:var(--s2)">Suas inscricoes nas modalidades do JICS 2026.</p>
+      </section>
+      <div id="inscricoesList">
+        <div class="insc-card">
+          <div class="insc-card-head"><div class="insc-card-title"><span class="material-symbols-outlined">how_to_reg</span> Inscricoes Ativas</div></div>
+          <div id="inscricoesRows"><div class="insc-empty"><span class="material-symbols-outlined">sports_score</span>Carregando suas inscricoes...</div></div>
+        </div>
+      </div>
+      <div class="insc-card">
+        <div class="insc-card-head"><div class="insc-card-title"><span class="material-symbols-outlined">sports</span> Modalidades Abertas</div><a href="/aluno/modalidades.html" class="btn btn-outline btn-sm"><span class="material-symbols-outlined">arrow_forward</span> Ver Todas</a></div>
+        <div id="modAbertas" style="padding:var(--s5);color:var(--text-muted);font-size:var(--t-sm)">Carregando...</div>
+      </div>
+    </main>
+  </div>
+  <nav class="bottom-nav">
+    <a href="/aluno/dashboard.html" class="bottom-nav-link"><span class="material-symbols-outlined">dashboard</span><span>Inicio</span></a>
+    <a href="/aluno/modalidades.html" class="bottom-nav-link"><span class="material-symbols-outlined">sports_basketball</span><span>Modalidades</span></a>
+    <a href="/aluno/horarios.html" class="bottom-nav-link"><span class="material-symbols-outlined">schedule</span><span>Jogos</span></a>
+    <a href="/aluno/resultados.html" class="bottom-nav-link"><span class="material-symbols-outlined">emoji_events</span><span>Ranking</span></a>
+    <a href="/aluno/perfil.html" class="bottom-nav-link"><span class="material-symbols-outlined">person</span><span>Perfil</span></a>
+  </nav>
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+</div>
+<script>
+var ICONS={'Basquete':'sports_basketball','Futsal':'sports_soccer','Volei':'sports_volleyball','Handebol':'sports_handball'};
+function getIcon(n){for(var k in ICONS){if((n||'').toLowerCase().includes(k.toLowerCase()))return ICONS[k];}return 'sports';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toggleSideNav(){document.getElementById('sideNav').classList.toggle('is-open');document.getElementById('sideOverlay').classList.toggle('is-show');}
+function closeSideNav(){document.getElementById('sideNav').classList.remove('is-open');document.getElementById('sideOverlay').classList.remove('is-show');}
+document.addEventListener('DOMContentLoaded',function(){
+  var rows=document.getElementById('inscricoesRows');
+  var DEMO=[{modalidade:'Basquete Masculino',equipe:'2o B - Informatica',numero:10,posicao:'Ala',status:'confirmado'},{modalidade:'Futsal Masculino',equipe:'2o B - Informatica',numero:7,posicao:'Ala',status:'confirmado'}];
+  if(!DEMO.length){rows.innerHTML='<div class="insc-empty"><span class="material-symbols-outlined">sports_score</span>Voce nao possui inscricoes ativas.<br><a href="/aluno/modalidades.html" class="btn btn-primary" style="margin-top:var(--s4)"><span class="material-symbols-outlined">sports</span> Ver Modalidades</a></div>';return;}
+  rows.innerHTML=DEMO.map(function(i){
+    var icon=getIcon(i.modalidade);
+    var badge=i.status==='confirmado'?'<span class="insc-badge-conf"><span class="material-symbols-outlined" style="font-size:12px">check_circle</span>Confirmado</span>':'<span class="insc-badge-pend"><span class="material-symbols-outlined" style="font-size:12px">schedule</span>Pendente</span>';
+    return '<div class="insc-row"><div class="insc-sport"><div class="sport-icon-sm"><span class="material-symbols-outlined">'+icon+'</span></div><div><div class="insc-name">'+esc(i.modalidade)+'</div><div class="insc-sub">Equipe: '+esc(i.equipe)+' &middot; Camisa #'+i.numero+' &middot; '+esc(i.posicao||'')+'</div></div></div>'+badge+'</div>';
+  }).join('');
+  document.getElementById('modAbertas').innerHTML='<p style="color:var(--text-secondary);font-size:var(--t-sm)">Acesse a pagina de <a href="/aluno/modalidades.html" style="color:var(--p-secondary);font-weight:600">Modalidades</a> para ver as inscricoes disponíveis para o JICS 2026.</p>';
+});
+</script>
+</body></html>

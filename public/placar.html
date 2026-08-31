@@ -1,0 +1,283 @@
+﻿<!DOCTYPE html><html lang="pt-BR" data-theme="dark"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Placar Ao Vivo - JICS IFRO</title><meta name="description" content="Placar ao vivo dos jogos do JICS IFRO"/><link rel="icon" type="image/png" href="/assets/ifro.png"/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><script src="/socket.io/socket.io.js"></script><style>*{margin:0;padding:0;box-sizing:border-box}
+:root{--green:#00A877;--green-dark:#0A5D54;--green-light:#4DC98C;--gold:#F59E0B;--err:#EF4444;--font-display:'Outfit',sans-serif;--font-body:'Plus Jakarta Sans',sans-serif}
+body{min-height:100vh;background:#040D0A;color:#fff;font-family:var(--font-body);overflow-x:hidden}
+/* MODES */
+#modeBtn{position:fixed;top:16px;right:16px;z-index:100;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);transition:all .2s}
+#modeBtn:hover{background:rgba(255,255,255,.18)}
+/* HEADER BAR */
+.placar-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:rgba(10,29,25,.95);backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,168,119,.2);position:sticky;top:0;z-index:50}
+.placar-brand{display:flex;align-items:center;gap:12px}
+.placar-brand img{height:36px;object-fit:contain}
+.placar-brand-text{font-family:var(--font-display);font-size:16px;font-weight:800;color:#fff;letter-spacing:.02em}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#EF4444;padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#EF4444;animation:livePulse 1.2s infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+/* MAIN LIVE VIEW */
+#liveView{padding:40px 24px;display:flex;flex-direction:column;align-items:center;gap:32px}
+.match-context{text-align:center}
+.match-modality{font-size:14px;font-weight:700;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.match-info{font-size:13px;color:rgba(255,255,255,.45);letter-spacing:.04em}
+/* SCOREBOARD PRINCIPAL */
+.scoreboard{display:flex;align-items:center;justify-content:center;gap:32px;width:100%;max-width:800px;flex-wrap:wrap}
+.team-block{flex:1;min-width:200px;text-align:center}
+.team-name{font-family:var(--font-display);font-size:clamp(18px,4vw,28px);font-weight:800;color:#fff;line-height:1.15;margin-bottom:12px;text-transform:uppercase;letter-spacing:.02em}
+.team-score{font-family:var(--font-display);font-size:clamp(72px,18vw,160px);font-weight:900;line-height:1;color:#fff;text-shadow:0 0 60px rgba(0,168,119,.4);transition:all .2s}
+.team-score.bump{animation:scoreBump .35s cubic-bezier(.34,1.56,.64,1)}
+@keyframes scoreBump{0%{transform:scale(1)}50%{transform:scale(1.18);color:#4DC98C;text-shadow:0 0 80px rgba(77,201,140,.7)}100%{transform:scale(1)}}
+.score-sep{display:flex;flex-direction:column;align-items:center;gap:12px;flex-shrink:0}
+.score-vs{font-family:var(--font-display);font-size:clamp(28px,6vw,56px);font-weight:900;color:rgba(255,255,255,.2)}
+.period-badge{background:rgba(0,168,119,.15);border:1px solid rgba(0,168,119,.35);color:var(--green);font-size:12px;font-weight:700;padding:4px 14px;border-radius:999px;letter-spacing:.06em;text-transform:uppercase}
+/* TIMER */
+.match-timer{font-family:var(--font-display);font-size:clamp(24px,5vw,48px);font-weight:700;color:var(--green-light);letter-spacing:.04em;text-align:center}
+/* STATUS */
+.match-status-bar{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.status-chip{display:flex;align-items:center;gap:6px;padding:6px 16px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid}
+.status-chip.live{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#EF4444}
+.status-chip.scheduled{background:rgba(0,168,119,.1);border-color:rgba(0,168,119,.3);color:var(--green)}
+.status-chip.finished{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.15);color:rgba(255,255,255,.5)}
+/* EVENTS FEED */
+.events-feed{width:100%;max-width:600px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:16px;overflow:hidden}
+.events-feed h3{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.07);font-family:var(--font-display);font-size:14px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.06em;text-transform:uppercase}
+.events-list{max-height:200px;overflow-y:auto;scrollbar-width:none}
+.events-list::-webkit-scrollbar{display:none}
+.event-item{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid rgba(255,255,255,.04);animation:eventIn .25s ease}
+@keyframes eventIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.event-item:last-child{border-bottom:none}
+.event-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.event-icon.point{background:rgba(0,168,119,.2);color:var(--green)}
+.event-icon.foul{background:rgba(245,158,11,.15);color:var(--gold)}
+.event-icon.card{background:rgba(239,68,68,.15);color:var(--err)}
+.event-text{flex:1;font-size:13px;color:rgba(255,255,255,.7)}
+.event-time{font-size:11px;color:rgba(255,255,255,.3)}
+/* NEXT GAMES MODE */
+#nextView{display:none;padding:40px 24px}
+.next-title{font-family:var(--font-display);font-size:24px;font-weight:800;text-align:center;margin-bottom:32px;color:rgba(255,255,255,.85);letter-spacing:.02em}
+.next-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;max-width:1200px;margin:0 auto}
+.next-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px;transition:transform .2s}
+.next-card:hover{transform:translateY(-2px)}
+.next-card-mod{font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.next-card-teams{font-family:var(--font-display);font-size:18px;font-weight:800;color:#fff;margin-bottom:4px}
+.next-card-vs{color:rgba(255,255,255,.35);font-size:14px}
+.next-card-meta{font-size:12px;color:rgba(255,255,255,.4);margin-top:8px}
+/* OFFLINE BANNER */
+#offlineBanner{position:fixed;bottom:0;left:0;right:0;background:#1a0a0a;border-top:1px solid rgba(239,68,68,.4);padding:10px 20px;display:none;align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--err);z-index:200}
+#offlineBanner.is-visible{display:flex}
+/* FOOTER */
+.placar-footer{text-align:center;padding:20px;font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.06em;border-top:1px solid rgba(255,255,255,.05);margin-top:40px}
+/* RESPONSIVE */
+@media(max-width:600px){.scoreboard{gap:16px;flex-direction:column}.team-score{font-size:80px}.score-vs{font-size:32px}}
+</style></head>
+<body>
+<button id="modeBtn" onclick="toggleMode()">Proximos Jogos</button>
+
+<header class="placar-header">
+  <div class="placar-brand">
+    <img src="/assets/ifro.png" alt="IFRO"/>
+    <span class="placar-brand-text">JICS IFRO &mdash; Placar Ao Vivo</span>
+  </div>
+  <div class="live-badge"><span class="live-dot"></span> AO VIVO</div>
+</header>
+
+<!-- MODO: JOGO AO VIVO -->
+<div id="liveView">
+  <div class="match-context">
+    <div class="match-modality" id="matchModality">Basquete Masculino</div>
+    <div class="match-info" id="matchInfo">Quadra A &middot; Grupo A &middot; Fase de Grupos</div>
+  </div>
+
+  <div class="scoreboard" role="region" aria-label="Placar">
+    <div class="team-block">
+      <div class="team-name" id="teamA">Equipe A</div>
+      <div class="team-score" id="scoreA">0</div>
+    </div>
+    <div class="score-sep">
+      <div class="score-vs">:</div>
+      <div class="period-badge" id="periodBadge">1&ordm; Quarto</div>
+    </div>
+    <div class="team-block">
+      <div class="team-name" id="teamB">Equipe B</div>
+      <div class="team-score" id="scoreB">0</div>
+    </div>
+  </div>
+
+  <div class="match-timer" id="matchTimer">00:00</div>
+
+  <div class="match-status-bar">
+    <div class="status-chip live" id="statusChip"><span class="material-symbols-outlined" style="font-size:16px">radio_button_checked</span> Em Andamento</div>
+    <div class="status-chip scheduled" id="locationChip"><span class="material-symbols-outlined" style="font-size:16px">location_on</span> <span id="matchLocation">Quadra A</span></div>
+  </div>
+
+  <div class="events-feed" aria-live="polite" aria-label="Eventos da partida">
+    <h3><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">timeline</span> Eventos da Partida</h3>
+    <div class="events-list" id="eventsList">
+      <div class="event-item"><div class="event-icon point"><span class="material-symbols-outlined" style="font-size:14px">sports_basketball</span></div><div class="event-text">Aguardando inicio da partida...</div><div class="event-time">--:--</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODO: PROXIMOS JOGOS -->
+<div id="nextView">
+  <div class="next-title">Proximos Jogos</div>
+  <div class="next-grid" id="nextGrid">
+    <div class="next-card"><div class="next-card-mod">Carregando...</div></div>
+  </div>
+</div>
+
+<footer class="placar-footer">JICS &mdash; Jogos Internos do IFRO &middot; Acompanhe ao vivo</footer>
+
+<div id="offlineBanner">
+  <span class="material-symbols-outlined" style="font-size:18px">wifi_off</span>
+  Conexao perdida &mdash; tentando reconectar...
+</div>
+
+<script>
+var jogoId = new URLSearchParams(location.search).get('jogoId') || null;
+var currentMode = 'live';
+var socket = null;
+var timerInterval = null;
+var timerSeconds = 0;
+var timerRunning = false;
+
+// --- SOCKET.IO ---
+function initSocket() {
+  try {
+    socket = io({ reconnectionDelay: 2000, reconnectionDelayMax: 10000 });
+    socket.on('connect', function() {
+      document.getElementById('offlineBanner').classList.remove('is-visible');
+      if (jogoId) socket.emit('join_jogo', jogoId);
+      loadGame();
+    });
+    socket.on('disconnect', function() {
+      document.getElementById('offlineBanner').classList.add('is-visible');
+    });
+    socket.on('placar_update', function(data) {
+      if (!jogoId || data.jogoId == jogoId) applyUpdate(data);
+    });
+  } catch(e) {
+    loadGame();
+  }
+}
+
+// --- LOAD GAME ---
+function loadGame() {
+  if (!jogoId) { loadNextGames(); return; }
+  fetch('/jics/jogos/' + jogoId)
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      if (d.success && d.data) renderGame(d.data);
+    })
+    .catch(function() { loadNextGames(); });
+}
+
+function renderGame(d) {
+  var j = d.jogo || d;
+  setText('teamA', j.equipe_a_nome || 'Equipe A');
+  setText('teamB', j.equipe_b_nome || 'Equipe B');
+  setText('scoreA', j.placar_a != null ? j.placar_a : 0);
+  setText('scoreB', j.placar_b != null ? j.placar_b : 0);
+  setText('matchModality', j.modalidade_nome || j.modalidade || 'Modalidade');
+  setText('matchLocation', j.quadra || 'Quadra A');
+  setText('matchInfo', (j.quadra || 'Quadra A') + ' \u00b7 ' + (j.chave || 'Grupo') + ' \u00b7 ' + (j.fase || 'Fase de Grupos'));
+  if (j.status === 'em_andamento') {
+    document.getElementById('statusChip').className = 'status-chip live';
+    document.getElementById('statusChip').innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">radio_button_checked</span> Em Andamento';
+  } else if (j.status === 'finalizado') {
+    document.getElementById('statusChip').className = 'status-chip finished';
+    document.getElementById('statusChip').innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">check_circle</span> Finalizado';
+  }
+  if (d.sumula && d.sumula.eventos) renderEvents(d.sumula.eventos);
+}
+
+function applyUpdate(data) {
+  var sa = document.getElementById('scoreA'), sb = document.getElementById('scoreB');
+  var oldA = parseInt(sa.textContent)||0, oldB = parseInt(sb.textContent)||0;
+  if (data.placar_a != null && data.placar_a !== oldA) { sa.textContent = data.placar_a; bump('scoreA'); }
+  if (data.placar_b != null && data.placar_b !== oldB) { sb.textContent = data.placar_b; bump('scoreB'); }
+  if (data.periodo) setText('periodBadge', data.periodo);
+  if (data.evento) prependEvent(data.evento);
+}
+
+function bump(id) {
+  var el = document.getElementById(id);
+  el.classList.remove('bump');
+  void el.offsetWidth;
+  el.classList.add('bump');
+}
+
+function renderEvents(evts) {
+  var list = document.getElementById('eventsList');
+  list.innerHTML = '';
+  var recent = evts.slice(-10).reverse();
+  recent.forEach(function(ev) { list.insertAdjacentHTML('beforeend', buildEventHTML(ev)); });
+}
+
+function prependEvent(ev) {
+  var list = document.getElementById('eventsList');
+  list.insertAdjacentHTML('afterbegin', buildEventHTML(ev));
+}
+
+function buildEventHTML(ev) {
+  var iconClass = 'point', iconName = 'sports_basketball';
+  var label = ev.tipo || ev.descricao || 'Evento';
+  if ((label+'').toLowerCase().includes('falta')) { iconClass='foul'; iconName='warning'; }
+  else if ((label+'').toLowerCase().includes('cart')) { iconClass='card'; iconName='square'; }
+  var time = ev.minuto ? ev.minuto+"'" : '--:--';
+  return '<div class="event-item"><div class="event-icon '+iconClass+'"><span class="material-symbols-outlined" style="font-size:14px">'+iconName+'</span></div><div class="event-text">'+esc(ev.atleta_nome||ev.descricao||label)+'</div><div class="event-time">'+time+'</div></div>';
+}
+
+// --- NEXT GAMES ---
+function loadNextGames() {
+  document.getElementById('liveView').style.display = 'none';
+  document.getElementById('nextView').style.display = 'block';
+  document.getElementById('modeBtn').textContent = 'Ao Vivo';
+  currentMode = 'next';
+  fetch('/jics/jogos?status=agendado&limit=12')
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      var jogos = (d.data || d.jogos || []);
+      var grid = document.getElementById('nextGrid');
+      if (!jogos.length) { grid.innerHTML = '<div style="color:rgba(255,255,255,.35);text-align:center;grid-column:1/-1;padding:40px">Nenhum jogo agendado no momento.</div>'; return; }
+      grid.innerHTML = jogos.map(function(j) {
+        return '<div class="next-card"><div class="next-card-mod">'+esc(j.modalidade_nome||j.modalidade||'')+'</div><div class="next-card-teams">'+esc(j.equipe_a_nome||'A')+' <span class="next-card-vs">x</span> '+esc(j.equipe_b_nome||'B')+'</div><div class="next-card-meta">'+esc(fmtDate(j.data_hora))+(j.quadra?' &middot; '+esc(j.quadra):'')+'</div></div>';
+      }).join('');
+    })
+    .catch(function(){ document.getElementById('nextGrid').innerHTML = '<div style="color:rgba(255,255,255,.35);text-align:center;grid-column:1/-1;padding:40px">Nao foi possivel carregar os jogos.</div>'; });
+}
+
+function toggleMode() {
+  if (currentMode === 'live') {
+    currentMode = 'next';
+    document.getElementById('liveView').style.display = 'none';
+    document.getElementById('nextView').style.display = 'block';
+    document.getElementById('modeBtn').textContent = 'Ao Vivo';
+    loadNextGames();
+  } else {
+    currentMode = 'live';
+    document.getElementById('nextView').style.display = 'none';
+    document.getElementById('liveView').style.display = 'flex';
+    document.getElementById('modeBtn').textContent = 'Proximos Jogos';
+    loadGame();
+  }
+}
+
+// --- UTILS ---
+function setText(id, v) { var e = document.getElementById(id); if(e) e.textContent = v; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(iso) {
+  if (!iso) return 'A definir';
+  try {
+    var d = new Date(iso);
+    return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  } catch(e) { return iso; }
+}
+
+// --- INIT ---
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.io) { initSocket(); } else { loadGame(); }
+  // QR link update
+  var canonical = window.location.href;
+  document.title = jogoId ? 'Jogo #' + jogoId + ' - JICS Ao Vivo' : 'JICS - Proximos Jogos';
+});
+</script>
+</body>
+</html>
