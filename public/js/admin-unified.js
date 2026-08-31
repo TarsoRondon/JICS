@@ -1,224 +1,241 @@
-
 (() => {
-  const baseShowToast = window.showToast;
-  if (typeof baseShowToast === 'function' && !baseShowToast.__dual) {
-    const wrapper = (arg, type = 'info') => {
-      if (typeof arg === 'string') {
-        const title = type === 'error' ? 'Erro' : type === 'warning' ? 'Aviso' : 'Concluido';
-        return baseShowToast({ type, title, message: arg });
-      }
-      return baseShowToast(arg || { type: 'info', message: '' });
-    };
-    wrapper.__dual = true;
-    window.showToast = wrapper;
-  }
-
-  const safeShowToast = window.showToast || (() => {});
-  const safeShowLoading = window.showLoading || (() => {});
-  const safeConfirm = window.openConfirmModal || (() => {});
-  const ADMIN_LOGIN_URL = 'index.html';
-  const SUMULA_PAGE_URL = '/sumula.html';
-
-  let adminSessionExpired = false;
-
-  function showSessionBanner(message) {
-    if (adminSessionExpired || window.__adminSessionExpired) return;
-    const banner = document.getElementById('sessionBanner');
-    const text = document.getElementById('sessionBannerText');
-    if (text) text.textContent = message || 'Sessao expirada. Faca login novamente.';
-    if (banner) banner.classList.remove('hidden');
-    adminSessionExpired = true;
-    window.__adminSessionExpired = true;
-    try {
-      sessionStorage.setItem('adminSessionExpired', '1');
-    } catch (_) {}
-  }
-
-  function clearSessionBanner() {
-    const banner = document.getElementById('sessionBanner');
-    if (banner) banner.classList.add('hidden');
-    adminSessionExpired = false;
-    window.__adminSessionExpired = false;
-    try {
-      sessionStorage.removeItem('adminSessionExpired');
-    } catch (_) {}
-  }
-
-  function handleUnauthorized(message) {
-    showSessionBanner(message || 'Sessao expirada. Faca login novamente.');
-  }
-
-  function validateEmailField(value, helpId, inputId) {
-    const email = String(value || '').trim();
-    if (!email) {
-      setHelpById(inputId, helpId, 'E-mail obrigatorio.');
-      return false;
-    }
-    const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    setHelpById(inputId, helpId, ok ? '' : 'E-mail invalido.');
-    return ok;
-  }
-
-  function setHelpById(inputId, helpId, msg) {
-    const input = document.getElementById(inputId);
-    const help = document.getElementById(helpId);
-    if (!input) return;
-    if (help) help.textContent = msg || '';
-    input.classList.toggle('input-erro', Boolean(msg));
-  }
-
-  function scrollToFirstError(container) {
-    const root = container || document;
-    const target = root.querySelector('.input-erro');
-    if (!target) return;
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (typeof target.focus === 'function') {
-      target.focus({ preventScroll: true });
-    }
-  }
-
-  async function ensureAdminSession() {
-    try {
-      if (adminSessionExpired || sessionStorage.getItem('adminSessionExpired') === '1') {
-        showSessionBanner('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      const res = await fetch('/auth/admin/me', { credentials: 'include' });
-      if (res.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      if (res.ok) {
-        const data = await res.json().catch(() => null);
-        if (data?.sucesso) {
-          clearSessionBanner();
+        const baseShowToast = window.showToast;
+        if (typeof baseShowToast === 'function' && !baseShowToast.__dual) {
+            const wrapper = (arg, type = 'info') => {
+                if (typeof arg === 'string') {
+                    const title = type === 'error' ? 'Erro' : type === 'warning' ? 'Aviso' : 'Concluido';
+                    return baseShowToast({ type, title, message: arg });
+                }
+                return baseShowToast(arg || { type: 'info', message: '' });
+            };
+            wrapper.__dual = true;
+            window.showToast = wrapper;
         }
-      }
-    } catch (_) {}
-  }
 
-  function overrideAdminFetch() {
-    window.adminFetch = async (url, fallback = []) => {
-      try {
-        if (window.__adminSessionExpired) return fallback;
-        const r = await fetch(url, { credentials: 'include' });
-        if (r.status === 401) {
-          handleUnauthorized('Sessao expirada. Faca login novamente.');
-          throw new Error('HTTP 401');
+        const safeShowToast = window.showToast || (() => {});
+        const safeShowLoading = window.showLoading || (() => {});
+        const safeConfirm = window.openConfirmModal || (() => {});
+        const ADMIN_LOGIN_URL = 'index.html';
+        const SUMULA_PAGE_URL = '/sumula.html';
+
+        let adminSessionExpired = false;
+
+        // ✅ PASSO 4: Verificação adicional de role no JS
+        async function checkAdminRole() {
+            if (document.documentElement.dataset.adminRole) return; // Já verificado no HTML
+            try {
+                const res = await fetch('/api/user/role', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.sucesso || !data.role || !data.role.includes('ADMIN')) {
+                    window.location.replace('/aluno/dashboard.html');
+                    return false;
+                }
+                document.documentElement.dataset.adminRole = data.role;
+                return true;
+            } catch {
+                window.location.replace('/aluno/dashboard.html');
+                return false;
+            }
         }
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return await r.json();
-      } catch (e) {
-        console.warn('Admin fetch fallback', url, e);
-        return fallback;
-      }
-    };
 
-    window.adminPost = async (url, body) => {
-      if (window.__adminSessionExpired) {
-        throw new Error('Sessao expirada.');
-      }
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(body || {}),
-      });
-      if (r.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        throw new Error('HTTP 401');
-      }
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return await r.json();
-    };
-  }
+        function showSessionBanner(message) {
+            if (adminSessionExpired || window.__adminSessionExpired) return;
+            const banner = document.getElementById('sessionBanner');
+            const text = document.getElementById('sessionBannerText');
+            if (text) text.textContent = message || 'Sessao expirada. Faca login novamente.';
+            if (banner) banner.classList.remove('hidden');
+            adminSessionExpired = true;
+            window.__adminSessionExpired = true;
+            try {
+                sessionStorage.setItem('adminSessionExpired', '1');
+            } catch (_) {}
+        }
 
-  let eventosReady = false;
-  let orgReady = false;
-  let admReady = false;
-  let rankingReady = false;
-  let logsReady = false;
-  let sorteioReady = false;
-  let sorteioAllRows = [];
-  let sorteioEventos = [];
-  let sorteioModalidades = [];
-  let lastSumulaMatch = null;
-  let lastSumulaContext = null;
-  let sumulaTrapHandler = null;
-  let sumulaBackdropHandler = null;
-  let sumulaCards = [];
-  let sumulaPlayersByTeam = { A: [], B: [] };
-  const SORTEIO_LOADING_MIN = 1200;
-  let sorteioLoadingShownAt = 0;
-  let sorteioLoadingTimer = null;
+        function clearSessionBanner() {
+            const banner = document.getElementById('sessionBanner');
+            if (banner) banner.classList.add('hidden');
+            adminSessionExpired = false;
+            window.__adminSessionExpired = false;
+            try {
+                sessionStorage.removeItem('adminSessionExpired');
+            } catch (_) {}
+        }
 
-  overrideAdminFetch();
+        function handleUnauthorized(message) {
+            showSessionBanner(message || 'Sessao expirada. Faca login novamente.');
+        }
 
-  // =====================
-  // Eventos
-  // =====================
-  function setEvtMsg(text, isError) {
-    const msg = document.getElementById('evtMsg');
-    if (!msg) return;
-    msg.textContent = text || '';
-    msg.style.color = isError ? 'var(--danger)' : 'var(--muted)';
-  }
+        function validateEmailField(value, helpId, inputId) {
+            const email = String(value || '').trim();
+            if (!email) {
+                setHelpById(inputId, helpId, 'E-mail obrigatorio.');
+                return false;
+            }
+            const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            setHelpById(inputId, helpId, ok ? '' : 'E-mail invalido.');
+            return ok;
+        }
 
-  async function prefillOrgAdmin() {
-    const orgInput = document.getElementById('evtOrgId');
-    if (!orgInput) return;
-    try {
-      const res = await fetch('/auth/admin/me', { credentials: 'include' });
-      if (res.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      const data = await res.json();
-      if (!data?.sucesso) return;
-      const orgId = data?.data?.organization?.id || data?.data?.admin?.organization_id;
-      if (orgId) {
-        orgInput.value = orgId;
-        orgInput.readOnly = true;
-      }
-    } catch (_) {}
-  }
+        function setHelpById(inputId, helpId, msg) {
+            const input = document.getElementById(inputId);
+            const help = document.getElementById(helpId);
+            if (!input) return;
+            if (help) help.textContent = msg || '';
+            input.classList.toggle('input-erro', Boolean(msg));
+        }
 
-  function formatDateAdmin(value) {
-    if (!value) return '-';
-    try {
-      return new Date(value).toLocaleDateString('pt-BR');
-    } catch {
-      return '-';
-    }
-  }
+        function scrollToFirstError(container) {
+            const root = container || document;
+            const target = root.querySelector('.input-erro');
+            if (!target) return;
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (typeof target.focus === 'function') {
+                target.focus({ preventScroll: true });
+            }
+        }
 
-  async function loadEventosAdmin() {
-    if (adminSessionExpired) return;
-    const tbody = document.getElementById('evtTable');
-    if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="7" class="center muted" style="padding:16px;">Carregando...</td></tr>`;
-    try {
-      const res = await fetch('/eventos', { credentials: 'include' });
-      if (res.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      const data = await res.json();
-      if (!data?.sucesso) throw new Error(data?.erro?.mensagem || 'Erro ao carregar');
-      const rows = data.data || [];
-      const totalEl = document.getElementById('evtTotal');
-      const abertoEl = document.getElementById('evtAbertos');
-      const andamentoEl = document.getElementById('evtAndamento');
-      const encerradoEl = document.getElementById('evtEncerrados');
-      if (totalEl) totalEl.textContent = rows.length;
-      if (abertoEl) abertoEl.textContent = rows.filter(r => r.status === 'ABERTO').length;
-      if (andamentoEl) andamentoEl.textContent = rows.filter(r => r.status === 'EM_ANDAMENTO').length;
-      if (encerradoEl) encerradoEl.textContent = rows.filter(r => r.status === 'ENCERRADO').length;
-      if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="7" class="center muted" style="padding:16px;">Nenhum evento cadastrado.</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = rows.map(e => `
+        async function ensureAdminSession() {
+            try {
+                if (adminSessionExpired || sessionStorage.getItem('adminSessionExpired') === '1') {
+                    showSessionBanner('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                const res = await fetch('/auth/admin/me', { credentials: 'include' });
+                if (res.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                if (res.ok) {
+                    const data = await res.json().catch(() => null);
+                    if (data ? .sucesso) {
+                        clearSessionBanner();
+                    }
+                }
+            } catch (_) {}
+        }
+
+        function overrideAdminFetch() {
+            window.adminFetch = async(url, fallback = []) => {
+                try {
+                    if (window.__adminSessionExpired) return fallback;
+                    const r = await fetch(url, { credentials: 'include' });
+                    if (r.status === 401) {
+                        handleUnauthorized('Sessao expirada. Faca login novamente.');
+                        throw new Error('HTTP 401');
+                    }
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return await r.json();
+                } catch (e) {
+                    console.warn('Admin fetch fallback', url, e);
+                    return fallback;
+                }
+            };
+
+            window.adminPost = async(url, body) => {
+                if (window.__adminSessionExpired) {
+                    throw new Error('Sessao expirada.');
+                }
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(body || {}),
+                });
+                if (r.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    throw new Error('HTTP 401');
+                }
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return await r.json();
+            };
+        }
+
+        let eventosReady = false;
+        let orgReady = false;
+        let admReady = false;
+        let rankingReady = false;
+        let logsReady = false;
+        let sorteioReady = false;
+        let sorteioAllRows = [];
+        let sorteioEventos = [];
+        let sorteioModalidades = [];
+        let lastSumulaMatch = null;
+        let lastSumulaContext = null;
+        let sumulaTrapHandler = null;
+        let sumulaBackdropHandler = null;
+        let sumulaCards = [];
+        let sumulaPlayersByTeam = { A: [], B: [] };
+        const SORTEIO_LOADING_MIN = 1200;
+        let sorteioLoadingShownAt = 0;
+        let sorteioLoadingTimer = null;
+
+        overrideAdminFetch();
+
+        // =====================
+        // Eventos
+        // =====================
+        function setEvtMsg(text, isError) {
+            const msg = document.getElementById('evtMsg');
+            if (!msg) return;
+            msg.textContent = text || '';
+            msg.style.color = isError ? 'var(--danger)' : 'var(--muted)';
+        }
+
+        async function prefillOrgAdmin() {
+            const orgInput = document.getElementById('evtOrgId');
+            if (!orgInput) return;
+            try {
+                const res = await fetch('/auth/admin/me', { credentials: 'include' });
+                if (res.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                const data = await res.json();
+                if (!data ? .sucesso) return;
+                const orgId = data ? .data ? .organization ? .id || data ? .data ? .admin ? .organization_id;
+                if (orgId) {
+                    orgInput.value = orgId;
+                    orgInput.readOnly = true;
+                }
+            } catch (_) {}
+        }
+
+        function formatDateAdmin(value) {
+            if (!value) return '-';
+            try {
+                return new Date(value).toLocaleDateString('pt-BR');
+            } catch {
+                return '-';
+            }
+        }
+
+        async function loadEventosAdmin() {
+            if (adminSessionExpired) return;
+            const tbody = document.getElementById('evtTable');
+            if (!tbody) return;
+            tbody.innerHTML = `<tr><td colspan="7" class="center muted" style="padding:16px;">Carregando...</td></tr>`;
+            try {
+                const res = await fetch('/eventos', { credentials: 'include' });
+                if (res.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                const data = await res.json();
+                if (!data ? .sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro ao carregar');
+                const rows = data.data || [];
+                const totalEl = document.getElementById('evtTotal');
+                const abertoEl = document.getElementById('evtAbertos');
+                const andamentoEl = document.getElementById('evtAndamento');
+                const encerradoEl = document.getElementById('evtEncerrados');
+                if (totalEl) totalEl.textContent = rows.length;
+                if (abertoEl) abertoEl.textContent = rows.filter(r => r.status === 'ABERTO').length;
+                if (andamentoEl) andamentoEl.textContent = rows.filter(r => r.status === 'EM_ANDAMENTO').length;
+                if (encerradoEl) encerradoEl.textContent = rows.filter(r => r.status === 'ENCERRADO').length;
+                if (!rows.length) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="center muted" style="padding:16px;">Nenhum evento cadastrado.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = rows.map(e => `
         <tr>
           <td>${e.id}</td>
           <td>${e.nome || '-'}</td>
@@ -229,125 +246,130 @@
           <td>${formatDateAdmin(e.criado_em)}</td>
         </tr>
       `).join('');
-    } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="7" class="center muted" style="padding:16px;">Falha ao carregar eventos.</td></tr>`;
-    }
-  }
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" class="center muted" style="padding:16px;">Falha ao carregar eventos.</td></tr>`;
+            }
+        }
 
-  async function handleEventoSubmit(event) {
-    event?.preventDefault();
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    setEvtMsg('');
-    const nome = document.getElementById('evtNome')?.value?.trim();
-    const ano = Number(document.getElementById('evtAno')?.value || 0);
-    const dataInicio = document.getElementById('evtInicio')?.value || null;
-    const dataFim = document.getElementById('evtFim')?.value || null;
-    const status = document.getElementById('evtStatus')?.value || 'ABERTO';
-    const organization_id = Number(document.getElementById('evtOrgId')?.value || 0);
-    setHelpById('evtOrgId', null, organization_id ? '' : 'Organizacao obrigatoria.');
-    setHelpById('evtNome', null, nome ? '' : 'Nome obrigatorio.');
-    setHelpById('evtAno', null, ano ? '' : 'Ano obrigatorio.');
+        async function handleEventoSubmit(event) {
+            event ? .preventDefault();
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            setEvtMsg('');
+            const nome = document.getElementById('evtNome') ? .value ? .trim();
+            const ano = Number(document.getElementById('evtAno') ? .value || 0);
+            const dataInicio = document.getElementById('evtInicio') ? .value || null;
+            const dataFim = document.getElementById('evtFim') ? .value || null;
+            const status = document.getElementById('evtStatus') ? .value || 'ABERTO';
+            const organization_id = Number(document.getElementById('evtOrgId') ? .value || 0);
+            setHelpById('evtOrgId', null, organization_id ? '' : 'Organizacao obrigatoria.');
+            setHelpById('evtNome', null, nome ? '' : 'Nome obrigatorio.');
+            setHelpById('evtAno', null, ano ? '' : 'Ano obrigatorio.');
 
-    if (!organization_id || !nome || !ano) {
-      setEvtMsg('Preencha organization_id, nome e ano.', true);
-      scrollToFirstError(document.getElementById('evtForm'));
-      return;
-    }
+            if (!organization_id || !nome || !ano) {
+                setEvtMsg('Preencha organization_id, nome e ano.', true);
+                scrollToFirstError(document.getElementById('evtForm'));
+                return;
+            }
 
-    const submitBtn = document.getElementById('evtSubmit');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Salvando...';
-    }
+            const submitBtn = document.getElementById('evtSubmit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Salvando...';
+            }
 
-    try {
-      const res = await fetch('/eventos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ organization_id, nome, ano, data_inicio: dataInicio, data_fim: dataFim, status })
-      });
-      if (res.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      const data = await res.json();
-      if (!data?.sucesso) {
-        setEvtMsg(data?.erro?.mensagem || data?.message || 'Erro ao salvar evento.', true);
-        return;
-      }
-      if (window.SuccessFeedback) {
-        SuccessFeedback.show({ title: 'Evento criado', message: 'Evento cadastrado com sucesso.' });
-      } else {
-        safeShowToast({ type: 'success', title: 'Evento criado', message: 'Evento cadastrado com sucesso.' });
-      }
-      document.getElementById('evtForm')?.reset();
-      prefillOrgAdmin();
-      loadEventosAdmin();
-    } catch (_) {
-      setEvtMsg('Nao foi possivel salvar o evento.', true);
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Salvar evento';
-      }
-    }
-  }
+            try {
+                const res = await fetch('/eventos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ organization_id, nome, ano, data_inicio: dataInicio, data_fim: dataFim, status })
+                });
+                if (res.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                const data = await res.json();
+                if (!data ? .sucesso) {
+                    setEvtMsg(data ? .erro ? .mensagem || data ? .message || 'Erro ao salvar evento.', true);
+                    return;
+                }
+                if (window.SuccessFeedback) {
+                    SuccessFeedback.show({ title: 'Evento criado', message: 'Evento cadastrado com sucesso.' });
+                } else {
+                    safeShowToast({ type: 'success', title: 'Evento criado', message: 'Evento cadastrado com sucesso.' });
+                }
+                document.getElementById('evtForm') ? .reset();
+                prefillOrgAdmin();
+                loadEventosAdmin();
+            } catch (_) {
+                setEvtMsg('Nao foi possivel salvar o evento.', true);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Salvar evento';
+                }
+            }
+        }
 
-  function bindEventosTab() {
-    if (eventosReady) return;
-    eventosReady = true;
-    const form = document.getElementById('evtForm');
-    const resetBtn = document.getElementById('evtReset');
-    if (form) form.addEventListener('submit', handleEventoSubmit);
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        form?.reset();
-        setEvtMsg('');
-        prefillOrgAdmin();
-      });
-    }
-    prefillOrgAdmin();
-    loadEventosAdmin();
-  }
+        function bindEventosTab() {
+            if (eventosReady) return;
+            eventosReady = true;
+            const form = document.getElementById('evtForm');
+            const resetBtn = document.getElementById('evtReset');
+            if (form) form.addEventListener('submit', handleEventoSubmit);
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    form ? .reset();
+                    setEvtMsg('');
+                    prefillOrgAdmin();
+                });
+            }
+            prefillOrgAdmin();
+            loadEventosAdmin();
+        }
 
-  // =====================
-  // Organizadores
-  // =====================
-  let orgAdmins = [];
-  let orgEditingId = null;
+        // =====================
+        // Organizadores
+        // =====================
+        let orgAdmins = [];
+        let orgEditingId = null;
 
-  function orgOpenModal(id) {
-    document.getElementById(id)?.classList.remove('hidden');
-  }
-  function orgCloseModal(id) {
-    document.getElementById(id)?.classList.add('hidden');
-  }
-  function orgSetHelp(inputId, helpId, msg) {
-    const input = document.getElementById(inputId);
-    const help = document.getElementById(helpId);
-    if (!input) return;
-    if (help) help.textContent = msg || '';
-    input.classList.toggle('input-erro', Boolean(msg));
-  }
-  function orgFormatDate(dateStr) {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-  }
-  function isOrganizador(admin) {
-    return String(admin.role || '').toUpperCase() === 'STAFF';
-  }
-  function renderOrganizadores(list) {
-    const tbody = document.getElementById('orgTable');
-    if (!tbody) return;
-    if (!list.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="center muted" style="padding:18px;">Nenhum organizador encontrado.</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = list.map(a => `
+        function orgOpenModal(id) {
+            document.getElementById(id) ? .classList.remove('hidden');
+        }
+
+        function orgCloseModal(id) {
+            document.getElementById(id) ? .classList.add('hidden');
+        }
+
+        function orgSetHelp(inputId, helpId, msg) {
+            const input = document.getElementById(inputId);
+            const help = document.getElementById(helpId);
+            if (!input) return;
+            if (help) help.textContent = msg || '';
+            input.classList.toggle('input-erro', Boolean(msg));
+        }
+
+        function orgFormatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        }
+
+        function isOrganizador(admin) {
+            return String(admin.role || '').toUpperCase() === 'STAFF';
+        }
+
+        function renderOrganizadores(list) {
+            const tbody = document.getElementById('orgTable');
+            if (!tbody) return;
+            if (!list.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="center muted" style="padding:18px;">Nenhum organizador encontrado.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = list.map(a => `
       <tr>
         <td>${a.nome}</td>
         <td>${a.email}</td>
@@ -361,241 +383,245 @@
         </td>
       </tr>
     `).join('');
-  }
-
-  async function fetchOrganizadores() {
-    if (adminSessionExpired) return;
-    safeShowLoading(true);
-    try {
-      const res = await fetch('/admins', { credentials: 'include' });
-      if (res.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      const data = await res.json();
-      if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro');
-      orgAdmins = (data.data || []).filter(isOrganizador);
-      const totalEl = document.getElementById('orgTotal');
-      const ativosEl = document.getElementById('orgAtivos');
-      const inativosEl = document.getElementById('orgInativos');
-      if (totalEl) totalEl.textContent = orgAdmins.length;
-      if (ativosEl) ativosEl.textContent = orgAdmins.filter(a => a.ativo).length;
-      if (inativosEl) inativosEl.textContent = orgAdmins.filter(a => !a.ativo).length;
-      applyOrgFilters();
-    } catch (err) {
-      safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao carregar organizadores' });
-    } finally {
-      safeShowLoading(false);
-    }
-  }
-
-  function applyOrgFilters() {
-    const search = document.getElementById('orgSearchInput')?.value?.trim().toLowerCase() || '';
-    const ativo = document.getElementById('orgActiveFilter')?.value || '';
-    let list = [...orgAdmins];
-    if (search) list = list.filter(a => a.nome.toLowerCase().includes(search) || a.email.toLowerCase().includes(search));
-    if (ativo !== '') list = list.filter(a => String(a.ativo ? 1 : 0) === ativo);
-    renderOrganizadores(list);
-  }
-
-  async function createOrganizadorAdmin() {
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    const nome = document.getElementById('orgCreateNome')?.value?.trim() || '';
-    const email = document.getElementById('orgCreateEmail')?.value?.trim() || '';
-    const senha = document.getElementById('orgCreateSenha')?.value?.trim() || '';
-    let ok = true;
-    orgSetHelp('orgCreateNome', 'orgCreateNomeHelp', nome ? '' : 'Nome obrigatorio.');
-    const emailOk = validateEmailField(email, 'orgCreateEmailHelp', 'orgCreateEmail');
-    orgSetHelp('orgCreateSenha', 'orgCreateSenhaHelp', senha.length >= 8 ? '' : 'Senha deve ter ao menos 8 caracteres.');
-    if (!nome || !emailOk || senha.length < 8) ok = false;
-    if (!ok) {
-      scrollToFirstError(document.getElementById('orgCreateForm'));
-      return;
-    }
-
-    safeShowLoading(true);
-    try {
-      const res = await fetch('/admins', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ nome, email, senha, role: 'STAFF' })
-      });
-      if (res.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      const data = await res.json();
-      if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro ao criar');
-      safeShowToast({ type: 'success', title: 'Organizador criado', message: 'Cadastro realizado com sucesso.' });
-      orgCloseModal('orgCreateModal');
-      fetchOrganizadores();
-    } catch (err) {
-      safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao criar organizador' });
-    } finally {
-      safeShowLoading(false);
-    }
-  }
-
-  function orgOpenEdit(id) {
-    const admin = orgAdmins.find(a => a.id === id);
-    if (!admin) return;
-    orgEditingId = id;
-    document.getElementById('orgEditNome').value = admin.nome;
-    document.getElementById('orgEditEmail').value = admin.email;
-    document.getElementById('orgEditAtivo').value = admin.ativo ? '1' : '0';
-    document.getElementById('orgEditSenha').value = '';
-    orgOpenModal('orgEditModal');
-  }
-
-  function orgResetTempPassword() {
-    const pass = Math.random().toString(36).slice(-10) + 'A1';
-    document.getElementById('orgEditSenha').value = pass;
-    safeShowToast({ type: 'info', title: 'Senha temporaria', message: 'Uma senha temporaria foi gerada.' });
-  }
-
-  async function saveEditOrganizadorAdmin() {
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    const nome = document.getElementById('orgEditNome').value.trim();
-    const ativo = document.getElementById('orgEditAtivo').value === '1';
-    const senha = document.getElementById('orgEditSenha').value.trim();
-    orgSetHelp('orgEditNome', 'orgEditNomeHelp', nome ? '' : 'Nome obrigatorio.');
-    orgSetHelp('orgEditSenha', 'orgEditSenhaHelp', senha && senha.length < 8 ? 'Senha deve ter ao menos 8 caracteres.' : '');
-    if (!nome) return;
-    if (senha && senha.length < 8) return;
-
-    safeShowLoading(true);
-    try {
-      const res = await fetch(`/admins/${orgEditingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ nome, ...(senha ? { senha } : {}) })
-      });
-      const data = await res.json();
-      if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro ao atualizar');
-
-      await fetch(`/admins/${orgEditingId}/ativar`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ ativo })
-      });
-      safeShowToast({ type: 'success', title: 'Organizador atualizado', message: 'Alteracoes salvas.' });
-      orgCloseModal('orgEditModal');
-      fetchOrganizadores();
-    } catch (err) {
-      safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao atualizar' });
-    } finally {
-      safeShowLoading(false);
-    }
-  }
-
-  function orgToggleAtivo(id) {
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    const admin = orgAdmins.find(a => a.id === id);
-    if (!admin) return;
-    safeConfirm({
-      title: admin.ativo ? 'Desativar organizador' : 'Ativar organizador',
-      message: 'Tem certeza que deseja continuar?',
-      onConfirm: async () => {
-        safeShowLoading(true);
-        try {
-          const res = await fetch(`/admins/${id}/ativar`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ ativo: !admin.ativo })
-          });
-          const data = await res.json();
-          if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro');
-          safeShowToast({ type: 'success', title: 'Atualizado', message: 'Status alterado.' });
-          fetchOrganizadores();
-        } catch (err) {
-          safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao atualizar status' });
-        } finally {
-          safeShowLoading(false);
         }
-      }
-    });
-  }
 
-  function orgDeleteOrganizador(id) {
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    safeConfirm({
-      title: 'Excluir organizador',
-      message: 'Tem certeza que deseja excluir este organizador?',
-      onConfirm: async () => {
-        safeShowLoading(true);
-        try {
-          const res = await fetch(`/admins/${id}`, {
-            method: 'DELETE',
-            credentials: 'include'
-          });
-          const data = await res.json();
-          if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro ao excluir');
-          safeShowToast({ type: 'success', title: 'Organizador removido', message: 'Registro excluido.' });
-          fetchOrganizadores();
-        } catch (err) {
-          safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao excluir' });
-        } finally {
-          safeShowLoading(false);
+        async function fetchOrganizadores() {
+            if (adminSessionExpired) return;
+            safeShowLoading(true);
+            try {
+                const res = await fetch('/admins', { credentials: 'include' });
+                if (res.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                const data = await res.json();
+                if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro');
+                orgAdmins = (data.data || []).filter(isOrganizador);
+                const totalEl = document.getElementById('orgTotal');
+                const ativosEl = document.getElementById('orgAtivos');
+                const inativosEl = document.getElementById('orgInativos');
+                if (totalEl) totalEl.textContent = orgAdmins.length;
+                if (ativosEl) ativosEl.textContent = orgAdmins.filter(a => a.ativo).length;
+                if (inativosEl) inativosEl.textContent = orgAdmins.filter(a => !a.ativo).length;
+                applyOrgFilters();
+            } catch (err) {
+                safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao carregar organizadores' });
+            } finally {
+                safeShowLoading(false);
+            }
         }
-      }
-    });
-  }
 
-  function bindOrganizadoresTab() {
-    if (orgReady) return;
-    orgReady = true;
-    document.getElementById('orgApplyFilter')?.addEventListener('click', applyOrgFilters);
-    document.getElementById('orgOpenCreate')?.addEventListener('click', () => orgOpenModal('orgCreateModal'));
-    fetchOrganizadores();
-  }
+        function applyOrgFilters() {
+            const search = document.getElementById('orgSearchInput') ? .value ? .trim().toLowerCase() || '';
+            const ativo = document.getElementById('orgActiveFilter') ? .value || '';
+            let list = [...orgAdmins];
+            if (search) list = list.filter(a => a.nome.toLowerCase().includes(search) || a.email.toLowerCase().includes(search));
+            if (ativo !== '') list = list.filter(a => String(a.ativo ? 1 : 0) === ativo);
+            renderOrganizadores(list);
+        }
 
-  // =====================
-  // Administradores
-  // =====================
-  let admList = [];
-  let admEditingId = null;
+        async function createOrganizadorAdmin() {
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            const nome = document.getElementById('orgCreateNome') ? .value ? .trim() || '';
+            const email = document.getElementById('orgCreateEmail') ? .value ? .trim() || '';
+            const senha = document.getElementById('orgCreateSenha') ? .value ? .trim() || '';
+            let ok = true;
+            orgSetHelp('orgCreateNome', 'orgCreateNomeHelp', nome ? '' : 'Nome obrigatorio.');
+            const emailOk = validateEmailField(email, 'orgCreateEmailHelp', 'orgCreateEmail');
+            orgSetHelp('orgCreateSenha', 'orgCreateSenhaHelp', senha.length >= 8 ? '' : 'Senha deve ter ao menos 8 caracteres.');
+            if (!nome || !emailOk || senha.length < 8) ok = false;
+            if (!ok) {
+                scrollToFirstError(document.getElementById('orgCreateForm'));
+                return;
+            }
 
-  function admOpenModal(id) {
-    document.getElementById(id)?.classList.remove('hidden');
-  }
-  function admCloseModal(id) {
-    document.getElementById(id)?.classList.add('hidden');
-  }
-  function admSetHelp(inputId, helpId, msg) {
-    const input = document.getElementById(inputId);
-    const help = document.getElementById(helpId);
-    if (!input) return;
-    if (help) help.textContent = msg || '';
-    input.classList.toggle('input-erro', Boolean(msg));
-  }
-  function admFormatDate(dateStr) {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-  }
-  function renderAdmins(list) {
-    const tbody = document.getElementById('admTable');
-    if (!tbody) return;
-    if (!list.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="center muted" style="padding:18px;">Nenhum administrador encontrado.</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = list.map(a => `
+            safeShowLoading(true);
+            try {
+                const res = await fetch('/admins', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ nome, email, senha, role: 'STAFF' })
+                });
+                if (res.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                const data = await res.json();
+                if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro ao criar');
+                safeShowToast({ type: 'success', title: 'Organizador criado', message: 'Cadastro realizado com sucesso.' });
+                orgCloseModal('orgCreateModal');
+                fetchOrganizadores();
+            } catch (err) {
+                safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao criar organizador' });
+            } finally {
+                safeShowLoading(false);
+            }
+        }
+
+        function orgOpenEdit(id) {
+            const admin = orgAdmins.find(a => a.id === id);
+            if (!admin) return;
+            orgEditingId = id;
+            document.getElementById('orgEditNome').value = admin.nome;
+            document.getElementById('orgEditEmail').value = admin.email;
+            document.getElementById('orgEditAtivo').value = admin.ativo ? '1' : '0';
+            document.getElementById('orgEditSenha').value = '';
+            orgOpenModal('orgEditModal');
+        }
+
+        function orgResetTempPassword() {
+            const pass = Math.random().toString(36).slice(-10) + 'A1';
+            document.getElementById('orgEditSenha').value = pass;
+            safeShowToast({ type: 'info', title: 'Senha temporaria', message: 'Uma senha temporaria foi gerada.' });
+        }
+
+        async function saveEditOrganizadorAdmin() {
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            const nome = document.getElementById('orgEditNome').value.trim();
+            const ativo = document.getElementById('orgEditAtivo').value === '1';
+            const senha = document.getElementById('orgEditSenha').value.trim();
+            orgSetHelp('orgEditNome', 'orgEditNomeHelp', nome ? '' : 'Nome obrigatorio.');
+            orgSetHelp('orgEditSenha', 'orgEditSenhaHelp', senha && senha.length < 8 ? 'Senha deve ter ao menos 8 caracteres.' : '');
+            if (!nome) return;
+            if (senha && senha.length < 8) return;
+
+            safeShowLoading(true);
+            try {
+                const res = await fetch(`/admins/${orgEditingId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ nome, ...(senha ? { senha } : {}) })
+                });
+                const data = await res.json();
+                if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro ao atualizar');
+
+                await fetch(`/admins/${orgEditingId}/ativar`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ ativo })
+                });
+                safeShowToast({ type: 'success', title: 'Organizador atualizado', message: 'Alteracoes salvas.' });
+                orgCloseModal('orgEditModal');
+                fetchOrganizadores();
+            } catch (err) {
+                safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao atualizar' });
+            } finally {
+                safeShowLoading(false);
+            }
+        }
+
+        function orgToggleAtivo(id) {
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            const admin = orgAdmins.find(a => a.id === id);
+            if (!admin) return;
+            safeConfirm({
+                title: admin.ativo ? 'Desativar organizador' : 'Ativar organizador',
+                message: 'Tem certeza que deseja continuar?',
+                onConfirm: async() => {
+                    safeShowLoading(true);
+                    try {
+                        const res = await fetch(`/admins/${id}/ativar`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ ativo: !admin.ativo })
+                        });
+                        const data = await res.json();
+                        if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro');
+                        safeShowToast({ type: 'success', title: 'Atualizado', message: 'Status alterado.' });
+                        fetchOrganizadores();
+                    } catch (err) {
+                        safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao atualizar status' });
+                    } finally {
+                        safeShowLoading(false);
+                    }
+                }
+            });
+        }
+
+        function orgDeleteOrganizador(id) {
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            safeConfirm({
+                title: 'Excluir organizador',
+                message: 'Tem certeza que deseja excluir este organizador?',
+                onConfirm: async() => {
+                    safeShowLoading(true);
+                    try {
+                        const res = await fetch(`/admins/${id}`, {
+                            method: 'DELETE',
+                            credentials: 'include'
+                        });
+                        const data = await res.json();
+                        if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro ao excluir');
+                        safeShowToast({ type: 'success', title: 'Organizador removido', message: 'Registro excluido.' });
+                        fetchOrganizadores();
+                    } catch (err) {
+                        safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao excluir' });
+                    } finally {
+                        safeShowLoading(false);
+                    }
+                }
+            });
+        }
+
+        function bindOrganizadoresTab() {
+            if (orgReady) return;
+            orgReady = true;
+            document.getElementById('orgApplyFilter') ? .addEventListener('click', applyOrgFilters);
+            document.getElementById('orgOpenCreate') ? .addEventListener('click', () => orgOpenModal('orgCreateModal'));
+            fetchOrganizadores();
+        }
+
+        // =====================
+        // Administradores
+        // =====================
+        let admList = [];
+        let admEditingId = null;
+
+        function admOpenModal(id) {
+            document.getElementById(id) ? .classList.remove('hidden');
+        }
+
+        function admCloseModal(id) {
+            document.getElementById(id) ? .classList.add('hidden');
+        }
+
+        function admSetHelp(inputId, helpId, msg) {
+            const input = document.getElementById(inputId);
+            const help = document.getElementById(helpId);
+            if (!input) return;
+            if (help) help.textContent = msg || '';
+            input.classList.toggle('input-erro', Boolean(msg));
+        }
+
+        function admFormatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        }
+
+        function renderAdmins(list) {
+            const tbody = document.getElementById('admTable');
+            if (!tbody) return;
+            if (!list.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="center muted" style="padding:18px;">Nenhum administrador encontrado.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = list.map(a => `
       <tr>
         <td>${a.nome}</td>
         <td>${a.email}</td>
@@ -609,252 +635,252 @@
         </td>
       </tr>
     `).join('');
-  }
-
-  async function fetchAdmins() {
-    if (adminSessionExpired) return;
-    safeShowLoading(true);
-    try {
-      const res = await fetch('/admins', { credentials: 'include' });
-      if (res.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      const data = await res.json();
-      if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro');
-      admList = data.data || [];
-      applyAdmFilters();
-    } catch (err) {
-      safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao carregar admins' });
-    } finally {
-      safeShowLoading(false);
-    }
-  }
-
-  function applyAdmFilters() {
-    const search = document.getElementById('admSearchInput')?.value?.trim().toLowerCase() || '';
-    const role = document.getElementById('admRoleFilter')?.value || '';
-    const ativo = document.getElementById('admActiveFilter')?.value || '';
-    let list = [...admList];
-    if (search) list = list.filter(a => a.nome.toLowerCase().includes(search) || a.email.toLowerCase().includes(search));
-    if (role) list = list.filter(a => a.role === role);
-    if (ativo !== '') list = list.filter(a => String(a.ativo ? 1 : 0) === ativo);
-    renderAdmins(list);
-  }
-
-  async function createAdminUser() {
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    const nome = document.getElementById('admCreateNome').value.trim();
-    const email = document.getElementById('admCreateEmail').value.trim();
-    const senha = document.getElementById('admCreateSenha').value.trim();
-    const role = document.getElementById('admCreateRole').value;
-    let ok = true;
-    admSetHelp('admCreateNome', 'admCreateNomeHelp', nome ? '' : 'Nome obrigatorio.');
-    const emailOk = validateEmailField(email, 'admCreateEmailHelp', 'admCreateEmail');
-    admSetHelp('admCreateSenha', 'admCreateSenhaHelp', senha.length >= 8 ? '' : 'Senha deve ter ao menos 8 caracteres.');
-    if (!nome || !emailOk || senha.length < 8) ok = false;
-    if (!ok) {
-      scrollToFirstError(document.getElementById('admCreateForm'));
-      return;
-    }
-
-    safeShowLoading(true);
-    try {
-      const res = await fetch('/admins', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ nome, email, senha, role })
-      });
-      if (res.status === 401) {
-        handleUnauthorized('Sessao expirada. Faca login novamente.');
-        return;
-      }
-      const data = await res.json();
-      if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro ao criar');
-      safeShowToast({ type: 'success', title: 'Administrador criado', message: 'Cadastro realizado com sucesso.' });
-      admCloseModal('admCreateModal');
-      fetchAdmins();
-    } catch (err) {
-      safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao criar admin' });
-    } finally {
-      safeShowLoading(false);
-    }
-  }
-
-  function admOpenEdit(id) {
-    const admin = admList.find(a => a.id === id);
-    if (!admin) return;
-    admEditingId = id;
-    document.getElementById('admEditNome').value = admin.nome;
-    document.getElementById('admEditEmail').value = admin.email;
-    document.getElementById('admEditRole').value = admin.role;
-    document.getElementById('admEditAtivo').value = admin.ativo ? '1' : '0';
-    document.getElementById('admEditSenha').value = '';
-    admOpenModal('admEditModal');
-  }
-
-  function admResetTempPassword() {
-    const pass = Math.random().toString(36).slice(-10) + 'A1';
-    document.getElementById('admEditSenha').value = pass;
-    safeShowToast({ type: 'info', title: 'Senha temporaria', message: 'Uma senha temporaria foi gerada.' });
-  }
-
-  async function saveEditAdminUser() {
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    const nome = document.getElementById('admEditNome').value.trim();
-    const role = document.getElementById('admEditRole').value;
-    const ativo = document.getElementById('admEditAtivo').value === '1';
-    const senha = document.getElementById('admEditSenha').value.trim();
-    admSetHelp('admEditNome', 'admEditNomeHelp', nome ? '' : 'Nome obrigatorio.');
-    admSetHelp('admEditSenha', 'admEditSenhaHelp', senha && senha.length < 8 ? 'Senha deve ter ao menos 8 caracteres.' : '');
-    if (!nome) return;
-    if (senha && senha.length < 8) return;
-
-    safeShowLoading(true);
-    try {
-      const res = await fetch(`/admins/${admEditingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ nome, role, ...(senha ? { senha } : {}) })
-      });
-      const data = await res.json();
-      if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro ao atualizar');
-
-      await fetch(`/admins/${admEditingId}/ativar`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ ativo })
-      });
-      safeShowToast({ type: 'success', title: 'Admin atualizado', message: 'Alteracoes salvas.' });
-      admCloseModal('admEditModal');
-      fetchAdmins();
-    } catch (err) {
-      safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao atualizar' });
-    } finally {
-      safeShowLoading(false);
-    }
-  }
-
-  function admToggleAtivo(id) {
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    const admin = admList.find(a => a.id === id);
-    if (!admin) return;
-    safeConfirm({
-      title: admin.ativo ? 'Desativar admin' : 'Ativar admin',
-      message: 'Tem certeza que deseja continuar?',
-      onConfirm: async () => {
-        safeShowLoading(true);
-        try {
-          const res = await fetch(`/admins/${id}/ativar`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ ativo: !admin.ativo })
-          });
-          const data = await res.json();
-          if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro');
-          safeShowToast({ type: 'success', title: 'Atualizado', message: 'Status alterado.' });
-          fetchAdmins();
-        } catch (err) {
-          safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao atualizar status' });
-        } finally {
-          safeShowLoading(false);
         }
-      }
-    });
-  }
 
-  function admDelete(id) {
-    if (adminSessionExpired) {
-      showSessionBanner();
-      return;
-    }
-    safeConfirm({
-      title: 'Excluir administrador',
-      message: 'Tem certeza que deseja excluir este administrador?',
-      onConfirm: async () => {
-        safeShowLoading(true);
-        try {
-          const res = await fetch(`/admins/${id}`, {
-            method: 'DELETE',
-            credentials: 'include'
-          });
-          const data = await res.json();
-          if (!data.sucesso) throw new Error(data?.erro?.mensagem || 'Erro ao excluir');
-          safeShowToast({ type: 'success', title: 'Admin removido', message: 'Registro excluido.' });
-          fetchAdmins();
-        } catch (err) {
-          safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao excluir' });
-        } finally {
-          safeShowLoading(false);
+        async function fetchAdmins() {
+            if (adminSessionExpired) return;
+            safeShowLoading(true);
+            try {
+                const res = await fetch('/admins', { credentials: 'include' });
+                if (res.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                const data = await res.json();
+                if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro');
+                admList = data.data || [];
+                applyAdmFilters();
+            } catch (err) {
+                safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao carregar admins' });
+            } finally {
+                safeShowLoading(false);
+            }
         }
-      }
-    });
-  }
 
-  function bindAdminsTab() {
-    if (admReady) return;
-    admReady = true;
-    document.getElementById('admApplyFilter')?.addEventListener('click', applyAdmFilters);
-    document.getElementById('admOpenCreate')?.addEventListener('click', () => admOpenModal('admCreateModal'));
-    fetchAdmins();
-  }
+        function applyAdmFilters() {
+            const search = document.getElementById('admSearchInput') ? .value ? .trim().toLowerCase() || '';
+            const role = document.getElementById('admRoleFilter') ? .value || '';
+            const ativo = document.getElementById('admActiveFilter') ? .value || '';
+            let list = [...admList];
+            if (search) list = list.filter(a => a.nome.toLowerCase().includes(search) || a.email.toLowerCase().includes(search));
+            if (role) list = list.filter(a => a.role === role);
+            if (ativo !== '') list = list.filter(a => String(a.ativo ? 1 : 0) === ativo);
+            renderAdmins(list);
+        }
 
-  // =====================
-  // Sorteio (com evento)
-  // =====================
-  function setSelectOptionsByList(select, items, placeholder) {
-    if (!select) return;
-    const current = select.value;
-    const unique = [];
-    const seen = new Set();
-    items.forEach((item) => {
-      if (!item || seen.has(String(item.value))) return;
-      seen.add(String(item.value));
-      unique.push(item);
-    });
-    select.innerHTML = `<option value="">${placeholder}</option>` + unique.map(
-      (item) => `<option value="${item.value}">${item.label}</option>`
-    ).join('');
-    if (current) select.value = current;
-  }
+        async function createAdminUser() {
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            const nome = document.getElementById('admCreateNome').value.trim();
+            const email = document.getElementById('admCreateEmail').value.trim();
+            const senha = document.getElementById('admCreateSenha').value.trim();
+            const role = document.getElementById('admCreateRole').value;
+            let ok = true;
+            admSetHelp('admCreateNome', 'admCreateNomeHelp', nome ? '' : 'Nome obrigatorio.');
+            const emailOk = validateEmailField(email, 'admCreateEmailHelp', 'admCreateEmail');
+            admSetHelp('admCreateSenha', 'admCreateSenhaHelp', senha.length >= 8 ? '' : 'Senha deve ter ao menos 8 caracteres.');
+            if (!nome || !emailOk || senha.length < 8) ok = false;
+            if (!ok) {
+                scrollToFirstError(document.getElementById('admCreateForm'));
+                return;
+            }
 
-  function escapeHtml(value) {
-    return String(value ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
+            safeShowLoading(true);
+            try {
+                const res = await fetch('/admins', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ nome, email, senha, role })
+                });
+                if (res.status === 401) {
+                    handleUnauthorized('Sessao expirada. Faca login novamente.');
+                    return;
+                }
+                const data = await res.json();
+                if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro ao criar');
+                safeShowToast({ type: 'success', title: 'Administrador criado', message: 'Cadastro realizado com sucesso.' });
+                admCloseModal('admCreateModal');
+                fetchAdmins();
+            } catch (err) {
+                safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao criar admin' });
+            } finally {
+                safeShowLoading(false);
+            }
+        }
 
-  function cleanLabel(value) {
-    return String(value ?? '')
-      .replace(/\r?\n|\r/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
+        function admOpenEdit(id) {
+            const admin = admList.find(a => a.id === id);
+            if (!admin) return;
+            admEditingId = id;
+            document.getElementById('admEditNome').value = admin.nome;
+            document.getElementById('admEditEmail').value = admin.email;
+            document.getElementById('admEditRole').value = admin.role;
+            document.getElementById('admEditAtivo').value = admin.ativo ? '1' : '0';
+            document.getElementById('admEditSenha').value = '';
+            admOpenModal('admEditModal');
+        }
 
-  function setSorteioLoading(visible, text = 'Gerando tabela de sorteio...') {
-    let overlay = document.getElementById('sorteioLoadingOverlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'sorteioLoadingOverlay';
-      overlay.className = 'sorteio-loading-overlay hidden';
-      overlay.setAttribute('aria-live', 'polite');
-      overlay.innerHTML = `
+        function admResetTempPassword() {
+            const pass = Math.random().toString(36).slice(-10) + 'A1';
+            document.getElementById('admEditSenha').value = pass;
+            safeShowToast({ type: 'info', title: 'Senha temporaria', message: 'Uma senha temporaria foi gerada.' });
+        }
+
+        async function saveEditAdminUser() {
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            const nome = document.getElementById('admEditNome').value.trim();
+            const role = document.getElementById('admEditRole').value;
+            const ativo = document.getElementById('admEditAtivo').value === '1';
+            const senha = document.getElementById('admEditSenha').value.trim();
+            admSetHelp('admEditNome', 'admEditNomeHelp', nome ? '' : 'Nome obrigatorio.');
+            admSetHelp('admEditSenha', 'admEditSenhaHelp', senha && senha.length < 8 ? 'Senha deve ter ao menos 8 caracteres.' : '');
+            if (!nome) return;
+            if (senha && senha.length < 8) return;
+
+            safeShowLoading(true);
+            try {
+                const res = await fetch(`/admins/${admEditingId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ nome, role, ...(senha ? { senha } : {}) })
+                });
+                const data = await res.json();
+                if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro ao atualizar');
+
+                await fetch(`/admins/${admEditingId}/ativar`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ ativo })
+                });
+                safeShowToast({ type: 'success', title: 'Admin atualizado', message: 'Alteracoes salvas.' });
+                admCloseModal('admEditModal');
+                fetchAdmins();
+            } catch (err) {
+                safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao atualizar' });
+            } finally {
+                safeShowLoading(false);
+            }
+        }
+
+        function admToggleAtivo(id) {
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            const admin = admList.find(a => a.id === id);
+            if (!admin) return;
+            safeConfirm({
+                title: admin.ativo ? 'Desativar admin' : 'Ativar admin',
+                message: 'Tem certeza que deseja continuar?',
+                onConfirm: async() => {
+                    safeShowLoading(true);
+                    try {
+                        const res = await fetch(`/admins/${id}/ativar`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ ativo: !admin.ativo })
+                        });
+                        const data = await res.json();
+                        if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro');
+                        safeShowToast({ type: 'success', title: 'Atualizado', message: 'Status alterado.' });
+                        fetchAdmins();
+                    } catch (err) {
+                        safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao atualizar status' });
+                    } finally {
+                        safeShowLoading(false);
+                    }
+                }
+            });
+        }
+
+        function admDelete(id) {
+            if (adminSessionExpired) {
+                showSessionBanner();
+                return;
+            }
+            safeConfirm({
+                title: 'Excluir administrador',
+                message: 'Tem certeza que deseja excluir este administrador?',
+                onConfirm: async() => {
+                    safeShowLoading(true);
+                    try {
+                        const res = await fetch(`/admins/${id}`, {
+                            method: 'DELETE',
+                            credentials: 'include'
+                        });
+                        const data = await res.json();
+                        if (!data.sucesso) throw new Error(data ? .erro ? .mensagem || 'Erro ao excluir');
+                        safeShowToast({ type: 'success', title: 'Admin removido', message: 'Registro excluido.' });
+                        fetchAdmins();
+                    } catch (err) {
+                        safeShowToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao excluir' });
+                    } finally {
+                        safeShowLoading(false);
+                    }
+                }
+            });
+        }
+
+        function bindAdminsTab() {
+            if (admReady) return;
+            admReady = true;
+            document.getElementById('admApplyFilter') ? .addEventListener('click', applyAdmFilters);
+            document.getElementById('admOpenCreate') ? .addEventListener('click', () => admOpenModal('admCreateModal'));
+            fetchAdmins();
+        }
+
+        // =====================
+        // Sorteio (com evento)
+        // =====================
+        function setSelectOptionsByList(select, items, placeholder) {
+            if (!select) return;
+            const current = select.value;
+            const unique = [];
+            const seen = new Set();
+            items.forEach((item) => {
+                if (!item || seen.has(String(item.value))) return;
+                seen.add(String(item.value));
+                unique.push(item);
+            });
+            select.innerHTML = `<option value="">${placeholder}</option>` + unique.map(
+                (item) => `<option value="${item.value}">${item.label}</option>`
+            ).join('');
+            if (current) select.value = current;
+        }
+
+        function escapeHtml(value) {
+            return String(value ? ? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function cleanLabel(value) {
+            return String(value ? ? '')
+                .replace(/\r?\n|\r/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function setSorteioLoading(visible, text = 'Gerando tabela de sorteio...') {
+            let overlay = document.getElementById('sorteioLoadingOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'sorteioLoadingOverlay';
+                overlay.className = 'sorteio-loading-overlay hidden';
+                overlay.setAttribute('aria-live', 'polite');
+                overlay.innerHTML = `
         <div class="sorteio-loading-card" role="status" aria-atomic="true">
           <div class="sorteio-loading-spinner" aria-hidden="true"></div>
           <p class="sorteio-loading-title">Sorteio em andamento</p>
@@ -862,172 +888,172 @@
           <div class="sorteio-loading-bar" aria-hidden="true"><span></span></div>
         </div>
       `;
-      document.body.appendChild(overlay);
-    }
-    const textNode = overlay.querySelector('.sorteio-loading-text');
-    if (textNode) textNode.textContent = text;
+                document.body.appendChild(overlay);
+            }
+            const textNode = overlay.querySelector('.sorteio-loading-text');
+            if (textNode) textNode.textContent = text;
 
-    if (visible) {
-      clearTimeout(sorteioLoadingTimer);
-      sorteioLoadingTimer = null;
-      overlay.classList.remove('hidden');
-      document.body.classList.add('sorteio-loading-active');
-      sorteioLoadingShownAt = Date.now();
-      return;
-    }
+            if (visible) {
+                clearTimeout(sorteioLoadingTimer);
+                sorteioLoadingTimer = null;
+                overlay.classList.remove('hidden');
+                document.body.classList.add('sorteio-loading-active');
+                sorteioLoadingShownAt = Date.now();
+                return;
+            }
 
-    const elapsed = Date.now() - sorteioLoadingShownAt;
-    const remaining = Math.max(0, SORTEIO_LOADING_MIN - elapsed);
-    clearTimeout(sorteioLoadingTimer);
-    sorteioLoadingTimer = setTimeout(() => {
-      overlay.classList.add('hidden');
-      document.body.classList.remove('sorteio-loading-active');
-      sorteioLoadingTimer = null;
-    }, remaining);
-  }
+            const elapsed = Date.now() - sorteioLoadingShownAt;
+            const remaining = Math.max(0, SORTEIO_LOADING_MIN - elapsed);
+            clearTimeout(sorteioLoadingTimer);
+            sorteioLoadingTimer = setTimeout(() => {
+                overlay.classList.add('hidden');
+                document.body.classList.remove('sorteio-loading-active');
+                sorteioLoadingTimer = null;
+            }, remaining);
+        }
 
-  function serializeSorteioRowsForSave(rows) {
-    const list = Array.isArray(rows) ? rows : [];
-    return list
-      .map((row, idx) => {
-        const equipeA = cleanLabel(row?.equipeA || row?.equipe_a || '');
-        const equipeB = cleanLabel(row?.equipeB || row?.equipe_b || '');
-        if (!equipeA || !equipeB) return null;
-        return {
-          chave: cleanLabel(row?.chave || row?.chave_grupo || 'CH A') || 'CH A',
-          equipeA,
-          equipeB,
-          ordem: Number(row?.ordem || (idx + 1)) || (idx + 1),
-          hora: cleanLabel(row?.hora || row?.hora_oficial || row?.hora_texto || ''),
-          jogo: cleanLabel(row?.jogo || row?.numero_jogo || row?.jogo_label || `Jogo ${idx + 1}`),
-        };
-      })
-      .filter(Boolean);
-  }
+        function serializeSorteioRowsForSave(rows) {
+            const list = Array.isArray(rows) ? rows : [];
+            return list
+                .map((row, idx) => {
+                    const equipeA = cleanLabel(row ? .equipeA || row ? .equipe_a || '');
+                    const equipeB = cleanLabel(row ? .equipeB || row ? .equipe_b || '');
+                    if (!equipeA || !equipeB) return null;
+                    return {
+                        chave: cleanLabel(row ? .chave || row ? .chave_grupo || 'CH A') || 'CH A',
+                        equipeA,
+                        equipeB,
+                        ordem: Number(row ? .ordem || (idx + 1)) || (idx + 1),
+                        hora: cleanLabel(row ? .hora || row ? .hora_oficial || row ? .hora_texto || ''),
+                        jogo: cleanLabel(row ? .jogo || row ? .numero_jogo || row ? .jogo_label || `Jogo ${idx + 1}`),
+                    };
+                })
+                .filter(Boolean);
+        }
 
-  function normalizeLookup(value) {
-    return cleanLabel(value)
-      .toUpperCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-  }
+        function normalizeLookup(value) {
+            return cleanLabel(value)
+                .toUpperCase()
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '');
+        }
 
-  function extractMatchId(row) {
-    const candidates = [
-      row?.id,
-      row?.jogo_id,
-      row?.jogoId,
-      row?.id_jogo,
-      row?.match_id,
-      row?.matchId,
-      row?.ID,
-    ];
-    for (const candidate of candidates) {
-      const parsed = Number(candidate);
-      if (Number.isInteger(parsed) && parsed > 0) return parsed;
-    }
-    return 0;
-  }
+        function extractMatchId(row) {
+            const candidates = [
+                row ? .id,
+                row ? .jogo_id,
+                row ? .jogoId,
+                row ? .id_jogo,
+                row ? .match_id,
+                row ? .matchId,
+                row ? .ID,
+            ];
+            for (const candidate of candidates) {
+                const parsed = Number(candidate);
+                if (Number.isInteger(parsed) && parsed > 0) return parsed;
+            }
+            return 0;
+        }
 
-  function resolveMatchIdBySignature(match) {
-    const ordem = Number(match?.ordem || 0);
-    const jogoLabel = normalizeLookup(match?.jogo || match?.numero_jogo || match?.jogo_label || '');
-    const chave = normalizeLookup(match?.chave || match?.chave_grupo || '');
-    const equipeA = normalizeLookup(match?.equipeA || match?.equipe_a || '');
-    const equipeB = normalizeLookup(match?.equipeB || match?.equipe_b || '');
-    const pool = [...sorteioRows, ...sorteioAllRows];
+        function resolveMatchIdBySignature(match) {
+            const ordem = Number(match ? .ordem || 0);
+            const jogoLabel = normalizeLookup(match ? .jogo || match ? .numero_jogo || match ? .jogo_label || '');
+            const chave = normalizeLookup(match ? .chave || match ? .chave_grupo || '');
+            const equipeA = normalizeLookup(match ? .equipeA || match ? .equipe_a || '');
+            const equipeB = normalizeLookup(match ? .equipeB || match ? .equipe_b || '');
+            const pool = [...sorteioRows, ...sorteioAllRows];
 
-    for (const row of pool) {
-      const rowId = extractMatchId(row);
-      if (!rowId) continue;
-      const rowOrdem = Number(row?.ordem || 0);
-      if (ordem && rowOrdem === ordem) return rowId;
+            for (const row of pool) {
+                const rowId = extractMatchId(row);
+                if (!rowId) continue;
+                const rowOrdem = Number(row ? .ordem || 0);
+                if (ordem && rowOrdem === ordem) return rowId;
 
-      const rowJogo = normalizeLookup(row?.jogo || row?.numero_jogo || row?.jogo_label || '');
-      const rowChave = normalizeLookup(row?.chave || row?.chave_grupo || '');
-      if (jogoLabel && rowJogo && jogoLabel === rowJogo) {
-        if (!chave || !rowChave || chave === rowChave) return rowId;
-      }
+                const rowJogo = normalizeLookup(row ? .jogo || row ? .numero_jogo || row ? .jogo_label || '');
+                const rowChave = normalizeLookup(row ? .chave || row ? .chave_grupo || '');
+                if (jogoLabel && rowJogo && jogoLabel === rowJogo) {
+                    if (!chave || !rowChave || chave === rowChave) return rowId;
+                }
 
-      const rowEquipeA = normalizeLookup(row?.equipeA || row?.equipe_a || '');
-      const rowEquipeB = normalizeLookup(row?.equipeB || row?.equipe_b || '');
-      if (equipeA && equipeB && rowEquipeA && rowEquipeB && equipeA === rowEquipeA && equipeB === rowEquipeB) {
-        return rowId;
-      }
-    }
+                const rowEquipeA = normalizeLookup(row ? .equipeA || row ? .equipe_a || '');
+                const rowEquipeB = normalizeLookup(row ? .equipeB || row ? .equipe_b || '');
+                if (equipeA && equipeB && rowEquipeA && rowEquipeB && equipeA === rowEquipeA && equipeB === rowEquipeB) {
+                    return rowId;
+                }
+            }
 
-    return 0;
-  }
+            return 0;
+        }
 
-  function simplifyCourseLabel(value) {
-    const raw = cleanLabel(value);
-    if (!raw) return '';
-    return raw
-      .replace(/^t(?:e|\u00E9)cnico(?:a)?\s+em\s+/i, '')
-      .replace(/\s+integrado(?:\s+ao)?\s+ensino\s+m(?:e|\u00E9)dio.*$/i, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
+        function simplifyCourseLabel(value) {
+            const raw = cleanLabel(value);
+            if (!raw) return '';
+            return raw
+                .replace(/^t(?:e|\u00E9)cnico(?:a)?\s+em\s+/i, '')
+                .replace(/\s+integrado(?:\s+ao)?\s+ensino\s+m(?:e|\u00E9)dio.*$/i, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
 
-  function formatTeamLabel(value) {
-    const label = cleanLabel(value);
-    if (!label || label === '-') return '-';
+        function formatTeamLabel(value) {
+            const label = cleanLabel(value);
+            if (!label || label === '-') return '-';
 
-    let base = label;
-    if (base.includes(' - ')) {
-      base = cleanLabel(base.split(' - ').pop());
-    }
+            let base = label;
+            if (base.includes(' - ')) {
+                base = cleanLabel(base.split(' - ').pop());
+            }
 
-    base = base.replace(/^\d{4,}(?:[.\-][A-Za-z0-9]+)+\s*/g, '').trim() || base;
-    const parsed = base.match(/^(\d+)\s*(?:[\u00BA\u00B0])?\s+(.+?)(?:\s+([A-Za-z]))?$/i);
-    if (!parsed) return base || label;
+            base = base.replace(/^\d{4,}(?:[.\-][A-Za-z0-9]+)+\s*/g, '').trim() || base;
+            const parsed = base.match(/^(\d+)\s*(?:[\u00BA\u00B0])?\s+(.+?)(?:\s+([A-Za-z]))?$/i);
+            if (!parsed) return base || label;
 
-    const serie = `${parsed[1]}\u00BA`;
-    const curso = simplifyCourseLabel(parsed[2]) || cleanLabel(parsed[2]);
-    const turma = String(parsed[3] || '').toUpperCase();
-    return `${serie}${turma} ${curso}`.replace(/\s+/g, ' ').trim();
-  }
+            const serie = `${parsed[1]}\u00BA`;
+            const curso = simplifyCourseLabel(parsed[2]) || cleanLabel(parsed[2]);
+            const turma = String(parsed[3] || '').toUpperCase();
+            return `${serie}${turma} ${curso}`.replace(/\s+/g, ' ').trim();
+        }
 
-  function mapSorteioRow(j) {
-    const id = extractMatchId(j);
-    const equipeA = formatTeamLabel(j.equipeA || j.equipe_a || j.equipeA_nome || '-');
-    const equipeB = formatTeamLabel(j.equipeB || j.equipe_b || j.equipeB_nome || '-');
-    const hora = cleanLabel(j.hora || j.hora_oficial || j.hora_texto || '');
-    const jogo = cleanLabel(j.jogo || j.numero_jogo || j.jogo_label || `Jogo ${j.ordem || id || ''}`);
-    const chave = cleanLabel(j.chave || j.chave_grupo || 'CH A');
-    return {
-      ...j,
-      id: id || null,
-      equipeA,
-      equipeB,
-      hora,
-      jogo,
-      chave,
-      status: j.status || 'NAO_INICIADO',
-    };
-  }
+        function mapSorteioRow(j) {
+            const id = extractMatchId(j);
+            const equipeA = formatTeamLabel(j.equipeA || j.equipe_a || j.equipeA_nome || '-');
+            const equipeB = formatTeamLabel(j.equipeB || j.equipe_b || j.equipeB_nome || '-');
+            const hora = cleanLabel(j.hora || j.hora_oficial || j.hora_texto || '');
+            const jogo = cleanLabel(j.jogo || j.numero_jogo || j.jogo_label || `Jogo ${j.ordem || id || ''}`);
+            const chave = cleanLabel(j.chave || j.chave_grupo || 'CH A');
+            return {
+                ...j,
+                id: id || null,
+                equipeA,
+                equipeB,
+                hora,
+                jogo,
+                chave,
+                status: j.status || 'NAO_INICIADO',
+            };
+        }
 
-  function renderSorteioStatus(status) {
-    const raw = String(status || '').toUpperCase();
-    const isDone = raw === 'DONE' || raw === 'FINALIZADO' || raw === 'ENCERRADO';
-    const isLive = raw === 'EM_ANDAMENTO' || raw === 'LIVE';
-    const cls = isDone ? 'pill done' : isLive ? 'pill warning' : 'pill';
-    const label = isDone ? 'Finalizado' : isLive ? 'Em andamento' : 'Agendado';
-    return `<span class="${cls}">${label}</span>`;
-  }
+        function renderSorteioStatus(status) {
+            const raw = String(status || '').toUpperCase();
+            const isDone = raw === 'DONE' || raw === 'FINALIZADO' || raw === 'ENCERRADO';
+            const isLive = raw === 'EM_ANDAMENTO' || raw === 'LIVE';
+            const cls = isDone ? 'pill done' : isLive ? 'pill warning' : 'pill';
+            const label = isDone ? 'Finalizado' : isLive ? 'Em andamento' : 'Agendado';
+            return `<span class="${cls}">${label}</span>`;
+        }
 
-  function renderSorteioTabela() {
-    const tbody = document.getElementById('sorteioBody');
-    if (!tbody) return;
-    if (!sorteioRows.length) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Escolha filtros e clique em \"Gerar tabela\".</td></tr>';
-      return;
-    }
-    tbody.innerHTML = sorteioRows.map((j) => {
-      const sumulaAction = j.id
-        ? `<button class="btn-outline btn-sm" type="button" onclick="openSumulaMatchById('${j.id}')">S\u00FAmula</button>`
-        : '<button class="btn-outline btn-sm" type="button" disabled title="Gere e recarregue a tabela para abrir a sumula.">S\u00FAmula</button>';
-      return `
+        function renderSorteioTabela() {
+            const tbody = document.getElementById('sorteioBody');
+            if (!tbody) return;
+            if (!sorteioRows.length) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Escolha filtros e clique em \"Gerar tabela\".</td></tr>';
+                return;
+            }
+            tbody.innerHTML = sorteioRows.map((j) => {
+                const sumulaAction = j.id ?
+                    `<button class="btn-outline btn-sm" type="button" onclick="openSumulaMatchById('${j.id}')">S\u00FAmula</button>` :
+                    '<button class="btn-outline btn-sm" type="button" disabled title="Gere e recarregue a tabela para abrir a sumula.">S\u00FAmula</button>';
+                return `
       <tr class="${normalizeSorteioStatus(j.status) === 'DONE' ? 'is-done' : ''}">
         <td class="sorteio-col-center">${j.ordem ?? '-'}</td>
         <td class="sorteio-col-center">${escapeHtml(j.jogo || '-')}</td>
@@ -1040,55 +1066,55 @@
         <td class="sorteio-col-center">${sumulaAction}</td>
       </tr>
     `;
-    }).join('');
-  }
+            }).join('');
+        }
 
-  function syncSorteioChaveOptions() {
-    const select = document.getElementById('sorteioChave');
-    if (!select) return;
-    const current = select.value;
-    const chaves = Array.from(new Set(sorteioAllRows.map((j) => String(j.chave || 'CH A'))))
-      .sort((a, b) => a.localeCompare(b));
-    select.innerHTML = '<option value="">Todas</option>' + chaves.map((chave) => `<option value="${chave}">${chave}</option>`).join('');
-    if (current && chaves.includes(current)) {
-      select.value = current;
-    }
-  }
+        function syncSorteioChaveOptions() {
+            const select = document.getElementById('sorteioChave');
+            if (!select) return;
+            const current = select.value;
+            const chaves = Array.from(new Set(sorteioAllRows.map((j) => String(j.chave || 'CH A'))))
+                .sort((a, b) => a.localeCompare(b));
+            select.innerHTML = '<option value="">Todas</option>' + chaves.map((chave) => `<option value="${chave}">${chave}</option>`).join('');
+            if (current && chaves.includes(current)) {
+                select.value = current;
+            }
+        }
 
-  function renderSorteioChavesTabela() {
-    const tbody = document.getElementById('sorteioChavesBody');
-    if (!tbody) return;
-    if (!sorteioAllRows.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="center muted" style="padding:16px;">Gere o sorteio para exibir as chaves.</td></tr>';
-      return;
-    }
-    const map = new Map();
-    sorteioAllRows.forEach((j) => {
-      const chave = String(j.chave || 'CH A');
-      if (!map.has(chave)) {
-        map.set(chave, { chave, equipes: new Set(), total: 0, done: 0 });
-      }
-      const item = map.get(chave);
-      item.total += 1;
-      if (normalizeSorteioStatus(j.status) === 'DONE') item.done += 1;
-      if (j.equipeA && j.equipeA !== '-') item.equipes.add(String(j.equipeA).trim());
-      if (j.equipeB && j.equipeB !== '-') item.equipes.add(String(j.equipeB).trim());
-    });
-    const rows = Array.from(map.values()).sort((a, b) => a.chave.localeCompare(b.chave));
-    const selectedChave = document.getElementById('sorteioChave')?.value || '';
-    tbody.innerHTML = rows.map((r) => {
-      const teamNames = Array.from(r.equipes).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-      const teamsTableRows = teamNames.length
-        ? teamNames.map((team, idx) => `
+        function renderSorteioChavesTabela() {
+            const tbody = document.getElementById('sorteioChavesBody');
+            if (!tbody) return;
+            if (!sorteioAllRows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="center muted" style="padding:16px;">Gere o sorteio para exibir as chaves.</td></tr>';
+                return;
+            }
+            const map = new Map();
+            sorteioAllRows.forEach((j) => {
+                const chave = String(j.chave || 'CH A');
+                if (!map.has(chave)) {
+                    map.set(chave, { chave, equipes: new Set(), total: 0, done: 0 });
+                }
+                const item = map.get(chave);
+                item.total += 1;
+                if (normalizeSorteioStatus(j.status) === 'DONE') item.done += 1;
+                if (j.equipeA && j.equipeA !== '-') item.equipes.add(String(j.equipeA).trim());
+                if (j.equipeB && j.equipeB !== '-') item.equipes.add(String(j.equipeB).trim());
+            });
+            const rows = Array.from(map.values()).sort((a, b) => a.chave.localeCompare(b.chave));
+            const selectedChave = document.getElementById('sorteioChave') ? .value || '';
+            tbody.innerHTML = rows.map((r) => {
+                const teamNames = Array.from(r.equipes).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+                const teamsTableRows = teamNames.length ?
+                    teamNames.map((team, idx) => `
             <tr>
               <td class="sorteio-equipes-mini-pos">${idx + 1}</td>
               <td class="sorteio-equipes-mini-name">${escapeHtml(team)}</td>
             </tr>
-          `).join('')
-        : '<tr><td colspan="2" class="sorteio-equipes-mini-empty">Sem equipes</td></tr>';
-      const progress = r.total > 0 ? Math.round((r.done / r.total) * 100) : 0;
-      const isActive = selectedChave && selectedChave === r.chave;
-      return `
+          `).join('') :
+                    '<tr><td colspan="2" class="sorteio-equipes-mini-empty">Sem equipes</td></tr>';
+                const progress = r.total > 0 ? Math.round((r.done / r.total) * 100) : 0;
+                const isActive = selectedChave && selectedChave === r.chave;
+                return `
         <tr class="sorteio-chave-row${isActive ? ' is-active' : ''}">
           <td><span class="sorteio-key-badge">${escapeHtml(r.chave)}</span></td>
           <td>
@@ -1114,18 +1140,18 @@
           <td class="sorteio-col-center"><button class="${isActive ? 'btn-primary' : 'btn-outline'} btn-sm" type="button" onclick="selectSorteioChave('${r.chave}')">${isActive ? 'Filtrando' : 'Ver jogos'}</button></td>
         </tr>
       `;
-    }).join('');
-  }
+            }).join('');
+        }
 
-  function updateSorteioTitle() {
-    const title = document.getElementById('sorteioTituloModalidade');
-    const eventoId = document.getElementById('sorteioEvento')?.value;
-    const modalidadeId = document.getElementById('sorteioModalidade')?.value;
-    if (!title) return;
-    const evento = sorteioEventos.find(e => String(e.id) === String(eventoId));
-    const modalidade = sorteioModalidades.find(m => String(m.id) === String(modalidadeId));
-    if (evento && modalidade) {
-      title.textContent = `Tabela de sorteio - ${modalidade.nome || modalidade.titulo} - ${evento.nome || 'Evento'} ${evento.ano ? `(${evento.ano})` : ''}`;
+        function updateSorteioTitle() {
+            const title = document.getElementById('sorteioTituloModalidade');
+            const eventoId = document.getElementById('sorteioEvento') ? .value;
+            const modalidadeId = document.getElementById('sorteioModalidade') ? .value;
+            if (!title) return;
+            const evento = sorteioEventos.find(e => String(e.id) === String(eventoId));
+            const modalidade = sorteioModalidades.find(m => String(m.id) === String(modalidadeId));
+            if (evento && modalidade) {
+                title.textContent = `Tabela de sorteio - ${modalidade.nome || modalidade.titulo} - ${evento.nome || 'Evento'} ${evento.ano ? `(${evento.ano})` : ''}`;
     } else if (evento) {
       title.textContent = `Tabela de sorteio - Todas as modalidades - ${evento.nome || 'Evento'} ${evento.ano ? `(${evento.ano})` : ''}`;
     } else {
@@ -2687,6 +2713,3 @@
     }
   });
 })();
-
-
-

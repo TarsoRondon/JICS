@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tabela de Jogos · JICS IFRO</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="/admin/shell.css"/>
+  <script src="/js/jics-ui.js" defer></script>
+  <script src="/js/jsdosistema.js" defer></script>
+  <style>
+    .jg-filters {
+      display: flex;
+      gap: var(--s3);
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .jg-row {
+      display: grid;
+      grid-template-columns: 50px 1.2fr 100px 1.2fr 120px 110px 110px 100px;
+      align-items: center;
+      gap: var(--s3);
+      padding: var(--s4) var(--s5);
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background var(--duration-fast) var(--ease-smooth);
+    }
+    .jg-row:hover {
+      background: var(--bg-card-hover);
+    }
+    .jg-row-head {
+      font-size: var(--t-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-muted);
+      background: var(--bg-surface-2) !important;
+      border-bottom: 2px solid var(--border-subtle);
+    }
+    .jg-chave {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--r-md);
+      background: var(--p-soft);
+      color: var(--p-secondary);
+      font-weight: 800;
+      font-size: var(--t-sm);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-display);
+    }
+    .jg-team {
+      font-size: var(--t-sm);
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .jg-score {
+      font-family: var(--font-display);
+      font-size: var(--t-base);
+      font-weight: 800;
+      color: var(--p-secondary);
+      text-align: center;
+    }
+    .jg-score.pending {
+      color: var(--text-muted);
+      font-size: var(--t-xs);
+    }
+    .jg-loc {
+      font-size: var(--t-xs);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .jg-date {
+      font-size: var(--t-xs);
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 960px) {
+      .jg-row {
+        grid-template-columns: 40px 1fr 1fr auto auto;
+      }
+      .jg-loc, .jg-date, .loc-col, .date-col {
+        display: none;
+      }
+    }
+    @media (max-width: 640px) {
+      .jg-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--s2);
+        padding: var(--s4);
+      }
+      .jg-row-head { display: none; }
+    }
+  </style>
+</head>
+<body class="admin-app" data-page="jogos">
+<div id="appShell">
+
+  <!-- ═══ NAVBAR ═══ -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button type="button" class="btn-icon nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
+      <a href="/admin/dashboard.html" class="navbar-brand">
+        <img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS ADMIN
+      </a>
+    </div>
+    <div class="navbar-center">
+      <button type="button" class="navbar-search-btn btn-global-search">
+        <span class="material-symbols-outlined" style="font-size:18px;">search</span>
+        <span>Pesquisar partidas, atletas, equipes...</span>
+      </button>
+    </div>
+    <div class="navbar-right">
+      <button type="button" class="btn-icon theme-toggle-btn" onclick="JICS_UI.toggleTheme()"><span class="material-symbols-outlined">light_mode</span></button>
+      <button type="button" class="btn-icon btn-notif-trigger"><span class="material-symbols-outlined">notifications</span></button>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header">
+        <span class="side-header-title">Painel Esportivo</span>
+      </div>
+      <div class="side-sections">
+        <a class="side-link" href="/admin/dashboard.html"><span class="material-symbols-outlined side-link-icon">dashboard</span><span>Dashboard</span></a>
+        <a class="side-link active" href="/admin/jogos.html"><span class="material-symbols-outlined side-link-icon">sports</span><span>Jogos & Tabela</span></a>
+        <a class="side-link" href="/admin/chaveamento.html"><span class="material-symbols-outlined side-link-icon">account_tree</span><span>Chaveamento</span></a>
+        <a class="side-link" href="/admin/modalidades.html"><span class="material-symbols-outlined side-link-icon">sports_basketball</span><span>Modalidades</span></a>
+        <a class="side-link" href="/admin/equipes.html"><span class="material-symbols-outlined side-link-icon">groups</span><span>Equipes</span></a>
+        <a class="side-link" href="/admin/alunos.html"><span class="material-symbols-outlined side-link-icon">school</span><span>Atletas & Alunos</span></a>
+        <a class="side-link" href="/admin/sumulas.html"><span class="material-symbols-outlined side-link-icon">assignment</span><span>Súmulas</span></a>
+        <div class="side-group-title">Operações</div>
+        <a class="side-link" href="/admin/sorteio.html"><span class="material-symbols-outlined side-link-icon">casino</span><span>Sorteio de Chaves</span></a>
+        <a class="side-link" href="/admin/boletim_oficial.html"><span class="material-symbols-outlined side-link-icon">campaign</span><span>Boletim Oficial</span></a>
+        <a class="side-link" href="/admin/admin.html"><span class="material-symbols-outlined side-link-icon">admin_panel_settings</span><span>Administração</span></a>
+      </div>
+    </aside>
+
+    <!-- ═══ CONTEÚDO PRINCIPAL ═══ -->
+    <main class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Calendário & Tabela de Jogos</h1>
+          <p class="page-subtitle" id="jogoSubtitle">Acompanhe e gerencie todas as partidas do torneio</p>
+        </div>
+        <div class="jg-filters">
+          <select id="filtroModalidade" class="form-select" style="width:auto;min-width:180px;" onchange="carregarJogos()">
+            <option value="">Todas modalidades</option>
+          </select>
+          <select id="filtroCategoria" class="form-select" style="width:auto;" onchange="carregarJogos()">
+            <option value="">Todas categorias</option>
+            <option value="MASCULINO">Masculino</option>
+            <option value="FEMININO">Feminino</option>
+          </select>
+          <select id="filtroFase" class="form-select" style="width:auto;" onchange="carregarJogos()">
+            <option value="">Todas as fases</option>
+            <option value="GRUPOS">Fase de Grupos</option>
+            <option value="QUARTAS">Quartas</option>
+            <option value="SEMIFINAL">Semifinal</option>
+            <option value="FINAL">Final</option>
+          </select>
+          <button type="button" class="btn btn-outline" onclick="carregarJogos()">
+            <span class="material-symbols-outlined">refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <!-- CABEÇALHO DA TABELA -->
+        <div class="jg-row jg-row-head">
+          <div>Chave</div>
+          <div>Equipe A</div>
+          <div style="text-align:center;">Placar</div>
+          <div>Equipe B</div>
+          <div class="loc-col">Local</div>
+          <div class="date-col">Horário</div>
+          <div>Status</div>
+          <div style="text-align:right;">Ações</div>
+        </div>
+
+        <!-- LISTAGEM DINÂMICA -->
+        <div id="jogosLista">
+          <div style="padding:var(--s6);text-align:center;">
+            <div class="skeleton" style="height:48px;margin-bottom:var(--s2);"></div>
+            <div class="skeleton" style="height:48px;margin-bottom:var(--s2);"></div>
+            <div class="skeleton" style="height:48px;"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  await carregarFiltros();
+  carregarJogos();
+});
+
+async function carregarFiltros() {
+  try {
+    const res = await fetch('/modalidades');
+    const mods = await res.json();
+    const modSel = document.getElementById('filtroModalidade');
+    if (Array.isArray(mods)) {
+      mods.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.nome || m.titulo;
+        modSel.appendChild(opt);
+      });
+    }
+  } catch {}
+}
+
+async function carregarJogos() {
+  const params = new URLSearchParams();
+  const mod = document.getElementById('filtroModalidade').value;
+  const cat = document.getElementById('filtroCategoria').value;
+  const fase = document.getElementById('filtroFase').value;
+  if (mod) params.set('modalidadeId', mod);
+  if (cat) params.set('categoria', cat);
+  if (fase) params.set('fase', fase);
+
+  const lista = document.getElementById('jogosLista');
+
+  try {
+    const res = await fetch(`/jics/jogos?${params}`);
+    const data = await res.json();
+    const jogos = data.jogos || [];
+    document.getElementById('jogoSubtitle').textContent = `${jogos.length} partida(s) encontrada(s)`;
+
+    if (!jogos.length) {
+      lista.innerHTML = `
+        <div style="padding:var(--s8);text-align:center;color:var(--text-secondary);">
+          <span class="material-symbols-outlined" style="font-size:48px;color:var(--text-muted);margin-bottom:var(--s3);">sports</span>
+          <h3 style="font-size:var(--t-lg);font-weight:700;color:var(--text-main);">Nenhum jogo encontrado</h3>
+          <p style="font-size:var(--t-sm);margin-top:var(--s1);">Gere as tabelas na seção de Chaveamento para iniciar a competição.</p>
+          <a href="/admin/chaveamento.html" class="btn btn-primary btn-sm" style="margin-top:var(--s4);">Ir para Chaveamento</a>
+        </div>
+      `;
+      return;
+    }
+
+    lista.innerHTML = jogos.map(j => {
+      const dataHora = j.data_hora ? new Date(j.data_hora).toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : 'A definir';
+      const status = (j.status || 'AGENDADO').toUpperCase();
+      const isLive = status === 'EM_ANDAMENTO';
+      const isDone = status === 'FINALIZADO';
+
+      const statusBadge = isLive
+        ? '<span class="live-indicator">AO VIVO</span>'
+        : `<span class="status-live-pill" style="background:${isDone ? 'var(--bg-surface-2)' : 'var(--bg-surface)'};">${isDone ? 'Finalizado' : 'Agendado'}</span>`;
+
+      const placar = j.placar_a !== null && j.placar_b !== null
+        ? `<span class="jg-score">${j.placar_a} × ${j.placar_b}</span>`
+        : `<span class="jg-score pending">VS</span>`;
+
+      const acaoBtn = isLive
+        ? `<a href="/admin/sumula.html?jogoId=${j.id}" class="btn btn-primary btn-sm">Mesa Súmula</a>`
+        : `<a href="/admin/sumula.html?jogoId=${j.id}" class="btn btn-outline btn-sm">Ver Súmula</a>`;
+
+      return `
+        <div class="jg-row">
+          <div class="jg-chave">${esc(j.chave || 'A')}</div>
+          <div class="jg-team"><strong>${esc(j.equipe_a_nome || 'Aguardando')}</strong></div>
+          <div style="text-align:center;">${placar}</div>
+          <div class="jg-team"><strong>${esc(j.equipe_b_nome || 'Aguardando')}</strong></div>
+          <div class="jg-loc"><span class="material-symbols-outlined" style="font-size:16px;">location_on</span> ${esc(j.quadra || 'Quadra Principal')}</div>
+          <div class="jg-date">${dataHora}</div>
+          <div>${statusBadge}</div>
+          <div style="text-align:right;">${acaoBtn}</div>
+        </div>
+      `;
+    }).join('');
+  } catch {
+    lista.innerHTML = '<div style="padding:var(--s6);text-align:center;color:var(--color-error);">Erro ao carregar partidas.</div>';
+  }
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function toggleSideNav() {
+  document.getElementById('sideNav').classList.toggle('is-open');
+  document.getElementById('sideOverlay').classList.toggle('is-show');
+}
+function closeSideNav() {
+  document.getElementById('sideNav').classList.remove('is-open');
+  document.getElementById('sideOverlay').classList.remove('is-show');
+}
+</script>
+</body>
+</html>

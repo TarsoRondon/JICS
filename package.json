@@ -8,6 +8,7 @@
     },
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
+        "test:email": "node testar-email.js",
         "build:tailwind": "tailwindcss -i ./public/css/tailwind.css -o ./public/css/tailwind.build.css --minify"
     },
     "keywords": [],

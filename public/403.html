@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 — Sem permissão</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+         :root {
+            --green: #24b371;
+            --green-dark: #137446;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #0f1e17;
+            --muted: #6b9080;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: radial-gradient(circle at top left, #dff5ea, transparent), radial-gradient(circle at bottom right, #e8f8f1, transparent), var(--bg);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .card {
+            background: var(--card);
+            padding: 60px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .08);
+            max-width: 520px;
+            animation: fade .5s ease;
+        }
+        
+        .code {
+            font-size: 90px;
+            font-weight: 700;
+            color: var(--green);
+        }
+        
+        .title {
+            font-size: 26px;
+            margin-top: 10px;
+            color: var(--text);
+        }
+        
+        .desc {
+            margin: 15px 0 30px;
+            color: var(--muted);
+        }
+        
+        .btn {
+            padding: 12px 26px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--green), var(--green-dark));
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: .2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(36, 179, 113, .3);
+        }
+        
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="code">403</div>
+        <div class="title">Acesso negado</div>
+        <div class="desc">Você não tem permissão para acessar esta página.</div>
+        <a href="index.html" class="btn">Voltar ao login</a>
+    </div>
+</body>
+
+</html>

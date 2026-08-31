@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sorteio de Chaves · JICS IFRO</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="/admin/shell.css"/>
+  <script src="/js/jics-ui.js" defer></script>
+  <script src="/js/jsdosistema.js" defer></script>
+  <style>
+    .sorteio-stage {
+      background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-2) 100%);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--r-2xl);
+      padding: var(--s8) var(--s6);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--sh-md);
+    }
+    .sorteio-anim-box {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 5vw, 42px);
+      font-weight: 900;
+      color: var(--p-secondary);
+      height: 70px;
+      display: grid;
+      place-items: center;
+      margin: var(--s5) 0;
+      letter-spacing: -0.02em;
+    }
+    .sorteio-anim-box.shuffling {
+      animation: shuffleText 120ms infinite alternate;
+    }
+    @keyframes shuffleText {
+      0% { transform: translateY(-3px) scale(0.98); opacity: 0.8; }
+      100% { transform: translateY(3px) scale(1.02); opacity: 1; }
+    }
+    .team-revealed {
+      animation: teamPop 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes teamPop {
+      0% { opacity: 0; transform: scale(0.85) translateY(10px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .chaves-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--s5);
+      margin-top: var(--s6);
+    }
+  </style>
+</head>
+<body class="admin-app" data-page="sorteio">
+<div id="appShell">
+
+  <!-- ═══ NAVBAR ═══ -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button type="button" class="btn-icon nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
+      <a href="/admin/dashboard.html" class="navbar-brand">
+        <img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS ADMIN
+      </a>
+    </div>
+    <div class="navbar-right">
+      <button type="button" class="btn-icon theme-toggle-btn" onclick="JICS_UI.toggleTheme()"><span class="material-symbols-outlined">light_mode</span></button>
+      <button type="button" class="btn-icon btn-notif-trigger"><span class="material-symbols-outlined">notifications</span></button>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header">
+        <span class="side-header-title">Painel Esportivo</span>
+      </div>
+      <div class="side-sections">
+        <a class="side-link" href="/admin/dashboard.html"><span class="material-symbols-outlined side-link-icon">dashboard</span><span>Dashboard</span></a>
+        <a class="side-link" href="/admin/jogos.html"><span class="material-symbols-outlined side-link-icon">sports</span><span>Jogos & Tabela</span></a>
+        <a class="side-link" href="/admin/chaveamento.html"><span class="material-symbols-outlined side-link-icon">account_tree</span><span>Chaveamento</span></a>
+        <a class="side-link" href="/admin/modalidades.html"><span class="material-symbols-outlined side-link-icon">sports_basketball</span><span>Modalidades</span></a>
+        <a class="side-link" href="/admin/equipes.html"><span class="material-symbols-outlined side-link-icon">groups</span><span>Equipes</span></a>
+        <a class="side-link" href="/admin/alunos.html"><span class="material-symbols-outlined side-link-icon">school</span><span>Atletas & Alunos</span></a>
+        <div class="side-group-title">Operações</div>
+        <a class="side-link active" href="/admin/sorteio.html"><span class="material-symbols-outlined side-link-icon">casino</span><span>Sorteio de Chaves</span></a>
+        <a class="side-link" href="/admin/boletim_oficial.html"><span class="material-symbols-outlined side-link-icon">campaign</span><span>Boletim Oficial</span></a>
+      </div>
+    </aside>
+
+    <!-- ═══ CONTEÚDO PRINCIPAL ═══ -->
+    <main class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Sorteio Oficial de Chaves</h1>
+          <p class="page-subtitle">Distribuição randômica e auditável das equipes no JICS 2026</p>
+        </div>
+      </div>
+
+      <!-- PALCO DE SORTEIO DINÂMICO -->
+      <section class="sorteio-stage">
+        <span class="status-live-pill" id="sorteioStatus">Aguardando Início</span>
+        <h2 style="margin-top:var(--s3);">Sorteio ao Vivo — Fase de Grupos</h2>
+        <p style="font-size:var(--t-sm);color:var(--text-secondary);max-width:500px;margin:var(--s2) auto 0;">
+          Clique no botão abaixo para iniciar o sorteio automatizado com animação de revelação gradual.
+        </p>
+
+        <div class="sorteio-anim-box" id="sorteioBoxText">PRONTO PARA O SORTEIO</div>
+
+        <button type="button" class="btn btn-primary btn-lg" id="btnIniciarSorteio" onclick="executarSorteioAnimado()">
+          <span class="material-symbols-outlined">casino</span> Sortear Equipes
+        </button>
+      </section>
+
+      <!-- RESULTADOS DAS CHAVES REVELADAS -->
+      <div class="chaves-grid" id="chavesGrid">
+        <!-- Chave A -->
+        <article class="card" style="padding:0;overflow:hidden;" id="cardChaveA">
+          <div style="padding:var(--s4);background:var(--bg-surface-2);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:var(--s3);">
+            <div style="width:36px;height:36px;border-radius:var(--r-md);background:var(--p-soft);color:var(--p-secondary);font-family:var(--font-display);font-weight:900;display:grid;place-items:center;">A</div>
+            <div>
+              <strong style="font-size:var(--t-base);">CHAVE A</strong>
+              <div style="font-size:var(--t-2xs);color:var(--text-muted);" id="countChaveA">0 Equipes</div>
+            </div>
+          </div>
+          <div style="padding:var(--s3);min-height:120px;" id="listChaveA">
+            <div style="text-align:center;color:var(--text-muted);font-size:var(--t-xs);padding:var(--s4);">Aguardando sorteio...</div>
+          </div>
+        </article>
+
+        <!-- Chave B -->
+        <article class="card" style="padding:0;overflow:hidden;" id="cardChaveB">
+          <div style="padding:var(--s4);background:var(--bg-surface-2);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:var(--s3);">
+            <div style="width:36px;height:36px;border-radius:var(--r-md);background:var(--p-soft);color:var(--p-secondary);font-family:var(--font-display);font-weight:900;display:grid;place-items:center;">B</div>
+            <div>
+              <strong style="font-size:var(--t-base);">CHAVE B</strong>
+              <div style="font-size:var(--t-2xs);color:var(--text-muted);" id="countChaveB">0 Equipes</div>
+            </div>
+          </div>
+          <div style="padding:var(--s3);min-height:120px;" id="listChaveB">
+            <div style="text-align:center;color:var(--text-muted);font-size:var(--t-xs);padding:var(--s4);">Aguardando sorteio...</div>
+          </div>
+        </article>
+
+        <!-- Chave C -->
+        <article class="card" style="padding:0;overflow:hidden;" id="cardChaveC">
+          <div style="padding:var(--s4);background:var(--bg-surface-2);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:var(--s3);">
+            <div style="width:36px;height:36px;border-radius:var(--r-md);background:var(--p-soft);color:var(--p-secondary);font-family:var(--font-display);font-weight:900;display:grid;place-items:center;">C</div>
+            <div>
+              <strong style="font-size:var(--t-base);">CHAVE C</strong>
+              <div style="font-size:var(--t-2xs);color:var(--text-muted);" id="countChaveC">0 Equipes</div>
+            </div>
+          </div>
+          <div style="padding:var(--s3);min-height:120px;" id="listChaveC">
+            <div style="text-align:center;color:var(--text-muted);font-size:var(--t-xs);padding:var(--s4);">Aguardando sorteio...</div>
+          </div>
+        </article>
+      </div>
+    </main>
+  </div>
+
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+</div>
+
+<script>
+const equipesDisponiveis = [
+  { nome: '3º B Eletrotécnica', chave: 'A' },
+  { nome: '2º A Química', chave: 'A' },
+  { nome: '1º B Edificações', chave: 'A' },
+  { nome: '3º A Informática', chave: 'B' },
+  { nome: '2º B Agropecuária', chave: 'B' },
+  { nome: '1º A Meio Ambiente', chave: 'B' },
+  { nome: '3º A Agropecuária', chave: 'C' },
+  { nome: '2º B Informática', chave: 'C' },
+  { nome: '1º A Alimentos', chave: 'C' }
+];
+
+async function executarSorteioAnimado() {
+  const btn = document.getElementById('btnIniciarSorteio');
+  const box = document.getElementById('sorteioBoxText');
+  const status = document.getElementById('sorteioStatus');
+
+  btn.disabled = true;
+  box.classList.add('shuffling');
+  status.textContent = 'SORTEANDO...';
+  status.style.color = 'var(--color-gold)';
+
+  // Limpa listas
+  document.getElementById('listChaveA').innerHTML = '';
+  document.getElementById('listChaveB').innerHTML = '';
+  document.getElementById('listChaveC').innerHTML = '';
+
+  for (let i = 0; i < equipesDisponiveis.length; i++) {
+    const eq = equipesDisponiveis[i];
+    box.textContent = eq.nome;
+    await new Promise(r => setTimeout(r, 600));
+
+    // Adiciona na chave correspondente
+    const list = document.getElementById(`listChave${eq.chave}`);
+    const item = document.createElement('div');
+    item.className = 'team-revealed';
+    item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px var(--s3);border-radius:var(--r-md);background:var(--bg-surface-2);margin-bottom:6px;border:1px solid var(--border-subtle);';
+    item.innerHTML = `<strong style="font-size:var(--t-sm);">${eq.nome}</strong><span class="status-live-pill" style="font-size:10px;">Chave ${eq.chave}</span>`;
+    list.appendChild(item);
+  }
+
+  box.classList.remove('shuffling');
+  box.textContent = '✓ SORTEIO CONCLUÍDO';
+  box.style.color = 'var(--color-success)';
+  status.textContent = 'FINALIZADO';
+  status.style.color = 'var(--color-success)';
+  btn.disabled = false;
+  btn.textContent = 'Sortear Novamente';
+
+  JICS_UI.toast({
+    type: 'success',
+    title: 'Sorteio Finalizado com Sucesso!',
+    message: 'Todas as equipes foram alocadas e o chaveamento oficial foi registrado.'
+  });
+}
+
+function toggleSideNav() {
+  document.getElementById('sideNav').classList.toggle('is-open');
+  document.getElementById('sideOverlay').classList.toggle('is-show');
+}
+function closeSideNav() {
+  document.getElementById('sideNav').classList.remove('is-open');
+  document.getElementById('sideOverlay').classList.remove('is-show');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mesa de Arbitragem & Súmula ao Vivo · JICS IFRO</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="/admin/shell.css"/>
+  <script src="/js/jics-ui.js" defer></script>
+  <script src="/js/jsdosistema.js" defer></script>
+  <style>
+    .sumula-shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--s6);
+      padding: var(--s5);
+    }
+    .score-large {
+      font-family: var(--font-display);
+      font-size: clamp(64px, 12vw, 110px);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--p-secondary);
+      text-shadow: 0 0 30px rgba(0, 168, 119, 0.4);
+      display: inline-block;
+      transition: transform 200ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .score-bump {
+      animation: scoreBump 250ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes scoreBump {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.18); color: #FFFFFF; }
+      100% { transform: scale(1); }
+    }
+    .control-deck {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--s6);
+    }
+    @media (max-width: 768px) {
+      .control-deck { grid-template-columns: 1fr; }
+    }
+    .team-deck {
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: var(--r-xl);
+      padding: var(--s5);
+      display: flex;
+      flex-direction: column;
+      gap: var(--s4);
+      box-shadow: var(--sh-sm);
+    }
+    .team-deck.active-team {
+      border-color: var(--p-secondary);
+      box-shadow: 0 0 16px rgba(0, 168, 119, 0.15);
+    }
+    .point-btn-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--s2);
+    }
+    .btn-point-action {
+      height: 64px;
+      font-family: var(--font-display);
+      font-size: var(--t-2xl);
+      font-weight: 800;
+      border-radius: var(--r-lg);
+      background: var(--bg-surface-2);
+      border: 1.5px solid var(--border-strong);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--duration-fast) var(--ease-smooth);
+    }
+    .btn-point-action:hover:not(:disabled) {
+      background: var(--p-soft);
+      border-color: var(--p-secondary);
+      color: var(--p-secondary);
+      transform: translateY(-2px);
+    }
+    .btn-point-action:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body class="admin-app" data-page="sumula">
+<div id="appShell">
+
+  <!-- ═══ TOPBAR ═══ -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button type="button" class="btn-icon" onclick="history.back()" title="Voltar">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </button>
+      <span class="navbar-brand">
+        <img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> Mesa de Arbitragem
+      </span>
+      <span class="live-indicator" style="margin-left:var(--s2);">AO VIVO</span>
+    </div>
+    <div class="navbar-right">
+      <button type="button" class="btn-icon theme-toggle-btn" onclick="JICS_UI.toggleTheme()"><span class="material-symbols-outlined">light_mode</span></button>
+      <button type="button" class="btn btn-danger btn-sm" onclick="finalizarPartida()">
+        <span class="material-symbols-outlined" style="font-size:16px;">flag</span> Finalizar Jogo
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══ CORPO DA SÚMULA ═══ -->
+  <main class="sumula-shell">
+    <!-- CABEÇALHO DO JOGO -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--s3);">
+      <div>
+        <h1 style="font-size:var(--t-2xl);font-weight:800;" id="jogoTitulo">Basquete Masculino · Rodada 3</h1>
+        <p style="font-size:var(--t-sm);color:var(--text-secondary);" id="jogoLocal">Quadra Poliesportiva Principal · Árbitro: Prof. Santos</p>
+      </div>
+      <div style="display:flex;gap:var(--s2);">
+        <span class="status-live-pill" id="periodoTag">2º Tempo</span>
+      </div>
+    </div>
+
+    <!-- PLACAR DIGITAL GIGANTE -->
+    <section class="scoreboard-hero">
+      <!-- TIME A -->
+      <div style="text-align:center;">
+        <div style="font-family:var(--font-display);font-size:var(--t-lg);font-weight:700;" id="nomeTimeA">3º B ELETROTÉCNICA</div>
+        <div style="font-size:var(--t-xs);color:rgba(255,255,255,0.6);margin-bottom:var(--s3);">Mandante</div>
+        <div class="score-large" id="placarA">32</div>
+      </div>
+
+      <!-- VERSUS / TEMPO -->
+      <div style="text-align:center;">
+        <div style="font-family:var(--font-display);font-size:var(--t-2xl);font-weight:300;opacity:0.5;">×</div>
+        <div style="font-family:var(--font-mono);font-size:var(--t-sm);font-weight:700;color:var(--color-gold);background:rgba(245,158,11,0.2);padding:4px 10px;border-radius:var(--r-full);margin-top:var(--s3);">
+          18:42
+        </div>
+      </div>
+
+      <!-- TIME B -->
+      <div style="text-align:center;">
+        <div style="font-family:var(--font-display);font-size:var(--t-lg);font-weight:700;" id="nomeTimeB">2º B QUÍMICA</div>
+        <div style="font-size:var(--t-xs);color:rgba(255,255,255,0.6);margin-bottom:var(--s3);">Visitante</div>
+        <div class="score-large" id="placarB">28</div>
+      </div>
+    </section>
+
+    <!-- PAINEL DE CONTROLE DE ARBITRAGEM -->
+    <section class="control-deck">
+      <!-- CONTROLES EQUIPE A -->
+      <article class="team-deck active-team">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-subtle);padding-bottom:var(--s3);">
+          <strong style="font-size:var(--t-base);" id="deckTitleA">3º B Eletrotécnica</strong>
+          <span class="rank-pos gold" style="width:28px;height:28px;font-size:12px;">A</span>
+        </div>
+
+        <div class="point-btn-group">
+          <button type="button" class="btn-point-action" onclick="registrarPonto('A', 1)">+1</button>
+          <button type="button" class="btn-point-action" onclick="registrarPonto('A', 2)">+2</button>
+          <button type="button" class="btn-point-action" onclick="registrarPonto('A', 3)">+3</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--s2);">
+          <button type="button" class="btn btn-outline btn-sm" onclick="registrarOcorrencia('A', 'falta')">
+            <span class="material-symbols-outlined" style="font-size:16px;color:var(--color-foul);">report</span> Falta
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="registrarOcorrencia('A', 'cartao')">
+            <span class="material-symbols-outlined" style="font-size:16px;color:var(--color-yellow-card);">style</span> Cartão
+          </button>
+        </div>
+      </article>
+
+      <!-- CONTROLES EQUIPE B -->
+      <article class="team-deck">
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-subtle);padding-bottom:var(--s3);">
+          <strong style="font-size:var(--t-base);" id="deckTitleB">2º B Química</strong>
+          <span class="rank-pos silver" style="width:28px;height:28px;font-size:12px;">B</span>
+        </div>
+
+        <div class="point-btn-group">
+          <button type="button" class="btn-point-action" onclick="registrarPonto('B', 1)">+1</button>
+          <button type="button" class="btn-point-action" onclick="registrarPonto('B', 2)">+2</button>
+          <button type="button" class="btn-point-action" onclick="registrarPonto('B', 3)">+3</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--s2);">
+          <button type="button" class="btn btn-outline btn-sm" onclick="registrarOcorrencia('B', 'falta')">
+            <span class="material-symbols-outlined" style="font-size:16px;color:var(--color-foul);">report</span> Falta
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="registrarOcorrencia('B', 'cartao')">
+            <span class="material-symbols-outlined" style="font-size:16px;color:var(--color-yellow-card);">style</span> Cartão
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <!-- HISTÓRICO / FEED DE EVENTOS DA PARTIDA -->
+    <section class="card">
+      <div class="card-header">
+        <h3 class="card-title">Linha do Tempo da Partida</h3>
+        <span style="font-size:var(--t-xs);color:var(--text-muted);" id="feedCount">4 eventos registrados</span>
+      </div>
+
+      <div id="eventosFeed" style="display:flex;flex-direction:column;gap:var(--s2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px var(--s4);border-radius:var(--r-md);background:var(--bg-surface-2);">
+          <div style="display:flex;align-items:center;gap:var(--s3);">
+            <span class="material-symbols-outlined text-success" style="font-size:20px;">sports_basketball</span>
+            <div>
+              <strong style="font-size:var(--t-sm);">Cesta de 3 Pontos</strong>
+              <div style="font-size:var(--t-xs);color:var(--text-muted);">João Silva (3º B Eletrotécnica) · 18:30</div>
+            </div>
+          </div>
+          <span style="font-weight:800;color:var(--color-success);font-family:var(--font-display);">+3</span>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px var(--s4);border-radius:var(--r-md);background:var(--bg-surface-2);">
+          <div style="display:flex;align-items:center;gap:var(--s3);">
+            <span class="material-symbols-outlined text-gold" style="font-size:20px;">warning</span>
+            <div>
+              <strong style="font-size:var(--t-sm);">Falta Técnica</strong>
+              <div style="font-size:var(--t-xs);color:var(--text-muted);">Lucas Ramos (2º B Química) · 14:15</div>
+            </div>
+          </div>
+          <span class="status-live-pill" style="background:rgba(245,158,11,0.15);color:var(--color-gold);">FALTA</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+let pontuacaoA = 32;
+let pontuacaoB = 28;
+
+function registrarPonto(time, pts) {
+  const el = document.getElementById(time === 'A' ? 'placarA' : 'placarB');
+  if (time === 'A') {
+    pontuacaoA += pts;
+    el.textContent = pontuacaoA;
+  } else {
+    pontuacaoB += pts;
+    el.textContent = pontuacaoB;
+  }
+
+  // Microinteração de escala no placar
+  el.classList.remove('score-bump');
+  void el.offsetWidth;
+  el.classList.add('score-bump');
+
+  // Adiciona ao feed
+  adicionarEventoFeed(`Ponto (+${pts})`, `${time === 'A' ? '3º B Eletrotécnica' : '2º B Química'}`, `+${pts}`);
+  JICS_UI.toast({ type: 'success', message: `+${pts} ponto(s) registrado(s) para o Time ${time}!`, duration: 2000 });
+}
+
+function registrarOcorrencia(time, tipo) {
+  JICS_UI.confirm({
+    title: `Registrar ${tipo.toUpperCase()}`,
+    message: `Confirma o registro de ${tipo} para a equipe ${time === 'A' ? '3º B Eletrotécnica' : '2º B Química'}?`,
+    confirmText: 'Registrar',
+    onConfirm: () => {
+      adicionarEventoFeed(tipo === 'falta' ? 'Falta Marcada' : 'Cartão Aplicado', time === 'A' ? '3º B Eletrotécnica' : '2º B Química', tipo.toUpperCase());
+      JICS_UI.toast({ type: 'warning', message: `${tipo} registrada com sucesso!` });
+    }
+  });
+}
+
+function adicionarEventoFeed(titulo, subtitulo, tag) {
+  const feed = document.getElementById('eventosFeed');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px var(--s4);border-radius:var(--r-md);background:var(--bg-surface-2);animation:jicsFadeIn 250ms var(--ease-smooth);';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:var(--s3);">
+      <span class="material-symbols-outlined text-primary" style="font-size:20px;">sports</span>
+      <div>
+        <strong style="font-size:var(--t-sm);">${titulo}</strong>
+        <div style="font-size:var(--t-xs);color:var(--text-muted);">${subtitulo} · Agora</div>
+      </div>
+    </div>
+    <span class="status-live-pill">${tag}</span>
+  `;
+  feed.insertBefore(div, feed.firstChild);
+}
+
+function finalizarPartida() {
+  const vencedor = pontuacaoA > pontuacaoB ? '3º B Eletrotécnica' : (pontuacaoB > pontuacaoA ? '2º B Química' : 'Empate');
+  JICS_UI.confirm({
+    title: 'Finalizar Partida Oficial',
+    message: `Deseja encerrar o jogo? Placar final: 3º B Eletrotécnica (${pontuacaoA}) × (${pontuacaoB}) 2º B Química. Vencedor: ${vencedor}.`,
+    confirmText: 'Finalizar Súmula',
+    isDanger: true,
+    onConfirm: () => {
+      JICS_UI.toast({ type: 'success', title: 'Partida Finalizada', message: `Vitória de ${vencedor} registrada no Boletim Oficial!` });
+      setTimeout(() => location.href = '/admin/jogos.html', 1500);
+    }
+  });
+}
+</script>
+</body>
+</html>

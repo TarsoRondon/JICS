@@ -1,61 +1,164 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Aluno Dashboard • JICS</title>
-  <link rel="icon" type="image/png" href="/assets/ifro.png" />
-  <link rel="stylesheet" href="/aluno/dashboard.css" />
-  <script type="module" src="/aluno/dashboard.js" defer></script>
-  <link rel="stylesheet" href="/assets/success-feedback.css" />
-  <script defer src="/assets/success-feedback.js"></script>
-  <link rel="stylesheet" href="/css/dark-theme.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portal do Atleta & Estudante · JICS IFRO</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="/aluno/shell.css"/>
+  <script src="/js/jics-ui.js" defer></script>
+  <script src="/js/jsdosistema.js" defer></script>
 </head>
-<body class="aluno-theme" data-theme="dark">
-  <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <h1>Meu painel</h1>
-        <span id="updatedAgo" class="muted">Atualizado ha --</span>
-      </div>
-      <div class="actions">
-        <button class="btn ghost" id="btnRefresh">Atualizar</button>
-        <a class="btn" href="/dashboard.html">Abrir painel completo</a>
-      </div>
-    </header>
+<body class="aluno-app" data-page="dashboard">
+<div id="appShell">
 
-    <main class="content">
-      <section class="hero">
-        <div class="hero-card">
-          <h2>Meu status</h2>
-          <p id="statusText">Carregando...</p>
-          <div class="chips">
-            <span class="chip" id="chipInscricoes">0 inscricoes</span>
-            <span class="chip" id="chipAvisos">0 avisos</span>
-          </div>
-        </div>
-        <div class="hero-card">
-          <h2>Proximas partidas</h2>
-          <div id="nextGames" class="list"></div>
+  <!-- ═══ NAVBAR ALUNO ═══ -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button type="button" class="btn-icon nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
+      <a href="/aluno/dashboard.html" class="navbar-brand">
+        <img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS IFRO
+      </a>
+    </div>
+    <div class="navbar-center navbar-links">
+      <a href="/aluno/dashboard.html" class="nav-link active">Início</a>
+      <a href="/aluno/modalidades.html" class="nav-link">Modalidades</a>
+      <a href="/aluno/inscricoes.html" class="nav-link">Inscrições</a>
+      <a href="/aluno/horarios.html" class="nav-link">Horários</a>
+      <a href="/aluno/resultados.html" class="nav-link">Resultados</a>
+      <a href="/aluno/perfil.html" class="nav-link">Meu Perfil</a>
+    </div>
+    <div class="navbar-right">
+      <button type="button" class="btn-icon theme-toggle-btn" onclick="JICS_UI.toggleTheme()"><span class="material-symbols-outlined">light_mode</span></button>
+      <button type="button" class="btn-icon btn-notif-trigger"><span class="material-symbols-outlined">notifications</span></button>
+      <a href="/aluno/perfil.html" class="user-trigger">
+        <img class="user-avatar" src="/assets/avatar-default.png" alt="Avatar"/>
+        <span class="user-name" id="alunoNomeNav">Estudante</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <!-- ═══ SIDEBAR ALUNO ═══ -->
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header">
+        <span class="side-header-title">Menu do Participante</span>
+      </div>
+      <a class="side-link active" href="/aluno/dashboard.html"><span class="material-symbols-outlined">dashboard</span> Início</a>
+      <a class="side-link" href="/aluno/modalidades.html"><span class="material-symbols-outlined">sports_basketball</span> Modalidades</a>
+      <a class="side-link" href="/aluno/inscricoes.html"><span class="material-symbols-outlined">how_to_reg</span> Minhas Inscrições</a>
+      <a class="side-link" href="/aluno/horarios.html"><span class="material-symbols-outlined">schedule</span> Cronograma</a>
+      <a class="side-link" href="/aluno/resultados.html"><span class="material-symbols-outlined">emoji_events</span> Resultados & Ranking</a>
+      <a class="side-link" href="/aluno/perfil.html"><span class="material-symbols-outlined">person</span> Meu Perfil</a>
+      <div class="side-divider"></div>
+      <a class="side-link" href="/index.html"><span class="material-symbols-outlined">logout</span> Sair</a>
+    </aside>
+
+    <!-- ═══ CONTEÚDO ALUNO ═══ -->
+    <main class="page">
+      <!-- HERO GREETING -->
+      <section class="hero-card">
+        <span class="page-hero__badge">JICS 2026 · Jogos Escolares IFRO</span>
+        <h1><span data-greeting>Boa tarde!</span> Bem-vindo ao JICS.</h1>
+        <p style="margin-top:var(--s2);max-width:600px;">
+          Acompanhe suas partidas, inscreva-se em modalidades esportivas e consulte resultados e pontuações da sua turma em tempo real.
+        </p>
+        <div class="hero-actions">
+          <a href="/aluno/modalidades.html" class="btn btn-primary">
+            <span class="material-symbols-outlined">sports_soccer</span> Inscrever-se em Modalidades
+          </a>
+          <a href="/aluno/resultados.html" class="btn btn-outline">
+            <span class="material-symbols-outlined">emoji_events</span> Ver Classificação
+          </a>
         </div>
       </section>
 
-      <section class="grid">
-        <div class="card" id="minhasInscricoes"></div>
-        <div class="card" id="avisos"></div>
+      <!-- STATS DO ALUNO -->
+      <section class="stats-grid">
+        <article class="stat-card">
+          <div class="stat-icon"><span class="material-symbols-outlined">sports</span></div>
+          <div class="stat-info">
+            <div class="stat-value" id="totalModalidades">3</div>
+            <div class="stat-label">Modalidades Inscritas</div>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-icon"><span class="material-symbols-outlined">timer</span></div>
+          <div class="stat-info">
+            <div class="stat-value" id="totalJogos">5</div>
+            <div class="stat-label">Jogos Disputados</div>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-icon"><span class="material-symbols-outlined">military_tech</span></div>
+          <div class="stat-info">
+            <div class="stat-value" id="totalVitorias">4</div>
+            <div class="stat-label">Vitórias Conquistadas</div>
+          </div>
+        </article>
+      </section>
+
+      <!-- PRÓXIMA PARTIDA DA TURMA -->
+      <section class="next-match-card">
+        <header class="match-header">
+          <span class="match-tag"><span class="material-symbols-outlined" style="font-size:16px;">sports_volleyball</span> VOLEIBOL MASCULINO</span>
+          <div class="match-countdown">
+            <span class="material-symbols-outlined" style="font-size:16px;">schedule</span>
+            <span>Hoje · 16:30</span>
+          </div>
+        </header>
+
+        <div class="match-teams-grid">
+          <div class="team-box">
+            <div class="team-shield">3ºB</div>
+            <div>
+              <div class="team-name">3º B Eletrotécnica</div>
+              <div class="team-course">Sua Turma</div>
+            </div>
+          </div>
+          <div class="match-vs">
+            <div class="vs-pill">VS</div>
+          </div>
+          <div class="team-box reverse">
+            <div class="team-shield">1ºA</div>
+            <div>
+              <div class="team-name">1º A Informática</div>
+              <div class="team-course">Adversário</div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="match-details-bar">
+          <span><span class="material-symbols-outlined" style="font-size:16px;vertical-align:text-bottom;">location_on</span> Ginásio Poliesportivo · Quadra B</span>
+          <a href="/aluno/horarios.html" class="btn btn-outline btn-sm">Ver Cronograma</a>
+        </footer>
       </section>
     </main>
   </div>
-  <script defer src="/js/global-footer.js"></script>
+
+  <nav class="bottom-nav">
+    <a href="/aluno/dashboard.html" class="bottom-nav-link active"><span class="material-symbols-outlined">dashboard</span><span>Início</span></a>
+    <a href="/aluno/modalidades.html" class="bottom-nav-link"><span class="material-symbols-outlined">sports_basketball</span><span>Modalidades</span></a>
+    <a href="/aluno/horarios.html" class="bottom-nav-link"><span class="material-symbols-outlined">schedule</span><span>Jogos</span></a>
+    <a href="/aluno/resultados.html" class="bottom-nav-link"><span class="material-symbols-outlined">emoji_events</span><span>Ranking</span></a>
+    <a href="/aluno/perfil.html" class="bottom-nav-link"><span class="material-symbols-outlined">person</span><span>Perfil</span></a>
+  </nav>
+
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+</div>
+
+<script>
+function toggleSideNav() {
+  document.getElementById('sideNav').classList.toggle('is-open');
+  document.getElementById('sideOverlay').classList.toggle('is-show');
+}
+function closeSideNav() {
+  document.getElementById('sideNav').classList.remove('is-open');
+  document.getElementById('sideOverlay').classList.remove('is-show');
+}
+</script>
 </body>
 </html>
-
-
-
-
-
-
-

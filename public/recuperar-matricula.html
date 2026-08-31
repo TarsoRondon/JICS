@@ -1,127 +1,185 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IFRO Esportes - Recuperar matrícula</title>
-    
-  
-  <link rel="stylesheet" href="css/auth.css" />
-<link rel="icon" type="image/png" href="/assets/ifro.png" />
-    <link rel="stylesheet" href="/assets/success-feedback.css" />
-    <script defer src="/assets/success-feedback.js"></script>
-
-  <link rel="stylesheet" href="/css/dark-theme.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Recuperar matrícula · JICS</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link rel="stylesheet" href="/css/auth.css"/>
+  <link rel="stylesheet" href="/assets/success-feedback.css"/>
+  <script defer src="/assets/success-feedback.js"></script>
 </head>
-<body class="auth-page" data-theme="dark">
-    <main class="auth-shell">
-        <div class="wrap auth-split">
-            <section class="hero">
-                <h1>Recuperar matrícula</h1>
-                <p>Para recuperar sua matrícula, fale com o suporte institucional. Tenha em mãos um documento oficial.</p>
-                <div class="card">
-                    <h2>Precisa de ajuda?</h2>
-                    <p>Entre em contato com o suporte e informe seu nome completo e campus.</p>
-                    <p><strong>Suporte:</strong> <a class="support-link" href="mailto:jics.ifro@gmail.com?subject=Recupera%C3%A7%C3%A3o%20de%20matr%C3%ADcula%20-%20JICS&body=Ol%C3%A1%20equipe%20JICS%2C%0D%0A%0D%0APreciso%20de%20ajuda%20para%20recuperar%20minha%20matr%C3%ADcula.%0D%0A%0D%0ANome%20completo%3A%20%5Bdigite%20seu%20nome%20completo%5D%0D%0ACampus%3A%20%0D%0ACurso%2FTurma%3A%20%0D%0AData%20de%20nascimento%3A%20%0D%0A%0D%0AObrigado.%0D%0A">jics.ifro@gmail.com</a></p>
-                    <div class="actions">
-                        <a class="btn primary" href="mailto:jics.ifro@gmail.com?subject=Recupera%C3%A7%C3%A3o%20de%20matr%C3%ADcula%20-%20JICS&body=Ol%C3%A1%20equipe%20JICS%2C%0D%0A%0D%0APreciso%20de%20ajuda%20para%20recuperar%20minha%20matr%C3%ADcula.%0D%0A%0D%0ANome%20completo%3A%20%5Bdigite%20seu%20nome%20completo%5D%0D%0ACampus%3A%20%0D%0ACurso%2FTurma%3A%20%0D%0AData%20de%20nascimento%3A%20%0D%0A%0D%0AObrigado.%0D%0A">Entrar em contato</a>
-                        <a class="btn" href="index.html">Voltar ao login</a>
-                    </div>
-                </div>
-            </section>
 
-            <section class="art" aria-hidden="true">
-                <svg width="320" height="260" viewBox="0 0 406 353" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g filter="url(#filter0_g_25_186)">
+<body class="auth-flow" data-page="recuperar-matricula">
+
+  <!-- ── HEADER ── -->
+  <header class="af-header">
+    <a href="/index.html" class="af-brand">
+      <img src="/assets/ifro.png" alt="IFRO"/>
+      <div>
+        <strong>IFRO Esportes</strong>
+        <span>JICS 2026</span>
+      </div>
+    </a>
+    <a href="/index.html" class="af-back">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 3L5 8l5 5"/>
+      </svg>
+      Voltar ao login
+    </a>
+  </header>
+
+  <!-- ── SHELL ── -->
+  <div class="rm-shell">
+    <div class="rm-wrap">
+
+      <!-- ══ CARD PRINCIPAL ══ -->
+      <div class="rm-card">
+        <div class="rm-card-body">
+
+          <!-- Ícone -->
+          <div class="rm-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="3"/>
+              <circle cx="9" cy="11" r="2.5"/>
+              <path d="M14 10h4M14 13h3"/>
+              <path d="M4 19l3-3"/>
+            </svg>
+          </div>
+
+          <!-- Título -->
+          <div>
+            <h1 class="rm-card-title">Esqueceu sua matrícula?</h1>
+            <p class="rm-card-sub" style="margin-top:8px">
+              Sua matrícula é um número único gerado no momento do cadastro no IFRO.
+              Você pode encontrá-la em seus documentos escolares ou entrar em contato com o suporte.
+            </p>
+          </div>
+
+          <!-- Onde encontrar -->
+          <div>
+            <p style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--au-muted);margin-bottom:10px">
+              Onde encontrar sua matrícula
+            </p>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--au-surface);border:1px solid var(--au-border);border-radius:var(--r-md)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--au-p-dark)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+                <span style="font-size:.8rem;color:var(--au-text2)">Declaração de matrícula ou histórico escolar</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--au-surface);border:1px solid var(--au-border);border-radius:var(--r-md)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--au-p-dark)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span style="font-size:.8rem;color:var(--au-text2)">Secretaria ou coordenação do seu campus</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--au-surface);border:1px solid var(--au-border);border-radius:var(--r-md)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--au-p-dark)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92v2z"/></svg>
+                <span style="font-size:.8rem;color:var(--au-text2)">Email IFRO institucional (prefixo antes do @)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contato por email -->
+          <div>
+            <p style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--au-muted);margin-bottom:10px">
+              Contato direto com o suporte
+            </p>
+            <div class="rm-email-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              jics.ifro@gmail.com
+            </div>
+          </div>
+
+          <!-- Ações -->
+          <div class="rm-actions">
+            <a
+              class="rm-btn-primary"
+              href="mailto:jics.ifro@gmail.com?subject=Recupera%C3%A7%C3%A3o%20de%20matr%C3%ADcula%20-%20JICS&body=Ol%C3%A1%20equipe%20JICS%2C%0D%0A%0D%0APreciso%20de%20ajuda%20para%20recuperar%20minha%20matr%C3%ADcula.%0D%0A%0D%0ANome%20completo%3A%20%5Bdigite%20seu%20nome%20completo%5D%0D%0ACampus%3A%20%0D%0ACurso%2FTurma%3A%20%0D%0AData%20de%20nascimento%3A%20%0D%0A%0D%0AObrigado."
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              Enviar email para o suporte
+            </a>
+
+            <a href="index.html" class="rm-btn-secondary">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 3L5 8l5 5"/>
+              </svg>
+              Voltar ao login
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══ ILUSTRAÇÃO / SUPORTE ══ -->
+      <div class="rm-art" aria-hidden="true">
+        <div class="rm-art-ring"></div>
+        <div class="rm-art-ring"></div>
+        <div class="rm-art-ring"></div>
+
+        <!-- SVG decorativo da página original, mantido -->
+        <svg class="rm-art-svg" width="280" height="240" viewBox="0 0 406 353" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g filter="url(#filter0_g_rm)">
             <rect width="203.631" height="193.831" rx="16.8314" transform="matrix(-0.986907 0.161291 0.161291 0.986907 201.965 85.1422)" fill="#063730"/>
             <rect x="-0.694813" y="0.966288" width="201.948" height="192.148" rx="15.9898" transform="matrix(-0.986907 0.161291 0.161291 0.986907 200.429 85.2669)" stroke="#002224" stroke-width="1.68314"/>
           </g>
-          <g filter="url(#filter1_g_25_186)">
+          <g filter="url(#filter1_g_rm)">
             <rect x="137.888" y="71.3437" width="269.016" height="160.559" rx="16.8314" transform="rotate(7.14928 137.888 71.3437)" fill="#00BDA4"/>
             <rect x="138.619" y="72.2835" width="267.333" height="158.876" rx="15.9898" transform="rotate(7.14928 138.619 72.2835)" stroke="#002224" stroke-width="1.68314"/>
           </g>
-          <g filter="url(#filter2_g_25_186)">
+          <g filter="url(#filter2_g_rm)">
             <path d="M135.606 88.0208C136.763 78.7974 145.178 72.2582 154.402 73.4151L388.3 102.753C397.523 103.91 404.062 112.325 402.906 121.548L401.648 131.578L134.348 98.0502L135.606 88.0208Z" fill="#E5FFFC"/>
             <path d="M154.297 74.2503L388.195 103.588C396.957 104.687 403.169 112.681 402.07 121.443L400.917 130.638L135.288 97.3198L136.442 88.1253C137.541 79.3633 145.535 73.1514 154.297 74.2503Z" stroke="#002224" stroke-width="1.68314"/>
           </g>
-          <g filter="url(#filter6_g_25_186)">
+          <g filter="url(#filter3_g_rm)">
             <circle cx="261.612" cy="176.819" r="43.5888" transform="rotate(7.15 261.612 176.819)" fill="#002224"/>
             <path fill-rule="evenodd" clip-rule="evenodd" d="M257.033 214.684C270.162 216.331 282.537 210.808 290.228 201.173C271.956 186.01 248.662 184.289 228.205 193.392C233.277 204.629 243.905 213.037 257.033 214.684Z" fill="#00E5C7"/>
             <circle cx="263.178" cy="167.062" r="14.9836" transform="rotate(7.15 263.178 167.062)" fill="#00E5C7"/>
           </g>
-          <g filter="url(#filter7_g_25_186)">
-            <path d="M147.389 64.6835C151.463 66.4462 156.271 64.5761 157.297 60.2571C158.412 55.563 158.784 50.7059 158.384 45.8642C157.762 38.3414 155.294 31.0881 151.199 24.7468C147.104 18.4056 141.508 13.1722 134.907 9.51008C128.306 5.848 120.904 3.87032 113.357 3.75223C105.809 3.63414 98.3488 5.37927 91.6367 8.83305C84.9246 12.2868 79.1679 17.3427 74.8765 23.5527C70.5851 29.7627 67.8914 36.9352 67.0341 44.4349C66.4823 49.2617 66.7021 54.1281 67.6698 58.8547C68.5602 63.2037 73.3074 65.2234 77.4347 63.589V63.589C81.562 61.9545 83.4616 57.2636 82.9851 52.8501C82.7494 50.6677 82.7545 48.4579 83.0057 46.2607C83.5627 41.3875 85.313 36.727 88.1015 32.6918C90.89 28.6567 94.6306 25.3715 98.992 23.1273C103.353 20.8831 108.201 19.7492 113.105 19.8259C118.01 19.9026 122.819 21.1877 127.108 23.5672C131.397 25.9468 135.033 29.3474 137.694 33.4678C140.355 37.5882 141.959 42.3012 142.363 47.1894C142.545 49.3934 142.481 51.6023 142.177 53.7762C141.563 58.1727 143.315 62.9207 147.389 64.6835V64.6835Z" fill="#097164" stroke="black" stroke-width="1.68809"/>
+          <g>
             <rect x="51.6807" y="52.0475" width="120.249" height="108.612" rx="30.234" fill="#54F8E2" stroke="black" stroke-width="1.68809"/>
             <path d="M101.171 88.2514C101.171 93.0352 104.133 97.1448 108.369 98.9335L96.9353 136.092H127.967L116.667 99.3652C121.529 97.8919 125.059 93.4733 125.059 88.2514C125.059 81.8244 119.712 76.6143 113.115 76.6143C106.518 76.6143 101.171 81.8244 101.171 88.2514Z" fill="#097164"/>
           </g>
-          <path d="M174.284 320.835C174.284 323.166 173.994 325.29 173.415 327.207C172.836 329.111 171.953 330.752 170.767 332.131C169.594 333.51 168.105 334.572 166.298 335.317C164.491 336.048 162.353 336.414 159.885 336.414C157.416 336.414 155.278 336.048 153.471 335.317C151.664 334.572 150.168 333.51 148.982 332.131C147.809 330.752 146.933 329.104 146.354 327.187C145.775 325.269 145.485 323.138 145.485 320.794C145.485 317.663 145.995 314.939 147.016 312.622C148.051 310.291 149.637 308.484 151.775 307.201C153.912 305.918 156.63 305.277 159.926 305.277C163.209 305.277 165.905 305.918 168.015 307.201C170.139 308.484 171.712 310.291 172.732 312.622C173.767 314.953 174.284 317.69 174.284 320.835Z" fill="#002224"/>
           <defs>
-            <filter id="filter0_g_25_186" x="0.798922" y="84.941" width="232.63" height="224.539" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-              <feTurbulence type="fractalNoise" baseFrequency="2.9706411361694336 2.9706411361694336" numOctaves="3" seed="2373" />
-              <feDisplacementMap in="shape" scale="5.386042594909668" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
-              <feMerge result="effect1_texture_25_186">
-                <feMergeNode in="displacedImage"/>
-              </feMerge>
+            <filter id="filter0_g_rm" x="0.798922" y="84.941" width="232.63" height="224.539" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+              <feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+              <feTurbulence type="fractalNoise" baseFrequency="2.97" numOctaves="3" seed="2373"/>
+              <feDisplacementMap in="shape" scale="5.38" xChannelSelector="R" yChannelSelector="G" result="di" width="100%" height="100%"/>
+              <feMerge><feMergeNode in="di"/></feMerge>
             </filter>
-            <filter id="filter1_g_25_186" x="117.175" y="70.6128" width="288.369" height="194.253" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-              <feTurbulence type="fractalNoise" baseFrequency="2.9706411361694336 2.9706411361694336" numOctaves="3" seed="2373" />
-              <feDisplacementMap in="shape" scale="5.386042594909668" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
-              <feMerge result="effect1_texture_25_186">
-                <feMergeNode in="displacedImage"/>
-              </feMerge>
+            <filter id="filter1_g_rm" x="117.175" y="70.6128" width="288.369" height="194.253" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+              <feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+              <feTurbulence type="fractalNoise" baseFrequency="2.97" numOctaves="3" seed="2373"/>
+              <feDisplacementMap in="shape" scale="5.38" xChannelSelector="R" yChannelSelector="G" result="di" width="100%" height="100%"/>
+              <feMerge><feMergeNode in="di"/></feMerge>
             </filter>
-            <filter id="filter2_g_25_186" x="131.655" y="70.5894" width="274.076" height="63.6812" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-              <feTurbulence type="fractalNoise" baseFrequency="2.9706411361694336 2.9706411361694336" numOctaves="3" seed="2373" />
-              <feDisplacementMap in="shape" scale="5.386042594909668" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
-              <feMerge result="effect1_texture_25_186">
-                <feMergeNode in="displacedImage"/>
-              </feMerge>
+            <filter id="filter2_g_rm" x="134.107" y="73.1722" width="270.048" height="59.6451" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+              <feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
             </filter>
-            <filter id="filter6_g_25_186" x="215.325" y="130.533" width="92.5722" height="92.5719" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-              <feTurbulence type="fractalNoise" baseFrequency="2.9866125583648682 2.9866125583648682" numOctaves="3" seed="4921" />
-              <feDisplacementMap in="shape" scale="5.3851423263549805" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
-              <feMerge result="effect1_texture_25_186">
-                <feMergeNode in="displacedImage"/>
-              </feMerge>
-            </filter>
-            <filter id="filter7_g_25_186" x="48.1441" y="0.209994" width="127.322" height="163.986" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-              <feFlood flood-opacity="0" result="BackgroundImageFix"/>
-              <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-              <feTurbulence type="fractalNoise" baseFrequency="2.9866125583648682 2.9866125583648682" numOctaves="3" seed="983" />
-              <feDisplacementMap in="shape" scale="5.3851423263549805" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
-              <feMerge result="effect1_texture_25_186">
-                <feMergeNode in="displacedImage"/>
-              </feMerge>
+            <filter id="filter3_g_rm" x="217.523" y="132.73" width="88.1777" height="88.1777" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+              <feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
             </filter>
           </defs>
         </svg>
-                <p class="oops">Oops!</p>
-            </section>
+
+        <!-- Rótulo decorativo -->
+        <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);white-space:nowrap;text-align:center">
+          <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--au-muted)">
+            Suporte IFRO Esportes
+          </div>
+          <div style="font-size:.72rem;color:var(--au-p-dark);margin-top:4px;font-weight:600">
+            jics.ifro@gmail.com
+          </div>
         </div>
-    </main>
+      </div>
+
+    </div><!-- /.rm-wrap -->
+  </div><!-- /.rm-shell -->
 
   <script defer src="/js/global-footer.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-

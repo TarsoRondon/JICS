@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Boletim Oficial · JICS Admin</title>
+  <meta name="description" content="Publicações oficiais do campeonato JICS — resultados, comunicados e informações."/>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="/admin/shell.css"/>
+  <style>
+    /* ─── BOLETIM PAGE SPECIFIC ─── */
+    .bo-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--s4)}
+    .bo-filters{display:flex;gap:var(--s3);flex-wrap:wrap;align-items:center}
+    .bo-filters input,.bo-filters select{height:40px;padding:0 var(--s3);border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--card2);color:var(--text);font-size:var(--t-sm);outline:none;font-family:var(--font-body)}
+    .bo-filters input:focus,.bo-filters select:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--p-ring)}
+    .bo-filters input{min-width:220px}
+
+    /* Grid de cards */
+    .bo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--s5)}
+    .bo-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;transition:box-shadow var(--base),transform var(--base),border-color var(--base);display:flex;flex-direction:column}
+    .bo-card:hover{box-shadow:var(--sh-md);transform:translateY(-3px);border-color:var(--p)}
+    .bo-card-banner{height:6px;background:linear-gradient(90deg,var(--p),#1fc9a4)}
+    .bo-card-body{padding:var(--s5);flex:1;display:flex;flex-direction:column;gap:var(--s3)}
+    .bo-card-type{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--r-full);font-size:var(--t-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .bo-card-type.geral{background:var(--p-soft);color:var(--p-dark)}
+    .bo-card-type.resultado{background:var(--ok-soft);color:var(--ok)}
+    .bo-card-type.convocacao{background:var(--warn-soft);color:var(--warn)}
+    .bo-card-type.regulamento{background:var(--info-soft);color:var(--info)}
+    .bo-card-type.chaveamento{background:rgba(180,100,255,.12);color:#b464ff}
+    .bo-card-title{font-size:var(--t-base);font-weight:700;color:var(--text);line-height:1.3}
+    .bo-card-desc{font-size:var(--t-sm);color:var(--text2);line-height:1.55;flex:1}
+    .bo-card-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--s2);margin-top:auto}
+    .bo-card-date{font-size:var(--t-xs);color:var(--muted);display:flex;align-items:center;gap:5px}
+    .bo-card-actions{display:flex;gap:var(--s2)}
+
+    /* Modal Novo Boletim */
+    .bo-modal{position:fixed;inset:0;z-index:var(--z-modal);display:grid;place-items:center;padding:var(--s5);background:rgba(0,0,0,.60);backdrop-filter:blur(4px)}
+    .bo-modal.hidden{display:none}
+    .bo-modal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--sh-xl);width:100%;max-width:600px;overflow:hidden;animation:boModalIn .22s var(--ease) both}
+    @keyframes boModalIn{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+    .bo-modal-header{display:flex;align-items:center;justify-content:space-between;padding:var(--s5) var(--s6);border-bottom:1px solid var(--border)}
+    .bo-modal-title{font-size:var(--t-lg);font-weight:700;color:var(--text)}
+    .bo-modal-body{padding:var(--s6);display:flex;flex-direction:column;gap:var(--s4)}
+    .bo-modal-footer{padding:0 var(--s6) var(--s6);display:flex;justify-content:flex-end;gap:var(--s3)}
+
+    .bo-empty{text-align:center;padding:var(--s10);color:var(--muted)}
+    .bo-empty .material-symbols-outlined{font-size:64px;opacity:.15;display:block;margin-bottom:var(--s3)}
+    .bo-empty p{font-size:var(--t-sm)}
+
+    /* FAB */
+    .fab{position:fixed;bottom:var(--s7);right:var(--s7);width:56px;height:56px;border-radius:50%;background:var(--p);color:#000;border:none;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh-lg),var(--glow);cursor:pointer;z-index:200;transition:transform var(--fast),box-shadow var(--fast)}
+    .fab:hover{transform:scale(1.1);box-shadow:var(--sh-xl),0 0 30px rgba(42,185,138,.5)}
+    .fab .material-symbols-outlined{font-size:26px}
+
+    @media(max-width:600px){.bo-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body class="admin-app admin-ui" data-page="boletim" data-theme="dark">
+<div id="appShell">
+
+  <!-- ─── NAVBAR ─── -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button class="icon-btn nav-hamburger" onclick="toggleSideNav()" id="hamburgerBtn" aria-label="Menu">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <button class="navbar-brand" onclick="location.href='/admin/dashboard.html'">
+        <img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS ADMIN
+      </button>
+    </div>
+    <div class="navbar-right">
+      <button class="icon-btn" onclick="toggleAdminMenu(event)" aria-label="Configurações">
+        <span class="material-symbols-outlined">settings</span>
+      </button>
+      <div class="user-menu">
+        <button class="user-trigger" onclick="toggleUserDrawer()">
+          <img id="userAvatar" class="user-avatar" src="/assets/avatar-default.png" alt="" onerror="this.src='/assets/avatar-default.png'"/>
+          <span id="userNameNavbar" class="user-name"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div id="sessionBanner" class="session-banner hidden">
+    <span id="sessionBannerText">Sessão expirada.</span>
+    <button class="btn-outline btn-sm" onclick="location.href='/index.html'" type="button">Fazer login</button>
+  </div>
+
+  <div id="adminMenuOverlay" class="overlay hidden" onclick="closeAdminMenu()"></div>
+  <div id="adminMenuDropdown" class="card admin-menu-dropdown hidden">
+    <button class="btn-ghost" onclick="logout()">Sair</button>
+  </div>
+
+  <div class="app-body">
+    <!-- ─── SIDEBAR ─── -->
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header">
+        <span class="side-header-title">JICS Admin</span>
+        <button id="sideCollapseBtn" class="side-collapse-btn icon-btn" type="button" onclick="toggleSidebarCollapse()">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+      </div>
+      <div class="side-sections">
+        <div class="side-divider"></div>
+        <a class="side-link" href="/admin/dashboard.html">
+          <span class="material-symbols-outlined side-link-icon">dashboard</span>
+          <span class="side-link-text">Visão geral</span>
+        </a>
+        <a class="side-link" href="/admin/admin.html">
+          <span class="material-symbols-outlined side-link-icon">admin_panel_settings</span>
+          <span class="side-link-text">Painel completo</span>
+        </a>
+        <div class="side-divider"></div>
+        <a class="side-link active" href="/admin/boletim_oficial.html">
+          <span class="material-symbols-outlined side-link-icon">campaign</span>
+          <span class="side-link-text">Boletim Oficial</span>
+        </a>
+        <a class="side-link" href="/admin/equipes.html">
+          <span class="material-symbols-outlined side-link-icon">groups</span>
+          <span class="side-link-text">Equipes</span>
+        </a>
+        <a class="side-link" href="/admin/chaveamento.html">
+          <span class="material-symbols-outlined side-link-icon">account_tree</span>
+          <span class="side-link-text">Chaveamento</span>
+        </a>
+        <a class="side-link" href="/admin/jogos.html">
+          <span class="material-symbols-outlined side-link-icon">sports</span>
+          <span class="side-link-text">Jogos</span>
+        </a>
+        <a class="side-link" href="/admin/sumulas.html">
+          <span class="material-symbols-outlined side-link-icon">assignment</span>
+          <span class="side-link-text">Súmulas</span>
+        </a>
+        <div class="side-divider"></div>
+        <a class="side-link" href="/admin/modalidades.html">
+          <span class="material-symbols-outlined side-link-icon">sports_basketball</span>
+          <span class="side-link-text">Modalidades</span>
+        </a>
+        <a class="side-link" href="/admin/inscricoes.html">
+          <span class="material-symbols-outlined side-link-icon">how_to_reg</span>
+          <span class="side-link-text">Inscrições</span>
+        </a>
+        <a class="side-link" href="/admin/alunos.html">
+          <span class="material-symbols-outlined side-link-icon">school</span>
+          <span class="side-link-text">Alunos</span>
+        </a>
+        <div class="side-divider"></div>
+        <a class="side-link" href="/admin/noticias.html">
+          <span class="material-symbols-outlined side-link-icon">newspaper</span>
+          <span class="side-link-text">Notícias</span>
+        </a>
+        <a class="side-link" href="/admin/graficos.html">
+          <span class="material-symbols-outlined side-link-icon">bar_chart</span>
+          <span class="side-link-text">Gráficos</span>
+        </a>
+        <a class="side-link" href="/admin/logs.html">
+          <span class="material-symbols-outlined side-link-icon">history</span>
+          <span class="side-link-text">Logs</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ─── MAIN ─── -->
+    <main class="page admin-panel">
+      <div class="bo-header">
+        <div>
+          <div class="page-title">Boletim Oficial</div>
+          <div class="page-subtitle">Publicações e comunicados do campeonato</div>
+        </div>
+        <div class="bo-filters">
+          <input type="text" id="searchInput" placeholder="🔍  Buscar boletim…" oninput="filtrar()"/>
+          <select id="tipoFilter" onchange="filtrar()">
+            <option value="">Todos os tipos</option>
+            <option value="GERAL">Geral</option>
+            <option value="RESULTADO">Resultado</option>
+            <option value="CONVOCACAO">Convocação</option>
+            <option value="REGULAMENTO">Regulamento</option>
+            <option value="CHAVEAMENTO">Chaveamento</option>
+          </select>
+          <button class="btn-primary" onclick="abrirModal()">
+            <span class="material-symbols-outlined">add</span> Novo Boletim
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid de boletins -->
+      <div class="bo-grid" id="boletimGrid">
+        <div class="bo-empty" id="loadingState">
+          <span class="material-symbols-outlined">hourglass_empty</span>
+          <p>Carregando publicações…</p>
+        </div>
+      </div>
+
+      <!-- Paginação -->
+      <div id="paginacao" style="display:flex;justify-content:center;gap:var(--s3);margin-top:var(--s4)"></div>
+    </main>
+  </div>
+
+  <!-- ─── FAB (mobile) ─── -->
+  <button class="fab" onclick="abrirModal()" title="Novo Boletim" aria-label="Novo Boletim">
+    <span class="material-symbols-outlined">add</span>
+  </button>
+
+  <!-- ─── MODAL NOVO/EDITAR BOLETIM ─── -->
+  <div class="bo-modal hidden" id="boModal" role="dialog" aria-modal="true" aria-labelledby="boModalTitle">
+    <div class="bo-modal-card">
+      <div class="bo-modal-header">
+        <span class="bo-modal-title" id="boModalTitle">Novo Boletim</span>
+        <button class="icon-btn close-btn" onclick="fecharModal()" aria-label="Fechar">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <form id="boForm" onsubmit="salvarBoletim(event)">
+        <div class="bo-modal-body">
+          <input type="hidden" id="boId"/>
+          <div class="form-group">
+            <label for="boTitulo">Título *</label>
+            <input type="text" id="boTitulo" placeholder="Ex.: Resultado — Basquete Masculino" required maxlength="200"/>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="boTipo">Tipo</label>
+              <select id="boTipo">
+                <option value="GERAL">Geral</option>
+                <option value="RESULTADO">Resultado</option>
+                <option value="CONVOCACAO">Convocação</option>
+                <option value="REGULAMENTO">Regulamento</option>
+                <option value="CHAVEAMENTO">Chaveamento</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="boData">Data de publicação *</label>
+              <input type="date" id="boData" required/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="boDesc">Descrição / Conteúdo</label>
+            <textarea id="boDesc" rows="5" placeholder="Descreva o conteúdo do boletim…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="boPublicado">Visibilidade</label>
+            <select id="boPublicado">
+              <option value="1">Publicado (visível para alunos)</option>
+              <option value="0">Rascunho (apenas admin)</option>
+            </select>
+          </div>
+          <div id="boFormMsg" style="font-size:var(--t-sm);color:var(--err);display:none"></div>
+        </div>
+        <div class="bo-modal-footer">
+          <button type="button" class="btn-ghost" onclick="fecharModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" id="boSaveBtn">
+            <span class="material-symbols-outlined">save</span> Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ─── OVERLAYS / DRAWERS ─── -->
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+  <div id="drawerOverlay" class="overlay" onclick="closeUserDrawer()"></div>
+  <div id="userDrawer" class="user-drawer"></div>
+  <div id="globalModals"></div>
+  <div id="helpPanel" class="hidden"></div>
+</div>
+
+<script src="/js/jsdosistema.js"></script>
+<script>
+// ─── Estado global ───
+let todosBoletins = [];
+let paginaAtual = 1;
+const POR_PAGINA = 12;
+let editandoId = null;
+
+// ─── Inicialização ───
+document.addEventListener('DOMContentLoaded', () => {
+  // Data padrão hoje
+  document.getElementById('boData').value = new Date().toISOString().slice(0, 10);
+  carregarBoletins();
+});
+
+async function carregarBoletins() {
+  try {
+    const res = await fetch('/jics/boletim');
+    const data = await res.json();
+    if (data.sucesso) {
+      todosBoletins = data.boletins || [];
+      renderizar();
+    } else {
+      mostrarVazio('Erro ao carregar boletins.');
+    }
+  } catch {
+    mostrarVazio('Erro de conexão. Tente novamente.');
+  }
+}
+
+function filtrar() {
+  paginaAtual = 1;
+  renderizar();
+}
+
+function renderizar() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const tipo = document.getElementById('tipoFilter').value;
+
+  let lista = todosBoletins.filter(b => {
+    const matchSearch = !search || b.titulo.toLowerCase().includes(search) || (b.descricao || '').toLowerCase().includes(search);
+    const matchTipo = !tipo || b.tipo === tipo;
+    return matchSearch && matchTipo;
+  });
+
+  const total = lista.length;
+  const inicio = (paginaAtual - 1) * POR_PAGINA;
+  const paginada = lista.slice(inicio, inicio + POR_PAGINA);
+
+  const grid = document.getElementById('boletimGrid');
+
+  if (paginada.length === 0) {
+    grid.innerHTML = `
+      <div class="bo-empty" style="grid-column:1/-1">
+        <span class="material-symbols-outlined">campaign</span>
+        <p style="font-size:var(--t-base);font-weight:700;color:var(--text2)">Nenhum boletim encontrado</p>
+        <p>Publique o primeiro boletim clicando em "Novo Boletim".</p>
+      </div>`;
+  } else {
+    grid.innerHTML = paginada.map(b => renderCard(b)).join('');
+  }
+
+  renderPaginacao(total);
+}
+
+function renderCard(b) {
+  const tipo = (b.tipo || 'GERAL').toLowerCase();
+  const tipoLabel = { geral: 'Geral', resultado: 'Resultado', convocacao: 'Convocação', regulamento: 'Regulamento', chaveamento: 'Chaveamento' }[tipo] || 'Geral';
+  const icone = { geral: 'info', resultado: 'emoji_events', convocacao: 'person_add', regulamento: 'gavel', chaveamento: 'account_tree' }[tipo] || 'info';
+  const data = b.data_publicacao ? new Date(b.data_publicacao).toLocaleDateString('pt-BR') : '—';
+  const desc = (b.descricao || '').slice(0, 150) + ((b.descricao || '').length > 150 ? '…' : '');
+
+  return `
+  <article class="bo-card" data-id="${b.id}">
+    <div class="bo-card-banner"></div>
+    <div class="bo-card-body">
+      <div>
+        <span class="bo-card-type ${tipo}">
+          <span class="material-symbols-outlined" style="font-size:13px">${icone}</span>${tipoLabel}
+        </span>
+      </div>
+      <h3 class="bo-card-title">${escapeHtml(b.titulo)}</h3>
+      ${desc ? `<p class="bo-card-desc">${escapeHtml(desc)}</p>` : ''}
+      <div class="bo-card-meta">
+        <span class="bo-card-date">
+          <span class="material-symbols-outlined" style="font-size:14px">event</span>${data}
+          ${!b.publicado ? '<span class="status-pill warn" style="margin-left:6px">Rascunho</span>' : ''}
+        </span>
+        <div class="bo-card-actions">
+          ${b.pdf_path ? `<a href="${b.pdf_path}" target="_blank" class="btn-outline btn-sm" title="Ver PDF"><span class="material-symbols-outlined" style="font-size:15px">picture_as_pdf</span></a>` : ''}
+          <button class="btn-outline btn-sm" onclick="editarBoletim(${b.id})" title="Editar">
+            <span class="material-symbols-outlined" style="font-size:15px">edit</span>
+          </button>
+          <button class="btn-danger btn-sm" onclick="confirmarExcluir(${b.id})" title="Excluir">
+            <span class="material-symbols-outlined" style="font-size:15px">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderPaginacao(total) {
+  const totalPags = Math.ceil(total / POR_PAGINA);
+  const div = document.getElementById('paginacao');
+  if (totalPags <= 1) { div.innerHTML = ''; return; }
+
+  let html = '';
+  if (paginaAtual > 1) html += `<button class="btn-outline btn-sm" onclick="irPagina(${paginaAtual - 1})">‹ Anterior</button>`;
+  html += `<span style="font-size:var(--t-sm);color:var(--muted);align-self:center">Página ${paginaAtual} de ${totalPags}</span>`;
+  if (paginaAtual < totalPags) html += `<button class="btn-outline btn-sm" onclick="irPagina(${paginaAtual + 1})">Próxima ›</button>`;
+  div.innerHTML = html;
+}
+
+function irPagina(n) { paginaAtual = n; renderizar(); window.scrollTo(0, 0); }
+
+function mostrarVazio(msg) {
+  document.getElementById('boletimGrid').innerHTML = `<div class="bo-empty" style="grid-column:1/-1"><span class="material-symbols-outlined">error</span><p>${msg}</p></div>`;
+}
+
+// ─── Modal ───
+function abrirModal(b = null) {
+  editandoId = b ? b.id : null;
+  document.getElementById('boModalTitle').textContent = b ? 'Editar Boletim' : 'Novo Boletim';
+  document.getElementById('boId').value = b ? b.id : '';
+  document.getElementById('boTitulo').value = b ? b.titulo : '';
+  document.getElementById('boTipo').value = b ? (b.tipo || 'GERAL') : 'GERAL';
+  document.getElementById('boData').value = b ? (b.data_publicacao || '').slice(0, 10) : new Date().toISOString().slice(0, 10);
+  document.getElementById('boDesc').value = b ? (b.descricao || '') : '';
+  document.getElementById('boPublicado').value = b ? (b.publicado ? '1' : '0') : '1';
+  document.getElementById('boFormMsg').style.display = 'none';
+  document.getElementById('boModal').classList.remove('hidden');
+}
+
+function fecharModal() { document.getElementById('boModal').classList.add('hidden'); editandoId = null; }
+
+async function salvarBoletim(e) {
+  e.preventDefault();
+  const btn = document.getElementById('boSaveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite">progress_activity</span> Salvando…';
+
+  const payload = {
+    titulo: document.getElementById('boTitulo').value.trim(),
+    tipo: document.getElementById('boTipo').value,
+    data_publicacao: document.getElementById('boData').value,
+    descricao: document.getElementById('boDesc').value.trim(),
+    publicado: document.getElementById('boPublicado').value === '1',
+  };
+
+  try {
+    const url = editandoId ? `/jics/boletim/${editandoId}` : '/jics/boletim';
+    const method = editandoId ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const data = await res.json();
+
+    if (data.sucesso) {
+      fecharModal();
+      await carregarBoletins();
+    } else {
+      const msg = document.getElementById('boFormMsg');
+      msg.textContent = data.erro || 'Erro ao salvar.';
+      msg.style.display = 'block';
+    }
+  } catch {
+    const msg = document.getElementById('boFormMsg');
+    msg.textContent = 'Erro de conexão.';
+    msg.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined">save</span> Salvar';
+  }
+}
+
+function editarBoletim(id) {
+  const b = todosBoletins.find(x => x.id === id);
+  if (b) abrirModal(b);
+}
+
+async function confirmarExcluir(id) {
+  if (!confirm('Excluir este boletim?')) return;
+  try {
+    await fetch(`/jics/boletim/${id}`, { method: 'DELETE' });
+    await carregarBoletins();
+  } catch { alert('Erro ao excluir.'); }
+}
+
+// ─── Utilidades ───
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+</script>
+</body>
+</html>

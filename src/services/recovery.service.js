@@ -191,8 +191,9 @@ export async function requestOtp({ matricula, canal, finalidade, contato }) {
 
   try {
     await sendOtpEmail({ to: destinoFinal, nome: aluno.nome, matricula: cleanMatricula, otp, finalidade });
-  } catch {
-    return { ok: false, code: 'EMAIL_FAILED', message: 'Nao foi possivel enviar o codigo.' };
+  } catch (err) {
+    console.error('[ERRO_ENVIO_EMAIL_RECOVERY]:', err?.message || err);
+    return { ok: false, code: 'EMAIL_FAILED', message: 'Não foi possível enviar o código por e-mail no momento. Tente novamente em instantes.' };
   }
 
   return { ok: true, masked: maskDestino(canal, destinoFinal), channel: 'email' };

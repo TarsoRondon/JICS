@@ -1,142 +1,361 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recuperacao - JICS</title>
-    <link rel="icon" type="image/png" href="/assets/ifro.png" />
-
-    <link rel="stylesheet" href="css/auth.css" />
-    <link rel="stylesheet" href="css/recovery.css" />
-    <link rel="stylesheet" href="/assets/success-feedback.css" />
-    <script defer src="/assets/success-feedback.js"></script>
-    <link rel="stylesheet" href="/css/dark-theme.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Acesso à conta · JICS</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="css/recovery.css"/>
+  <link rel="stylesheet" href="/assets/success-feedback.css"/>
+  <script defer src="/assets/success-feedback.js"></script>
 </head>
 
-<body class="recovery-body auth-page" data-theme="light">
-    <main class="recovery-shell">
-        <section class="recovery-left" aria-label="Contexto de recuperacao">
-            <header class="brand">
-                <span class="brand-mark" aria-hidden="true">
-          <img src="/assets/ifro.png" alt="" />
+<body class="recovery-body" data-page="recuperacao">
+
+  <main class="recovery-shell">
+
+    <!-- ══════════════════════════════════════
+         ESQUERDA — identidade + contexto
+    ══════════════════════════════════════ -->
+    <section class="recovery-left" aria-label="Informações do processo">
+
+      <header class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <img src="/assets/ifro.png" alt=""/>
         </span>
-                <div>
-                    <strong>IFRO Esportes</strong>
-                    <div class="helper-text">JICS - ambiente seguro</div>
-                </div>
-            </header>
+        <div>
+          <strong>IFRO Esportes</strong>
+          <span class="helper-text">JICS · Ambiente seguro</span>
+        </div>
+      </header>
 
-            <p class="status-pill">Acesso protegido por OTP</p>
-            <h1 class="recovery-title">Recupere sua conta por e-mail</h1>
-            <p class="recovery-subtitle">Valide sua matricula e confirme um e-mail cadastrado para receber o codigo de verificacao.</p>
+      <p class="status-pill">Acesso protegido por OTP</p>
 
-            <div class="recovery-steps">
-                <div class="recovery-step-card"><span>1</span>
-                    <div>Valide seus dados</div>
-                </div>
-                <div class="recovery-step-card"><span>2</span>
-                    <div>Receba e confirme o codigo OTP</div>
-                </div>
-                <div class="recovery-step-card"><span>3</span>
-                    <div>Defina sua nova senha</div>
-                </div>
+      <h1 class="recovery-title">
+        Recupere sua<br/>
+        <em>conta</em><br/>
+        por e-mail.
+      </h1>
+
+      <p class="recovery-subtitle">
+        Valide sua matrícula e confirme um e-mail cadastrado
+        para receber o código de verificação e redefinir o acesso.
+      </p>
+
+      <div class="recovery-steps" aria-label="Etapas do processo">
+        <div class="recovery-step-card">
+          <span>1</span>
+          <div>Informe matrícula e e-mail</div>
+        </div>
+        <div class="recovery-step-card">
+          <span>2</span>
+          <div>Confirme o código OTP recebido</div>
+        </div>
+        <div class="recovery-step-card">
+          <span>3</span>
+          <div>Crie ou redefina sua senha</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════
+         DIREITA — formulário unificado
+    ══════════════════════════════════════ -->
+    <section class="recovery-card" aria-label="Formulário de acesso">
+
+      <!-- Tabs — 3 abas integradas -->
+      <div class="mode-tabs" role="tablist" aria-label="Modo de acesso">
+        <button class="mode-tab active" type="button"
+          data-mode="FIRST_ACCESS" role="tab" aria-selected="true"
+          id="tab-first">
+          Primeiro acesso
+        </button>
+        <button class="mode-tab" type="button"
+          data-mode="RESET_PASSWORD" role="tab" aria-selected="false"
+          id="tab-reset">
+          Recuperar senha
+        </button>
+        <button class="mode-tab" type="button"
+          data-mode="RECOVER_MATRICULA" role="tab" aria-selected="false"
+          id="tab-matricula">
+          Esqueci a matrícula
+        </button>
+      </div>
+
+      <!-- Status box (js popula) -->
+      <div id="statusBox" class="status-box hidden" role="status" aria-live="polite"></div>
+
+      <!-- ──────────────────────────────────
+           FLUXO OTP (abas 1 e 2)
+      ────────────────────────────────── -->
+      <form id="recoveryForm" novalidate>
+
+        <!-- campo hidden p/ autocomplete correto -->
+        <input id="usernameHidden" class="sr-only" type="text"
+          name="username" autocomplete="username"
+          aria-hidden="true" tabindex="-1"/>
+
+        <!-- STEP 1: Identificação -->
+        <div class="step" id="step-ident">
+
+          <div class="field">
+            <label for="matricula">Matrícula</label>
+            <input id="matricula" class="input" type="text"
+              inputmode="numeric" autocomplete="username"
+              placeholder="Digite sua matrícula"/>
+          </div>
+
+          <div class="field">
+            <label>Canal de verificação</label>
+            <div class="radio-group" role="radiogroup"
+              aria-label="Escolha o canal de verificação por e-mail">
+              <label class="radio-option">
+                <input type="radio" name="canal" value="email_pessoal" checked/>
+                E-mail pessoal
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="canal" value="email_academico"/>
+                E-mail acadêmico
+              </label>
+            </div>
+            <small class="helper-text">Verificação por SMS foi removida deste fluxo.</small>
+          </div>
+
+          <div class="field" id="contactField">
+            <label for="contato" id="contactLabel">E-mail pessoal</label>
+            <input id="contato" class="input" type="email"
+              autocomplete="email" placeholder="seu.email@provedor.com"/>
+          </div>
+
+          <div class="button-row">
+            <button id="btnValidate" class="btn-outline" type="button">
+              Validar dados
+            </button>
+            <button id="btnSendOtp" class="btn-primary hidden" type="button" disabled>
+              Enviar código
+            </button>
+          </div>
+
+        </div>
+
+        <!-- STEP 2: OTP -->
+        <div class="step hidden" id="step-otp">
+
+          <div class="field">
+            <label for="otp">Código OTP (6 dígitos)</label>
+            <input id="otp" class="input otp-input" type="text"
+              inputmode="numeric" maxlength="6"
+              autocomplete="one-time-code" placeholder="000000"/>
+            <span class="helper-text" id="otpHint"></span>
+            <span class="helper-text error-text hidden" id="otpError"
+              aria-live="polite"></span>
+          </div>
+
+          <div class="button-row">
+            <button id="btnVerifyOtp" class="btn-primary" type="button">
+              Verificar código
+            </button>
+            <button id="btnResend" class="btn-outline" type="button" disabled>
+              Reenviar (60s)
+            </button>
+          </div>
+
+        </div>
+
+        <!-- STEP 3: Nova senha -->
+        <div class="step hidden" id="step-password">
+
+          <div class="field">
+            <label for="newPassword">Nova senha</label>
+            <input id="newPassword" class="input" type="password"
+              autocomplete="new-password" placeholder="Crie uma senha forte"/>
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">Confirmar senha</label>
+            <input id="confirmPassword" class="input" type="password"
+              autocomplete="new-password" placeholder="Repita a senha"/>
+          </div>
+
+          <div class="password-rules" id="passwordRules">
+            <div class="rule-item" data-rule="length">
+              <span class="rule-icon">?</span> Mínimo 8 caracteres
+            </div>
+            <div class="rule-item" data-rule="upper">
+              <span class="rule-icon">?</span> 1 letra maiúscula
+            </div>
+            <div class="rule-item" data-rule="number">
+              <span class="rule-icon">?</span> 1 número
+            </div>
+            <div class="rule-item" data-rule="symbol">
+              <span class="rule-icon">?</span> 1 símbolo
+            </div>
+          </div>
+
+          <div class="password-ux">
+            <div class="strength-bar">
+              <span id="strengthBar" class="strength-fill"></span>
+            </div>
+            <span id="strengthText"  class="strength-text"></span>
+            <span id="matchText"     class="password-match"></span>
+          </div>
+
+          <div class="button-row">
+            <button id="btnSavePassword" class="btn-primary" type="button">
+              Salvar senha e entrar
+            </button>
+          </div>
+
+        </div>
+
+      </form>
+
+      <!-- ──────────────────────────────────
+           PAINEL: ESQUECI A MATRÍCULA
+           Mostrado quando tab-matricula ativo
+      ────────────────────────────────── -->
+      <div id="panelMatricula" class="rm-panel hidden">
+
+        <div class="rm-headline">
+          <div class="rm-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="3"/>
+              <circle cx="9" cy="11" r="2.5"/>
+              <path d="M14 10h4M14 13h3"/>
+            </svg>
+          </div>
+          <div class="rm-headline-text">
+            <h3>Esqueceu sua matrícula?</h3>
+            <p>
+              Sua matrícula é um número único gerado no cadastro do IFRO.
+              Veja abaixo onde encontrá-la ou entre em contato com o suporte.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <p class="rm-where-label">Onde encontrar sua matrícula</p>
+          <div class="rm-where-list">
+
+            <div class="rm-where-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
+                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+              </svg>
+              Declaração de matrícula ou histórico escolar
             </div>
 
-
-        </section>
-
-        <section class="recovery-card" aria-label="Formulario de recuperacao">
-            <div class="mode-tabs" role="tablist">
-                <button class="mode-tab active" type="button" data-mode="FIRST_ACCESS">Primeiro acesso</button>
-                <button class="mode-tab" type="button" data-mode="RESET_PASSWORD">Recuperar senha</button>
+            <div class="rm-where-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              Secretaria ou coordenação do seu campus
             </div>
 
-            <div id="statusBox" class="status-box hidden" role="status" aria-live="polite"></div>
-
-            <form id="recoveryForm" novalidate>
-                <input id="usernameHidden" class="sr-only" type="text" name="username" autocomplete="username" aria-hidden="true" tabindex="-1" />
-
-                <div class="step" id="step-ident">
-                    <div class="field">
-                        <label for="matricula">Matricula</label>
-                        <input id="matricula" class="input" type="text" inputmode="numeric" autocomplete="username" placeholder="Digite sua matricula" />
-                    </div>
-
-                    <div class="field">
-                        <label>Canal de verificacao</label>
-                        <div class="radio-group" role="radiogroup" aria-label="Canal de verificacao por email">
-                            <label class="radio-option"><input type="radio" name="canal" value="email_pessoal" checked /> E-mail pessoal</label>
-                            <label class="radio-option"><input type="radio" name="canal" value="email_academico" /> E-mail academico</label>
-                        </div>
-                        <small class="helper-text">Verificacao por telefone e SMS removida deste fluxo.</small>
-                    </div>
-
-                    <div class="field" id="contactField">
-                        <label for="contato" id="contactLabel">E-mail pessoal</label>
-                        <input id="contato" class="input" type="email" autocomplete="email" placeholder="seu.email@provedor.com" />
-                    </div>
-
-                    <div class="button-row">
-                        <button id="btnValidate" class="btn-outline" type="button">Validar dados</button>
-                        <button id="btnSendOtp" class="btn-primary hidden" type="button" disabled>Enviar codigo</button>
-                    </div>
-                </div>
-
-                <div class="step hidden" id="step-otp">
-                    <div class="field">
-                        <label for="otp">Codigo OTP</label>
-                        <input id="otp" class="input otp-input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000" />
-                        <span class="helper-text" id="otpHint"></span>
-                        <span class="helper-text error-text hidden" id="otpError" aria-live="polite"></span>
-                    </div>
-                    <div class="button-row">
-                        <button id="btnVerifyOtp" class="btn-primary" type="button">Verificar</button>
-                        <button id="btnResend" class="btn-outline" type="button" disabled>Reenviar (60s)</button>
-                    </div>
-                </div>
-
-                <div class="step hidden" id="step-password">
-                    <div class="field">
-                        <label for="newPassword">Nova senha</label>
-                        <input id="newPassword" class="input" type="password" autocomplete="new-password" />
-                    </div>
-                    <div class="field">
-                        <label for="confirmPassword">Confirmar senha</label>
-                        <input id="confirmPassword" class="input" type="password" autocomplete="new-password" />
-                    </div>
-                    <div class="password-rules" id="passwordRules">
-                        <div class="rule-item" data-rule="length"><span class="rule-icon">?</span> Minimo 8 caracteres</div>
-                        <div class="rule-item" data-rule="upper"><span class="rule-icon">?</span> 1 letra maiuscula</div>
-                        <div class="rule-item" data-rule="number"><span class="rule-icon">?</span> 1 numero</div>
-                        <div class="rule-item" data-rule="symbol"><span class="rule-icon">?</span> 1 simbolo</div>
-                    </div>
-                    <div class="password-ux">
-                        <div class="strength-bar"><span id="strengthBar" class="strength-fill"></span></div>
-                        <span id="strengthText" class="strength-text"></span>
-                        <span id="matchText" class="password-match"></span>
-                    </div>
-                    <div class="button-row">
-                        <button id="btnSavePassword" class="btn-primary" type="button">Salvar senha</button>
-                    </div>
-                </div>
-            </form>
-
-            <div class="helper-text" id="loginBackLink">
-                <a href="/index.html">Voltar ao login</a>
+            <div class="rm-where-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M22 7L12 13 2 7"/>
+              </svg>
+              Prefixo do seu e-mail institucional IFRO
             </div>
-            <div class="helper-text hidden" id="cancelLoggedIn">
-                <button id="cancelRecovery" class="btn-outline" type="button">Cancelar acao</button>
-            </div>
-        </section>
-    </main>
 
-    <script src="js/password-ux.js"></script>
-    <script src="js/recovery.js"></script>
-    <script defer src="/js/global-footer.js"></script>
+          </div>
+        </div>
+
+        <div>
+          <p class="rm-where-label">Contato direto</p>
+          <div class="rm-email-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="M22 7L12 13 2 7"/>
+            </svg>
+            jics.ifro@gmail.com
+          </div>
+        </div>
+
+        <div class="button-row">
+          <a class="btn-primary"
+            href="mailto:jics.ifro@gmail.com?subject=Recupera%C3%A7%C3%A3o%20de%20matr%C3%ADcula%20-%20JICS&body=Ol%C3%A1%20equipe%20JICS%2C%0D%0A%0D%0APreciso%20de%20ajuda%20para%20recuperar%20minha%20matr%C3%ADcula.%0D%0A%0D%0ANome%20completo%3A%20%5Bdigite%20seu%20nome%20completo%5D%0D%0ACampus%3A%20%0D%0ACurso%2FTurma%3A%20%0D%0AData%20de%20nascimento%3A%20%0D%0A%0D%0AObrigado."
+            style="text-decoration:none">
+            Enviar e-mail para o suporte
+          </a>
+        </div>
+
+      </div>
+      <!-- /#panelMatricula -->
+
+      <!-- Links de rodapé -->
+      <div class="helper-text" id="loginBackLink">
+        <a href="/index.html">← Voltar ao login</a>
+      </div>
+      <div class="helper-text hidden" id="cancelLoggedIn">
+        <button id="cancelRecovery" class="btn-outline" type="button">
+          Cancelar ação
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ════════════════════════════════════
+       JAVASCRIPT — recovery.js original
+  ════════════════════════════════════ -->
+  <script>
+    /* ── Lógica extra para a terceira aba (Esqueci a matrícula) ──
+       Completamente isolada do recovery.js para não interferir.   */
+    (function () {
+      const tabs      = document.querySelectorAll('.mode-tab');
+      const form      = document.getElementById('recoveryForm');
+      const panelMat  = document.getElementById('panelMatricula');
+
+      function showMatriculaTab() {
+        tabs.forEach(t => {
+          const isMat = t.dataset.mode === 'RECOVER_MATRICULA';
+          t.classList.toggle('active', isMat);
+          t.setAttribute('aria-selected', isMat ? 'true' : 'false');
+        });
+        form.style.display    = 'none';
+        panelMat.style.display = 'flex';
+        panelMat.classList.remove('hidden');
+        document.getElementById('loginBackLink').classList.remove('hidden');
+        document.getElementById('statusBox').classList.add('hidden');
+      }
+
+      function hideMatriculaTab() {
+        form.style.display    = '';
+        panelMat.style.display = 'none';
+        panelMat.classList.add('hidden');
+      }
+
+      document.getElementById('tab-matricula')?.addEventListener('click', showMatriculaTab);
+
+      /* Quando recovery.js trocar de aba (FIRST_ACCESS / RESET_PASSWORD),
+         garantir que o painel de matrícula desaparece.              */
+      document.querySelectorAll('.mode-tab:not(#tab-matricula)').forEach(t => {
+        t.addEventListener('click', hideMatriculaTab);
+      });
+
+      /* Suporte à hash #reset na URL */
+      if (location.hash === '#reset') {
+        const btn = document.querySelector('[data-mode="RESET_PASSWORD"]');
+        if (btn) btn.click();
+      }
+    })();
+  </script>
+
+  <script src="js/password-ux.js"></script>
+  <script src="js/recovery.js"></script>
+  <script defer src="/js/global-footer.js"></script>
 </body>
-
 </html>

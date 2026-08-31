@@ -1,107 +1,64 @@
-/* IFRO Esportes - Paleta Unificada de Contraste */
-:root,
-body[data-theme="light"],
-body.light {
-  --ifro-primary-700: #0b5d4f;
-  --ifro-primary-600: #0e7a63;
-  --ifro-primary-500: #12a57f;
-  --ifro-primary-400: #3cc59d;
-  --ifro-primary-100: #daf4eb;
-  --ifro-primary-700-rgb: 11, 93, 79;
-  --ifro-primary-600-rgb: 14, 122, 99;
-  --ifro-primary-500-rgb: 18, 165, 127;
-  --ifro-primary-400-rgb: 60, 197, 157;
+/* ═══════════════════════════════════════════════════════════════════
+   JICS · Paleta Oficial IFRO / Jogos Internos
+   Identidade: Verde Institucional (#0A5D54, #00A877, #4DC98C, #86DDB0)
+   Tipografia: Plus Jakarta Sans / Inter / Outfit
+   ═══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-  --ifro-bg: #f3f8f6;
-  --ifro-surface: #edf4f1;
-  --ifro-card: #ffffff;
-  --ifro-border: #c9ded5;
-  --ifro-text: #0e302a;
-  --ifro-muted: #486961;
+:root {
+  /* ── Verde Institucional JICS / IFRO ── */
+  --color-brand-primary:   #0A5D54; /* Verde principal */
+  --color-brand-secondary: #00A877; /* Verde secundário */
+  --color-brand-light:     #4DC98C; /* Verde claro */
+  --color-brand-soft:      #86DDB0; /* Verde suave */
+  --color-brand-dark:      #063B35; /* Verde profundo */
 
-  --ifro-success: #118a52;
-  --ifro-warning: #a76408;
-  --ifro-danger: #be2f2f;
-  --ifro-focus: rgba(18, 165, 127, 0.36);
+  --font-body: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
 
-  --ifro-shadow-sm: 0 6px 16px rgba(10, 48, 41, 0.08);
-  --ifro-shadow-md: 0 12px 28px rgba(10, 48, 41, 0.12);
-  --ifro-shadow-lg: 0 18px 40px rgba(10, 48, 41, 0.16);
+  /* ── Semânticos ── */
+  --bg:       #F6F8FA;
+  --surface:  #F0F4F2;
+  --card:     #FFFFFF;
+  --border:   #E2E8F0;
+  --line:     #CBD5E1;
+  --text:     #172126;
+  --text2:    #667085;
+  --muted:    #8C99A8;
+  --ph:       #A0AEC0;
 
-  --ifro-hero-left: #0b5d4f;
-  --ifro-hero-right: #0f8777;
+  --p:        #00A877;
+  --p-dark:   #0A5D54;
+  --p-soft:   rgba(0, 168, 119, 0.12);
+  --p-ring:   rgba(0, 168, 119, 0.25);
+  --p-border: rgba(0, 168, 119, 0.35);
+
+  --ok:       #10B981; --ok-soft:   rgba(16, 185, 129, 0.12);
+  --warn:     #F59E0B; --warn-soft: rgba(245, 158, 11, 0.12);
+  --err:      #EF4444; --err-soft:  rgba(239, 68, 68, 0.12);
+  --info:     #0EA5E9; --info-soft: rgba(14, 165, 233, 0.12);
+
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-full: 9999px;
 }
 
-body[data-theme="dark"],
-body.dark-theme {
-  --ifro-primary-700: #15a57f;
-  --ifro-primary-600: #1cbc92;
-  --ifro-primary-500: #30d0a7;
-  --ifro-primary-400: #6be3c2;
-  --ifro-primary-100: #dff7ef;
-  --ifro-primary-700-rgb: 21, 165, 127;
-  --ifro-primary-600-rgb: 28, 188, 146;
-  --ifro-primary-500-rgb: 48, 208, 167;
-  --ifro-primary-400-rgb: 107, 227, 194;
-
-  --ifro-bg: #0d1715;
-  --ifro-surface: #11211e;
-  --ifro-card: #152a25;
-  --ifro-border: #2c4942;
-  --ifro-text: #e8f5f0;
-  --ifro-muted: #9eb9b2;
-
-  --ifro-success: #59d995;
-  --ifro-warning: #f0b46a;
-  --ifro-danger: #ff8e8e;
-  --ifro-focus: rgba(48, 208, 167, 0.42);
-
-  --ifro-shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.26);
-  --ifro-shadow-md: 0 12px 28px rgba(0, 0, 0, 0.32);
-  --ifro-shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.4);
-
-  --ifro-hero-left: #0c1f1b;
-  --ifro-hero-right: #0f2c26;
-}
-
-/* Alias semanticos para compatibilidade entre paginas */
-:root,
-body[data-theme="light"],
-body.light,
-body[data-theme="dark"],
-body.dark-theme {
-  --bg: var(--ifro-bg);
-  --bg-soft: var(--ifro-surface);
-  --surface: var(--ifro-surface);
-  --card: var(--ifro-card);
-  --panel: var(--ifro-card);
-  --border: var(--ifro-border);
-  --line: var(--ifro-border);
-  --text: var(--ifro-text);
-  --muted: var(--ifro-muted);
-
-  --primary: var(--ifro-primary-500);
-  --primary-600: var(--ifro-primary-600);
-  --primary-700: var(--ifro-primary-700);
-  --primary-500-rgb: var(--ifro-primary-500-rgb);
-  --primary-700-rgb: var(--ifro-primary-700-rgb);
-  --primary-dark: var(--ifro-primary-700);
-  --accent: var(--ifro-primary-500);
-  --brand: var(--ifro-primary-700);
-
-  --success: var(--ifro-success);
-  --warning: var(--ifro-warning);
-  --warn: var(--ifro-warning);
-  --danger: var(--ifro-danger);
-  --focus: var(--ifro-focus);
-
-  --shadow-sm: var(--ifro-shadow-sm);
-  --shadow-md: var(--ifro-shadow-md);
-  --shadow-lg: var(--ifro-shadow-lg);
-  --shadow: var(--ifro-shadow-lg);
-
-  --brand-1: var(--ifro-primary-500);
-  --brand-2: var(--ifro-primary-700);
-  --bg-left: var(--ifro-hero-left);
-  --bg-right: var(--ifro-hero-right);
+[data-theme="dark"], body.dark {
+  --bg:       #061411;
+  --surface:  #0A1D19;
+  --card:     #0B211C;
+  --border:   #153A31;
+  --line:     #1E4D42;
+  --text:     #F1F7F4;
+  --text2:    #A3C5BA;
+  --muted:    #638D80;
+  --ph:       #4A6B61;
+  --p:        #00A877;
+  --p-dark:   #4DC98C;
+  --p-soft:   rgba(0, 168, 119, 0.18);
+  --p-ring:   rgba(77, 201, 140, 0.30);
+  --p-border: rgba(77, 201, 140, 0.40);
 }

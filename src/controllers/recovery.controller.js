@@ -17,8 +17,9 @@ export async function validateRecoveryHandler(req, res) {
       return res.status(400).json(result);
     }
     return res.json(result);
-  } catch {
-    return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno.' });
+  } catch (err) {
+    console.error('[ERRO_VALIDATE_RECOVERY]:', err);
+    return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno no servidor: ' + (err?.message || '') });
   }
 }
 
@@ -30,17 +31,18 @@ export async function requestOtpHandler(req, res) {
       if (result.code === 'WAIT' || result.code === 'BLOCKED') {
         return res.status(429).json(result);
       }
-      if (result.code === 'SMS_NOT_CONFIGURED') {
-        return res.status(503).json(result);
-      }
-      if (result.code === 'SMS_PROVIDER_ERROR') {
+      if (result.code === 'SMS_PROVIDER_ERROR' || result.code === 'EMAIL_FAILED') {
         return res.status(502).json(result);
+      }
+      if (result.code === 'SMS_NOT_CONFIGURED' || result.code === 'EMAIL_NOT_CONFIGURED') {
+        return res.status(503).json(result);
       }
       return res.status(400).json(result);
     }
     return res.json(result);
-  } catch {
-    return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno.' });
+  } catch (err) {
+    console.error('[ERRO_REQUEST_OTP]:', err);
+    return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno ao solicitar código: ' + (err?.message || '') });
   }
 }
 
@@ -52,8 +54,9 @@ export async function verifyOtpHandler(req, res) {
       return res.status(result.code === 'BLOCKED' ? 429 : 400).json(result);
     }
     return res.json(result);
-  } catch {
-    return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno.' });
+  } catch (err) {
+    console.error('[ERRO_VERIFY_OTP]:', err);
+    return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno ao validar código: ' + (err?.message || '') });
   }
 }
 
@@ -65,8 +68,9 @@ export async function setPasswordHandler(req, res) {
       return res.status(400).json(result);
     }
     return res.json(result);
-  } catch {
-    return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno.' });
+  } catch (err) {
+    console.error('[ERRO_SET_PASSWORD]:', err);
+    return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno ao redefinir senha: ' + (err?.message || '') });
   }
 }
 
@@ -78,7 +82,8 @@ export async function requestPhoneOldHandler(req, res) {
       return res.status(result.code === 'WAIT' || result.code === 'BLOCKED' ? 429 : 400).json(result);
     }
     return res.json(result);
-  } catch {
+  } catch (err) {
+    console.error('[ERRO_REQUEST_PHONE_OLD]:', err);
     return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno.' });
   }
 }
@@ -92,7 +97,8 @@ export async function verifyPhoneOldHandler(req, res) {
       return res.status(result.code === 'BLOCKED' ? 429 : 400).json(result);
     }
     return res.json(result);
-  } catch {
+  } catch (err) {
+    console.error('[ERRO_VERIFY_PHONE_OLD]:', err);
     return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno.' });
   }
 }
@@ -114,7 +120,8 @@ export async function requestPhoneNewHandler(req, res) {
       return res.status(400).json(result);
     }
     return res.json(result);
-  } catch {
+  } catch (err) {
+    console.error('[ERRO_REQUEST_PHONE_NEW]:', err);
     return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno.' });
   }
 }
@@ -127,7 +134,8 @@ export async function verifyPhoneNewHandler(req, res) {
       return res.status(result.code === 'BLOCKED' ? 429 : 400).json(result);
     }
     return res.json(result);
-  } catch {
+  } catch (err) {
+    console.error('[ERRO_VERIFY_PHONE_NEW]:', err);
     return res.status(500).json({ ok: false, code: 'SERVER_ERROR', message: 'Erro interno.' });
   }
 }

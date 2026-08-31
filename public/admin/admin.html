@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin · JICS</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet"/>
+  <link rel="stylesheet" href="/admin/shell.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+
+<!-- body.admin-ui é a classe usada pelo jsdosistema para identificar admin -->
+<body class="admin-app admin-ui" data-page="admin" data-theme="dark">
+
+<div id="appShell">
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button class="icon-btn nav-hamburger" onclick="toggleSideNav()">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <button class="navbar-brand" onclick="window.location.href='/admin.html'">
+        <img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/>
+        IFRO ESPORTES · ADMIN
+      </button>
+    </div>
+    <div class="navbar-right">
+      <button class="icon-btn" onclick="toggleAdminMenu(event)" title="Configurações">
+        <span class="material-symbols-outlined">settings</span>
+      </button>
+      <div class="user-menu">
+        <button class="user-trigger" onclick="toggleUserDrawer()">
+          <img id="userAvatar" class="user-avatar" src="/assets/avatar-default.png" alt="" onerror="this.src='/assets/avatar-default.png'"/>
+          <span id="userNameNavbar" class="user-name"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- SESSION BANNER -->
+  <div id="sessionBanner" class="session-banner hidden">
+    <span id="sessionBannerText">Sessão expirada. Faça login novamente.</span>
+    <button class="btn-outline btn-sm" type="button" onclick="location.href='/index.html'">Fazer login</button>
+  </div>
+
+  <!-- ADMIN MENU DROPDOWN -->
+  <div id="adminMenuOverlay" class="overlay hidden" onclick="closeAdminMenu()"></div>
+  <div id="adminMenuDropdown" class="card admin-menu-dropdown hidden">
+    <button class="btn-ghost" onclick="logout()">Sair</button>
+  </div>
+
+  <!-- APP BODY -->
+  <div class="app-body">
+
+    <!-- SIDEBAR ADMIN — jsdosistema usa toggleSidebarCollapse(), initSidebarCollapse() -->
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header">
+        <span class="side-header-title">JICS Admin</span>
+        <button id="sideCollapseBtn" class="side-collapse-btn icon-btn"
+          type="button" aria-label="Recolher barra lateral" aria-expanded="true"
+          onclick="toggleSidebarCollapse()">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+      </div>
+
+      <div class="side-sections">
+
+        <button class="side-group-btn open" onclick="toggleDrawerGroup('adminOps',this)">
+          Operações <span class="material-symbols-outlined">expand_more</span>
+        </button>
+        <div id="adminOps" class="side-sub open">
+          <a class="side-link active" data-tab="tabDashboard"    href="admin.html" onclick="openAdminTab('tabDashboard');return false;">Visão geral</a>
+          <a class="side-link"        data-tab="tabInscricoes"   href="admin.html" onclick="openAdminTab('tabInscricoes');return false;">Inscrições</a>
+          <a class="side-link staff-only" data-tab="tabSorteio" href="admin.html" onclick="openAdminTab('tabSorteio');return false;">Sorteio</a>
+          <a class="side-link staff-only" href="/sorteios-salvos.html">Sorteios salvos</a>
+          <a class="side-link"        data-tab="tabBuscarAluno"  href="admin.html" onclick="openAdminTab('tabBuscarAluno');return false;">Buscar aluno</a>
+          <a class="side-link staff-only" href="/sumula.html">Súmula</a>
+        </div>
+
+        <div class="side-divider"></div>
+        <button class="side-group-btn" onclick="toggleDrawerGroup('adminCad',this)">
+          Cadastros <span class="material-symbols-outlined">expand_more</span>
+        </button>
+        <div id="adminCad" class="side-sub">
+          <a class="side-link" data-tab="tabUsuarios"      href="admin.html" onclick="openAdminTab('tabUsuarios');return false;">Usuários</a>
+          <a class="side-link" data-tab="tabNoticias"      href="admin.html" onclick="openAdminTab('tabNoticias');return false;">Notícias</a>
+          <a class="side-link" data-tab="tabModalidades"   href="admin.html" onclick="openAdminTab('tabModalidades');return false;">Modalidades</a>
+          <a class="side-link staff-only" data-tab="tabEventos"      href="admin.html" onclick="openAdminTab('tabEventos');return false;">Eventos</a>
+          <a class="side-link staff-only" data-tab="tabOrganizadores" href="admin.html" onclick="openAdminTab('tabOrganizadores');return false;">Organizadores</a>
+          <a class="side-link admin-only" data-tab="tabAdmins"       href="admin.html" onclick="openAdminTab('tabAdmins');return false;">Administradores</a>
+          <a class="side-link admin-only" href="/admin-cadastro.html">Novo administrador</a>
+        </div>
+
+        <div class="side-divider"></div>
+        <button class="side-group-btn" onclick="toggleDrawerGroup('adminRel',this)">
+          Relatórios <span class="material-symbols-outlined">expand_more</span>
+        </button>
+        <div id="adminRel" class="side-sub">
+          <a class="side-link staff-only" data-tab="tabGraficos" href="admin.html" onclick="openAdminTab('tabGraficos');return false;">Gráficos</a>
+          <a class="side-link staff-only" data-tab="tabRanking"  href="admin.html" onclick="openAdminTab('tabRanking');return false;">Ranking</a>
+          <a class="side-link admin-only" data-tab="tabLogs"     href="admin.html" onclick="openAdminTab('tabLogs');return false;">Logs</a>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <main class="page admin-panel">
+
+      <!-- Quick nav + tabs (jsdosistema usa switchAdminTab / openAdminTab) -->
+      <section class="card admin-quick-nav">
+        <div class="admin-quick-nav-head">
+          <div>
+            <div class="page-title">Painel Administrativo</div>
+            <div class="page-subtitle" id="adminCrumb">Visão geral</div>
+          </div>
+          <a class="btn-link admin-only" href="/admin-cadastro.html">Novo administrador</a>
+        </div>
+
+        <div class="admin-tabs admin-quick-tabs">
+          <button class="pill-tab pill-tab-active" type="button" data-tab="tabDashboard"    onclick="switchAdminTab('tabDashboard',this)">Visão geral</button>
+          <button class="pill-tab" type="button" data-tab="tabInscricoes"   onclick="switchAdminTab('tabInscricoes',this)">Inscrições</button>
+          <button class="pill-tab staff-only" type="button" data-tab="tabSorteio"     onclick="switchAdminTab('tabSorteio',this)">Sorteio</button>
+          <button class="pill-tab" type="button" data-tab="tabBuscarAluno"  onclick="switchAdminTab('tabBuscarAluno',this)">Buscar aluno</button>
+          <button class="pill-tab" type="button" data-tab="tabUsuarios"     onclick="switchAdminTab('tabUsuarios',this)">Usuários</button>
+          <button class="pill-tab" type="button" data-tab="tabNoticias"     onclick="switchAdminTab('tabNoticias',this)">Notícias</button>
+          <button class="pill-tab" type="button" data-tab="tabModalidades"  onclick="switchAdminTab('tabModalidades',this)">Modalidades</button>
+          <button class="pill-tab staff-only" type="button" data-tab="tabEventos"     onclick="switchAdminTab('tabEventos',this)">Eventos</button>
+          <button class="pill-tab staff-only" type="button" data-tab="tabOrganizadores" onclick="switchAdminTab('tabOrganizadores',this)">Organizadores</button>
+          <button class="pill-tab staff-only" type="button" data-tab="tabGraficos"    onclick="switchAdminTab('tabGraficos',this)">Gráficos</button>
+          <button class="pill-tab staff-only" type="button" data-tab="tabRanking"     onclick="switchAdminTab('tabRanking',this)">Ranking</button>
+          <button class="pill-tab admin-only" type="button" data-tab="tabLogs"        onclick="switchAdminTab('tabLogs',this)">Logs</button>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: DASHBOARD ═══ -->
+      <section id="tabDashboard" class="tab-content active">
+
+        <!-- Hero -->
+        <div class="card" style="padding:var(--s6) var(--s8)">
+          <h1 id="heroGreeting">Bem-vindo ao IFRO ESPORTES</h1>
+          <p class="muted" style="margin-top:var(--s2)">Gerencie inscrições, modalidades, notícias e resultados.</p>
+          <div class="hero-actions" style="margin-top:var(--s5)">
+            <a class="btn-primary user-only" href="modalidades.html">Fazer inscrição</a>
+            <a class="btn-outline" href="modalidades.html">Ver modalidades</a>
+          </div>
+        </div>
+
+        <!-- KPIs — jsdosistema usa #metricAlunos etc via loadAdminMetricsLegacy() -->
+        <div class="kpis" id="kpiGrid">
+          <div class="kpi-card">
+            <div class="kpi-icon"><span class="material-symbols-outlined">group</span></div>
+            <div class="kpi-value" id="metricAlunos">—</div>
+            <div class="kpi-label">Alunos cadastrados</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon"><span class="material-symbols-outlined">assignment</span></div>
+            <div class="kpi-value" id="metricInscricoes">—</div>
+            <div class="kpi-label">Total de inscrições</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon"><span class="material-symbols-outlined">sports_soccer</span></div>
+            <div class="kpi-value" id="metricModalidades">—</div>
+            <div class="kpi-label">Modalidades ativas</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon"><span class="material-symbols-outlined">campaign</span></div>
+            <div class="kpi-value" id="metricNoticias">—</div>
+            <div class="kpi-label">Notícias publicadas</div>
+          </div>
+        </div>
+
+        <!-- Gráfico + Feed -->
+        <div class="grid-wide">
+          <div class="card">
+            <div class="card-head">
+              <h3>Inscrições por modalidade</h3>
+              <span class="muted">Últimos 30 dias</span>
+            </div>
+            <div style="padding:var(--s5)">
+              <canvas id="chartModalidades" height="200"></canvas>
+            </div>
+          </div>
+          <!-- jsdosistema injeta feed em #activityFeed -->
+          <div class="card" id="activityFeed">
+            <div class="card-head"><h3>Atividade recente</h3></div>
+            <div class="activity-feed" style="padding:var(--s5)">
+              <p class="muted">Carregando…</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Últimas inscrições -->
+        <div class="card" id="lastInscricoes">
+          <div class="card-head">
+            <h3>Últimas inscrições</h3>
+            <span class="muted">Atualizadas em tempo real</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table">
+              <thead><tr><th>Nome</th><th>Matrícula</th><th>Modalidade</th><th>Tipo</th><th>Data</th><th>Ação</th></tr></thead>
+              <tbody id="lastInscricoesBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ═══ TAB: INSCRIÇÕES ═══ -->
+      <section id="tabInscricoes" class="tab-content">
+        <div class="page-header">
+          <div><div class="page-title">Inscrições</div><div class="page-subtitle">Gerencie todas as inscrições do JICS.</div></div>
+          <div class="hero-actions">
+            <button id="btnExportarInscricoes" class="btn-outline" onclick="exportarInscricoesCsv()" type="button">Exportar CSV</button>
+          </div>
+        </div>
+        <div class="card" style="padding:var(--s5) var(--s6)">
+          <div class="filter-bar">
+            <input id="filtroBuscaInscricoes" type="search" placeholder="Nome, matrícula, modalidade…" style="flex:2;min-width:200px"/>
+            <select id="filtInscModalidade"><option value="">Modalidade</option></select>
+            <select id="filtInscTurma"><option value="">Turma</option></select>
+            <select id="filtInscCampus"><option value="">Campus</option></select>
+            <button class="btn-outline btn-sm" onclick="limparFiltrosInscricoes()" type="button">Limpar</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-responsive">
+            <table class="table">
+              <thead><tr><th>Nome</th><th>Matrícula</th><th>Turma</th><th>Modalidade</th><th>Sexo</th><th>Tipo</th><th>Data</th><th>Ação</th></tr></thead>
+              <tbody id="tabelaInscricoes"></tbody>
+            </table>
+          </div>
+          <div id="inscricoesEmpty" class="empty-state hidden">
+            <span class="material-symbols-outlined">assignment_late</span>
+            <h3>Sem inscrições</h3><p>Nenhuma inscrição encontrada.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: SORTEIO ═══ -->
+      <section id="tabSorteio" class="tab-content">
+        <div class="page-header">
+          <div><div class="page-title">Sorteio</div><div class="page-subtitle">Gere a tabela de jogos por turmas.</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Configuração</h3></div>
+          <div class="card-body" style="padding:var(--s5)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Modalidade</label>
+                <select id="sorteioModalidade"><option value="">Selecione</option></select>
+              </div>
+              <div class="form-group">
+                <label>Sexo</label>
+                <select id="sorteioSexo"><option value="">Selecione</option><option value="M">Masculino</option><option value="F">Feminino</option></select>
+              </div>
+              <div class="form-group">
+                <label>Chave</label>
+                <input id="sorteioChave" type="text" placeholder="CH A, CH B…"/>
+              </div>
+              <div class="form-group">
+                <label>Local</label>
+                <input id="sorteioLocal" type="text" placeholder="Ginásio, quadra…"/>
+              </div>
+              <div class="form-group">
+                <label>Hora início</label>
+                <input id="sorteioHoraInicio" type="time" value="07:30"/>
+              </div>
+              <div class="form-group">
+                <label>Intervalo (min)</label>
+                <input id="sorteioIntervalo" type="number" value="0" min="0" max="120"/>
+              </div>
+            </div>
+            <div class="hero-actions" style="margin-top:var(--s5)">
+              <button class="btn-primary" onclick="gerarTabelaSorteio()" type="button">Gerar tabela</button>
+              <button class="btn-outline" onclick="aplicarHorariosSorteio()" type="button">Aplicar horários</button>
+              <button class="btn-outline" onclick="exportarTabelaSorteioPrint()" type="button">Imprimir</button>
+              <button class="btn-ghost"   onclick="limparSorteio()" type="button">Limpar</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Tabela de jogos</h3></div>
+          <div class="table-responsive">
+            <table class="table sorteio-table">
+              <thead><tr><th>#</th><th>Jogo</th><th>Hora</th><th>Chave</th><th>Equipe A</th><th>X</th><th>Equipe B</th><th>Status</th><th>Ação</th></tr></thead>
+              <tbody id="sorteioBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: BUSCAR ALUNO ═══ -->
+      <section id="tabBuscarAluno" class="tab-content">
+        <div class="page-header"><div><div class="page-title">Buscar aluno</div><div class="page-subtitle">Consulte dados cadastrais por matrícula.</div></div></div>
+        <div class="card">
+          <div class="card-body" style="padding:var(--s5)">
+            <div style="display:flex;gap:var(--s3)">
+              <input id="buscaMatricula" type="text" placeholder="Digite a matrícula" style="flex:1"/>
+              <button class="btn-primary" onclick="buscarAluno()" type="button">Buscar</button>
+            </div>
+            <div id="buscaResultado" style="margin-top:var(--s5)"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: USUÁRIOS ═══ -->
+      <section id="tabUsuarios" class="tab-content">
+        <div class="page-header"><div><div class="page-title">Usuários</div></div></div>
+        <div class="card">
+          <div class="card-head"><h3>Lista de usuários</h3></div>
+          <div class="table-responsive">
+            <table class="table">
+              <thead><tr><th>Nome</th><th>Matrícula</th><th>Turma</th><th>Campus</th><th>Role</th><th>Ação</th></tr></thead>
+              <tbody id="tabelaUsuarios"><tr><td colspan="6" style="text-align:center;padding:var(--s8);color:var(--muted)">Carregando…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: NOTÍCIAS ═══ -->
+      <section id="tabNoticias" class="tab-content">
+        <div class="page-header">
+          <div><div class="page-title">Notícias</div><div class="page-subtitle">Publique comunicados e avisos para os participantes.</div></div>
+        </div>
+        <!-- Form publicar -->
+        <div class="card">
+          <div class="card-head"><h3>Publicar notícia</h3></div>
+          <div class="card-body" style="padding:var(--s5)">
+            <form class="form-grid" onsubmit="publicarNoticia(event)">
+              <div class="form-group">
+                <label for="tituloNoticia">Título</label>
+                <input id="tituloNoticia" type="text" placeholder="Título da notícia" required/>
+              </div>
+              <div class="form-group">
+                <label for="descricaoNoticia">Descrição</label>
+                <textarea id="descricaoNoticia" rows="4" placeholder="Escreva o comunicado" required></textarea>
+              </div>
+              <div style="grid-column:1/-1;display:flex;justify-content:flex-end">
+                <button class="btn-primary" type="submit">Publicar notícia</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <!-- Lista — jsdosistema usa #allNoticiasGrid via renderNews() -->
+        <div class="card">
+          <div class="card-head">
+            <h3>Publicações recentes</h3>
+            <div style="display:flex;gap:var(--s2)">
+              <input id="noticiaSearch" type="search" placeholder="Buscar…" style="width:200px"/>
+              <button id="noticiaClear" class="btn-ghost btn-sm" type="button">Limpar</button>
+            </div>
+          </div>
+          <div style="padding:var(--s5)">
+            <div id="allNoticiasGrid" class="cards-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: MODALIDADES ═══ -->
+      <section id="tabModalidades" class="tab-content">
+        <div class="page-header"><div><div class="page-title">Modalidades</div></div></div>
+        <!-- Form nova modalidade -->
+        <div class="card">
+          <div class="card-head"><h3>Adicionar / Editar modalidade</h3></div>
+          <div class="card-body" style="padding:var(--s5)">
+            <form id="modalidadeForm" class="form-grid" onsubmit="return false">
+              <div class="form-group">
+                <label for="modalidadeTitulo">Nome da modalidade</label>
+                <input id="modalidadeTitulo" type="text" list="modNomeSuggestions" placeholder="Ex: Futsal Masculino"/>
+                <datalist id="modNomeSuggestions"></datalist>
+              </div>
+              <div class="form-group">
+                <label for="modalidadeProfessor">Professor responsável</label>
+                <input id="modalidadeProfessor" type="text" placeholder="Nome do professor"/>
+              </div>
+              <div class="form-group">
+                <label for="horaInicio">Hora início</label>
+                <input id="horaInicio" type="time"/>
+              </div>
+              <div class="form-group">
+                <label for="horaFim">Hora fim</label>
+                <input id="horaFim" type="time"/>
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label for="modalidadeDescricao">Descrição</label>
+                <textarea id="modalidadeDescricao" rows="3" placeholder="Descrição da modalidade"></textarea>
+              </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label>Dias da semana</label>
+                <div class="dias-semana" style="display:flex;flex-wrap:wrap;gap:var(--s3)">
+                  <label style="display:flex;align-items:center;gap:6px;font-size:var(--t-sm)"><input type="checkbox" value="Segunda"/>Segunda</label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:var(--t-sm)"><input type="checkbox" value="Terça"/>Terça</label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:var(--t-sm)"><input type="checkbox" value="Quarta"/>Quarta</label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:var(--t-sm)"><input type="checkbox" value="Quinta"/>Quinta</label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:var(--t-sm)"><input type="checkbox" value="Sexta"/>Sexta</label>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:var(--t-sm)"><input type="checkbox" value="Sábado"/>Sábado</label>
+                </div>
+              </div>
+              <div style="grid-column:1/-1;display:flex;gap:var(--s3);justify-content:flex-end">
+                <button id="modalidadeCancelBtn" class="btn-ghost hidden" type="button" onclick="cancelarEdicaoModalidade()">Cancelar</button>
+                <button id="modalidadeSubmitBtn" class="btn-primary" type="submit">Adicionar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <!-- Tabela — jsdosistema usa #adminModalidadesTable via renderAdminModalidadesTable() -->
+        <div class="card">
+          <div class="card-head"><h3>Modalidades cadastradas</h3><button class="btn-outline btn-sm" onclick="exportarModalidadesCsv()" type="button">Exportar CSV</button></div>
+          <div class="table-responsive">
+            <table class="table">
+              <thead><tr><th>Nome</th><th>Professor</th><th>Dias</th><th>Horário</th><th>Ação</th></tr></thead>
+              <tbody id="adminModalidadesTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: EVENTOS ═══ -->
+      <section id="tabEventos" class="tab-content">
+        <div class="page-header"><div><div class="page-title">Eventos</div></div></div>
+        <div class="card"><div class="card-body"><p class="muted">Carregando dados de eventos…</p></div></div>
+      </section>
+
+      <!-- ═══ TAB: ORGANIZADORES ═══ -->
+      <section id="tabOrganizadores" class="tab-content">
+        <div class="page-header"><div><div class="page-title">Organizadores</div></div></div>
+        <div class="card"><div class="card-body"><p class="muted">Carregando dados de organizadores…</p></div></div>
+      </section>
+
+      <!-- ═══ TAB: ADMINS ═══ -->
+      <section id="tabAdmins" class="tab-content">
+        <div class="page-header">
+          <div><div class="page-title">Administradores</div></div>
+          <a class="btn-primary" href="/admin-cadastro.html">Novo administrador</a>
+        </div>
+        <div class="card"><div class="card-body"><p class="muted">Carregando administradores…</p></div></div>
+      </section>
+
+      <!-- ═══ TAB: GRÁFICOS ═══ -->
+      <section id="tabGraficos" class="tab-content">
+        <div class="page-header"><div><div class="page-title">Gráficos</div></div></div>
+        <div class="card">
+          <div class="card-head"><h3>Inscrições por modalidade</h3></div>
+          <div style="padding:var(--s6)"><canvas id="chartGraficos" height="260"></canvas></div>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: RANKING ═══ -->
+      <section id="tabRanking" class="tab-content">
+        <div class="page-header"><div><div class="page-title">Ranking</div></div></div>
+        <div class="card">
+          <div class="card-head"><h3>Classificação geral</h3></div>
+          <div id="classificationTable" class="card-body"></div>
+        </div>
+      </section>
+
+      <!-- ═══ TAB: LOGS ═══ -->
+      <section id="tabLogs" class="tab-content">
+        <div class="page-header"><div><div class="page-title">Logs do sistema</div></div></div>
+        <div class="card">
+          <div class="card-head"><h3>Registros de auditoria</h3></div>
+          <div class="card-body"><p class="muted">Carregando logs…</p></div>
+        </div>
+      </section>
+
+    </main><!-- /.admin-panel -->
+  </div><!-- /.app-body -->
+
+  <!-- overlays -->
+  <div id="sideOverlay"   class="overlay"></div>
+  <div id="drawerOverlay" class="overlay"></div>
+
+  <!-- user drawer -->
+  <div id="userDrawer" class="user-drawer"></div>
+
+  <!-- modais partials -->
+  <div id="globalModals"></div>
+
+  <!-- Modal confirm perigo -->
+  <div id="modalDangerConfirm" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="dangerConfirmTitle">Confirmar ação</h3>
+        <button class="close-btn" onclick="closeDangerConfirm()" type="button"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="modal-body"><p id="dangerConfirmText">Tem certeza?</p></div>
+      <div class="modal-footer">
+        <button class="btn-ghost"   onclick="closeDangerConfirm()" type="button">Cancelar</button>
+        <button class="btn-danger"  id="dangerConfirmBtn" onclick="confirmDangerAction()" type="button">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- help panel -->
+  <div id="helpPanel" class="hidden">
+    <details class="faq-item"><summary>Como gerenciar inscrições?</summary><p>Use a aba "Inscrições" para visualizar, filtrar e exportar.</p></details>
+    <details class="faq-item"><summary>Como publicar notícias?</summary><p>Use a aba "Notícias" e preencha o formulário.</p></details>
+  </div>
+
+</div><!-- /#appShell -->
+
+<script src="/js/jsdosistema.js"></script>
+</body>
+</html>

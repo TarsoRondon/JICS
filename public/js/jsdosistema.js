@@ -444,7 +444,7 @@ function buildDefaultSideNavMarkup() {
 
 function ensureV0ShellScaffold(page) {
     const shell = document.getElementById('appShell');
-    const appBody = shell ? .querySelector('.app-body');
+    const appBody = shell ? shell.querySelector('.app-body') : null;
     if (!shell || !appBody) return;
     if (!shouldUseV0ResponsiveShell(page)) return;
 
@@ -517,7 +517,7 @@ function normalizeLabelKey(value) {
 }
 
 function resolveSideLinkIcon(link, label) {
-    const href = normalizeLabelKey(link ? .getAttribute('href') || '');
+    const href = normalizeLabelKey(link ? link.getAttribute('href') || '' : '');
     const tab = normalizeLabelKey(link ? .dataset ? .tab || '');
     const key = `${href} ${tab} ${normalizeLabelKey(label)}`;
 
@@ -1132,7 +1132,7 @@ function bindDrawerOverlays() {
 }
 
 function toggleDrawerGroup(id, btn) {
-    const target = document.getElementById(id);
+    var target = document.getElementById(id);
     if (!target) return;
     target.classList.toggle('open');
     if (btn) btn.classList.toggle('open');

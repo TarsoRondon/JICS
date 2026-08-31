@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notícias e Comunicados · JICS IFRO</title>
+    <link rel="icon" type="image/png" href="/assets/ifro.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet" />
+    <link rel="stylesheet" href="/aluno/shell.css" />
+</head>
+
+<body class="aluno-app" data-page="noticias" data-theme="dark">
+    <div id="appShell">
+
+        <!-- ═══ NAVBAR ═══ -->
+        <nav class="navbar" aria-label="Navegação Principal">
+            <div class="navbar-left">
+                <button class="navbar-brand" onclick="window.location.href='/aluno/dashboard.html'" title="Início">
+                    <img src="/assets/ifro.png" alt="IFRO" class="brand-logo" />
+                    <span>IFRO ESPORTES</span>
+                </button>
+            </div>
+            <div class="navbar-center navbar-links">
+                <a href="/aluno/dashboard.html" class="nav-link">Início</a>
+                <a href="/aluno/modalidades.html" class="nav-link">Modalidades</a>
+                <a href="/aluno/inscricoes.html" class="nav-link">Inscrições</a>
+                <a href="/aluno/horarios.html" class="nav-link">Horários</a>
+                <a href="/aluno/noticias.html" class="nav-link active">Notícias</a>
+                <a href="/aluno/resultados.html" class="nav-link">Resultados</a>
+            </div>
+            <div class="navbar-right">
+                <button class="icon-btn help-btn" onclick="toggleHelpPanel()" title="Ajuda" aria-label="Ajuda">
+                    <span class="material-symbols-outlined">help_outline</span>
+                </button>
+                <div class="user-menu">
+                    <button class="user-trigger" onclick="toggleUserDrawer()" id="userTrigger" aria-label="Menu do Usuário">
+                        <img id="userAvatar" class="user-avatar" src="/assets/avatar-default.png" alt="Foto de perfil" onerror="this.src='/assets/avatar-default.png'" />
+                        <span id="userNameNavbar" class="user-name">Aluno</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- ═══ APP BODY ═══ -->
+        <div class="app-body">
+            <aside id="sideNav" class="side-drawer" aria-label="Menu Lateral">
+                <div class="side-header"><span class="side-header-title">Menu do Aluno</span></div>
+                <a class="side-link" href="/aluno/dashboard.html">
+                    <span class="material-symbols-outlined">dashboard</span> Início
+                </a>
+                <a class="side-link" href="/aluno/modalidades.html">
+                    <span class="material-symbols-outlined">sports_soccer</span> Modalidades
+                </a>
+                <a class="side-link user-only" href="/aluno/inscricoes.html">
+                    <span class="material-symbols-outlined">assignment</span> Minhas Inscrições
+                </a>
+                <a class="side-link" href="/aluno/horarios.html">
+                    <span class="material-symbols-outlined">schedule</span> Cronograma
+                </a>
+                <a class="side-link active" href="/aluno/noticias.html">
+                    <span class="material-symbols-outlined">campaign</span> Notícias
+                </a>
+                <a class="side-link" href="/aluno/resultados.html">
+                    <span class="material-symbols-outlined">emoji_events</span> Resultados
+                </a>
+                <a class="side-link" href="/aluno/perfil.html">
+                    <span class="material-symbols-outlined">person</span> Meu Perfil
+                </a>
+                <div class="side-divider staff-only"></div>
+                <a class="side-link staff-only" href="/admin/dashboard.html">
+                    <span class="material-symbols-outlined">admin_panel_settings</span> Painel Admin
+                </a>
+            </aside>
+
+            <!-- ═══ MAIN CONTENT ═══ -->
+            <main class="page">
+
+                <section class="page-hero">
+                    <div class="page-hero__copy">
+                        <span class="page-hero__badge">Mural Oficial</span>
+                        <h1>Notícias e Comunicados</h1>
+                        <p>Fique por dentro das datas importantes, avisos da coordenação, regulamentos e novidades dos Jogos Internos.</p>
+                    </div>
+                    <div class="page-hero__panel">
+                        <div class="page-search">
+                            <span class="material-symbols-outlined">search</span>
+                            <input id="noticiaSearch" type="search" placeholder="Pesquisar notícias ou avisos..." />
+                        </div>
+                        <div class="page-actions">
+                            <button id="noticiaClear" class="btn-outline btn-sm" type="button">Limpar</button>
+                        </div>
+                        <div id="noticiasCount" class="page-subtitle"></div>
+                    </div>
+                </section>
+
+                <!-- Grid de notícias renderizado dinamicamente pelo jsdosistema -->
+                <div id="allNoticiasGrid" class="cards-grid"></div>
+
+                <!-- Modal Ver Notícia Completa -->
+                <div id="modalVerNoticia" class="modal hidden">
+                    <div class="modal-card">
+                        <div class="modal-header">
+                            <h3 id="modalVerNoticiaTitle">Notícia</h3>
+                            <button class="close-btn" onclick="closeModal('modalVerNoticia')" type="button" aria-label="Fechar">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="modalVerNoticiaBody" style="line-height:1.7;color:var(--text);white-space:pre-wrap;"></p>
+                            <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+                                <small id="modalVerNoticiaDate" class="text-muted"></small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-outline" onclick="closeModal('modalVerNoticia')" type="button">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <div id="sideOverlay" class="overlay"></div>
+        <div id="drawerOverlay" class="overlay"></div>
+        <div id="userDrawer" class="user-drawer"></div>
+        <div id="globalModals"></div>
+
+        <div id="helpPanel" class="hidden">
+            <details class="faq-item">
+                <summary>Com que frequência as notícias são atualizadas?</summary>
+                <p>A comissão organizadora publica avisos em tempo real durante todo o período dos jogos.</p>
+            </details>
+        </div>
+    </div>
+
+    <script src="/js/jsdosistema.js"></script>
+</body>
+
+</html>

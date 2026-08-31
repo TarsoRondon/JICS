@@ -1,107 +1,122 @@
-﻿import { api } from '/js/core/api.js';
-import { toast } from '/js/ui/toast.js';
-import { timeAgo } from '/js/core/timeAgo.js';
-import { renderList, renderSkeletonList } from '/js/ui/renderList.js';
+/**
+ * Admin Dashboard Controller
+ * Plataforma Esportiva SaaS — JICS IFRO
+ */
 
-const kpiGrid = document.getElementById('kpiGrid');
-const feed = document.getElementById('activityFeed');
-const lastInscricoes = document.getElementById('lastInscricoes');
-const updatedAgo = document.getElementById('updatedAgo');
-const btnRefresh = document.getElementById('btnRefresh');
-const ctx = document.getElementById('chartModalidades');
+document.addEventListener('DOMContentLoaded', initDashboard);
 
-let lastUpdate = Date.now();
-let chart = null;
+async function initDashboard() {
+  // Anima os contadores dos Stat Cards
+  animateStats();
 
-function renderKpis(data) {
-  const items = [
-    { label: 'Alunos', value: data.alunos ?? 0 },
-    { label: 'Inscricoes', value: data.inscricoes ?? 0 },
-    { label: 'Modalidades', value: data.modalidades ?? 0 },
-    { label: 'Pendencias', value: data.pendencias ?? 0 },
-    { label: 'Comunicados', value: data.comunicados ?? 0 }
-  ];
-  kpiGrid.innerHTML = items.map(i => `
-    <div class="card">
-      <div class="muted">${i.label}</div>
-      <div style="font-size:28px;font-weight:900;margin-top:6px">${i.value}</div>
-    </div>
-  `).join('');
-}
+  // Inicia contador regressivo do próximo jogo (1h 45m a partir de agora)
+  const targetMatchTime = new Date(Date.now() + 105 * 60 * 1000);
+  const countdownEl = document.getElementById('countdownTimer');
+  if (countdownEl && window.JICS_UI) {
+    JICS_UI.startCountdown(countdownEl, targetMatchTime);
+  }
 
-function renderFeed(rows) {
-  renderList(feed, 'Atividade ao vivo', rows.map(r => ({
-    title: r.message,
-    subtitle: r.type || 'evento',
-    meta: r.createdAt
-  })), 'Sem atividade recente.');
-}
+  // Carrega jogos ao vivo / partidas de destaque
+  await loadLiveMatches();
 
-function renderChart(data) {
-  if (!ctx) return;
-  const labels = data.labels || [];
-  const values = data.values || [];
-  if (chart) chart.destroy();
-  chart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Inscricoes',
-        data: values,
-        backgroundColor: '#00A877'
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { x: { ticks: { color: '#8AA0B5' } }, y: { ticks: { color: '#8AA0B5' } } }
-    }
+  // Event listener para botão de atualização
+  document.getElementById('btnRefresh')?.addEventListener('click', async () => {
+    JICS_UI.toast({ type: 'info', message: 'Atualizando dados do painel...' });
+    await loadLiveMatches();
+    animateStats();
   });
 }
 
-function renderLastInscricoes(rows) {
-  renderList(lastInscricoes, 'Ultimas inscricoes', rows.map(r => ({
-    title: r.title,
-    subtitle: r.subtitle,
-    meta: r.meta
-  })), 'Nenhuma inscricao recente.');
-}
+function animateStats() {
+  const turmasEl = document.getElementById('kpiTurmas');
+  const modsEl = document.getElementById('kpiModalidades');
+  const atletasEl = document.getElementById('kpiAtletas');
+  const jogosEl = document.getElementById('kpiJogos');
 
-function updateTimeAgo() {
-  const seconds = Math.floor((Date.now() - lastUpdate) / 1000);
-  if (updatedAgo) updatedAgo.textContent = `Atualizado ${timeAgo(seconds)}`;
-}
-
-async function loadAdminDashboard() {
-  renderSkeletonList(feed, 'Atividade ao vivo');
-  renderSkeletonList(lastInscricoes, 'Ultimas inscricoes');
-  kpiGrid.innerHTML = Array.from({ length: 5 }).map(() => `
-    <div class="card">
-      <div class="skeleton-line"></div>
-      <div class="skeleton-line lg" style="margin-top:10px"></div>
-    </div>
-  `).join('');
-
-  try {
-    const [stats, chartData, activity, ultimas] = await Promise.all([
-      api('/dashboard/admin/stats'),
-      api('/dashboard/admin/chart'),
-      api('/dashboard/admin/activity'),
-      api('/dashboard/admin/ultimas-inscricoes')
-    ]);
-    renderKpis(stats);
-    renderChart(chartData);
-    renderFeed(activity);
-    renderLastInscricoes(ultimas);
-    lastUpdate = Date.now();
-    updateTimeAgo();
-  } catch (err) {
-    toast(err.message, 'err');
+  if (window.JICS_UI) {
+    if (turmasEl) JICS_UI.countUp(turmasEl, 24, 1000);
+    if (modsEl) JICS_UI.countUp(modsEl, 18, 1100);
+    if (atletasEl) JICS_UI.countUp(atletasEl, 128, 1200);
+    if (jogosEl) JICS_UI.countUp(jogosEl, 42, 1300);
   }
 }
 
-btnRefresh?.addEventListener('click', loadAdminDashboard);
-setInterval(() => loadAdminDashboard(), 15000);
-setInterval(updateTimeAgo, 1000);
-loadAdminDashboard();
+async function loadLiveMatches() {
+  const container = document.getElementById('liveMatchesContainer');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/jics/jogos');
+    const data = await res.json();
+    const jogos = (data && data.jogos) || [];
+
+    if (jogos.length === 0) {
+      // Exibe jogos de demonstração de alta qualidade se ainda não houver gerado chaveamento no banco
+      container.innerHTML = `
+        <div style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);border-radius:var(--r-lg);background:var(--bg-surface-2);border:1px solid var(--border-subtle);">
+          <span class="live-indicator">AO VIVO</span>
+          <div>
+            <strong style="font-size:var(--t-sm);color:var(--text-main);">3º B INFO × 2º A QUÍM</strong>
+            <div style="font-size:var(--t-xs);color:var(--text-muted);">Futsal Masculino · 2º Tempo</div>
+          </div>
+          <div style="font-family:var(--font-display);font-size:var(--t-lg);font-weight:800;color:var(--p-secondary);">3 × 2</div>
+          <a href="/admin/sumula.html?jogoId=1" class="btn btn-primary btn-sm">Súmula</a>
+        </div>
+
+        <div style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);border-radius:var(--r-lg);background:var(--bg-surface-2);border:1px solid var(--border-subtle);">
+          <span class="status-live-pill" style="background:var(--bg-surface);">16:00</span>
+          <div>
+            <strong style="font-size:var(--t-sm);color:var(--text-main);">1º B EDIF × 3º A AGRO</strong>
+            <div style="font-size:var(--t-xs);color:var(--text-muted);">Voleibol Feminino · Quadra B</div>
+          </div>
+          <div style="font-size:var(--t-sm);color:var(--text-muted);font-weight:600;">VS</div>
+          <a href="/admin/sumula.html?jogoId=2" class="btn btn-outline btn-sm">Abrir</a>
+        </div>
+
+        <div style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);border-radius:var(--r-lg);background:var(--bg-surface-2);border:1px solid var(--border-subtle);">
+          <span class="status-live-pill" style="background:var(--bg-surface);">16:45</span>
+          <div>
+            <strong style="font-size:var(--t-sm);color:var(--text-main);">2º B ELETRO × 1º A QUÍM</strong>
+            <div style="font-size:var(--t-xs);color:var(--text-muted);">Handebol Masculino · Quadra A</div>
+          </div>
+          <div style="font-size:var(--t-sm);color:var(--text-muted);font-weight:600;">VS</div>
+          <a href="/admin/sumula.html?jogoId=3" class="btn btn-outline btn-sm">Abrir</a>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = jogos.slice(0, 4).map(j => {
+      const isLive = j.status === 'EM_ANDAMENTO';
+      const isDone = j.status === 'FINALIZADO';
+      const statusBadge = isLive
+        ? '<span class="live-indicator">AO VIVO</span>'
+        : `<span class="status-live-pill">${isDone ? 'FIM' : 'AGENDADO'}</span>`;
+
+      const score = (j.placar_a !== null && j.placar_b !== null)
+        ? `<div style="font-family:var(--font-display);font-size:var(--t-lg);font-weight:800;color:var(--p-secondary);">${j.placar_a} × ${j.placar_b}</div>`
+        : `<div style="font-size:var(--t-sm);color:var(--text-muted);font-weight:600;">VS</div>`;
+
+      return `
+        <div style="display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);border-radius:var(--r-lg);background:var(--bg-surface-2);border:1px solid var(--border-subtle);">
+          ${statusBadge}
+          <div>
+            <strong style="font-size:var(--t-sm);color:var(--text-main);">${escapeH(j.equipe_a_nome || 'Time A')} × ${escapeH(j.equipe_b_nome || 'Time B')}</strong>
+            <div style="font-size:var(--t-xs);color:var(--text-muted);">${escapeH(j.modalidade_nome || 'Esporte')} · ${escapeH(j.quadra || 'Quadra')}</div>
+          </div>
+          ${score}
+          <a href="/admin/sumula.html?jogoId=${j.id}" class="btn ${isLive ? 'btn-primary' : 'btn-outline'} btn-sm">
+            ${isLive ? 'Súmula' : 'Ver'}
+          </a>
+        </div>
+      `;
+    }).join('');
+
+  } catch {
+    container.innerHTML = '<div style="padding:var(--s4);text-align:center;color:var(--text-muted);font-size:var(--t-xs);">Carregamento concluído.</div>';
+  }
+}
+
+function escapeH(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}

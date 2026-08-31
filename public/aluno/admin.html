@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>403 - Acesso Negado · JICS IFRO</title>
+    <link rel="icon" type="image/png" href="/assets/ifro.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300,0,0" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0c1a16;
+            color: #dff0e8;
+            padding: 20px;
+        }
+        
+        .container {
+            text-align: center;
+            backdrop-filter: blur(16px);
+            background: rgba(21, 40, 32, 0.85);
+            border: 1px solid rgba(42, 185, 138, 0.2);
+            padding: 48px 36px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            max-width: 480px;
+            width: 100%;
+            animation: fadeIn 0.4s ease;
+        }
+        
+        .icon-wrap {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: rgba(240, 112, 112, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f07070;
+        }
+        
+        .icon-wrap .material-symbols-outlined {
+            font-size: 44px;
+        }
+        
+        .code {
+            font-size: 64px;
+            font-weight: 800;
+            letter-spacing: -2px;
+            color: #f07070;
+            line-height: 1;
+        }
+        
+        .title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 12px;
+            color: #ffffff;
+        }
+        
+        .desc {
+            margin-top: 12px;
+            color: #a8c8b8;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: #2dd48a;
+            color: #0c1a16;
+        }
+        
+        .btn-primary:hover {
+            background: #24b072;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #dff0e8;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="icon-wrap">
+            <span class="material-symbols-outlined">lock</span>
+        </div>
+        <div class="code">403</div>
+        <div class="title">Área Restrita</div>
+        <div class="desc">
+            Você não possui permissão para acessar o painel administrativo com seu perfil de aluno.
+        </div>
+        <div class="actions">
+            <a href="/aluno/dashboard.html" class="btn btn-primary">
+                <span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Voltar ao Painel
+            </a>
+            <a href="/admin/dashboard.html" class="btn btn-outline">
+                <span class="material-symbols-outlined" style="font-size:18px">login</span> Entrar como Admin
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

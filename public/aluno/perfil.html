@@ -1,0 +1,390 @@
+﻿<!DOCTYPE html><html lang="pt-BR" data-theme="dark"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Meu Perfil - JICS IFRO</title><meta name="description" content="Perfil do Atleta JICS"/><link rel="icon" type="image/png" href="/assets/ifro.png"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link rel="stylesheet" href="/aluno/shell.css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script><script src="/js/jics-ui.js" defer></script><script src="/js/jsdosistema.js" defer></script><style>.profile-tabs{display:flex;gap:4px;background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-xl);padding:4px;overflow-x:auto;scrollbar-width:none}
+.profile-tabs::-webkit-scrollbar{display:none}
+.tab-btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-lg);font-size:var(--t-sm);font-weight:600;color:var(--text-secondary);background:none;border:none;cursor:pointer;white-space:nowrap;transition:all var(--duration-fast) var(--ease-smooth)}
+.tab-btn .material-symbols-outlined{font-size:18px}
+.tab-btn.active{color:#fff;background:linear-gradient(135deg,#0A5D54,#00A877);box-shadow:0 2px 12px rgba(0,168,119,.35)}
+.tab-btn:not(.active):hover{color:var(--text-main);background:var(--bg-surface-2)}
+.tab-panel{display:none;animation:jicsFadeIn 220ms var(--ease-smooth) forwards}
+.tab-panel.active{display:flex;flex-direction:column;gap:var(--s5)}
+.profile-hero-card{position:relative;overflow:hidden;background:linear-gradient(135deg,#062E27 0%,#0A5D54 55%,#00A877 100%);border-radius:var(--r-2xl);padding:var(--s7) var(--s6);display:flex;align-items:center;gap:var(--s6);flex-wrap:wrap}
+.profile-hero-card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(77,201,140,.08),transparent 60%);pointer-events:none}
+.profile-avatar-wrap{position:relative;flex-shrink:0}
+.profile-avatar-xl{width:100px;height:100px;border-radius:var(--r-xl);border:3px solid rgba(255,255,255,.5);object-fit:cover;background:rgba(255,255,255,.1);box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.avatar-edit-btn{position:absolute;bottom:-4px;right:-4px;width:32px;height:32px;border-radius:var(--r-full);background:#0A5D54;border:2px solid var(--bg-surface);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform var(--duration-fast)}
+.avatar-edit-btn:hover{transform:scale(1.1)}
+.avatar-edit-btn .material-symbols-outlined{font-size:16px;color:#fff}
+.profile-hero-info{flex:1;min-width:0;color:#fff}
+.profile-hero-name{font-family:var(--font-display);font-size:var(--t-3xl);font-weight:800;letter-spacing:-0.02em;line-height:1.1}
+.profile-hero-meta{display:flex;flex-wrap:wrap;gap:var(--s3);margin-top:var(--s3);font-size:var(--t-sm);color:rgba(255,255,255,.75)}
+.profile-hero-meta span{display:flex;align-items:center;gap:4px}
+.hero-badges{display:flex;gap:var(--s2);margin-top:var(--s4);flex-wrap:wrap}
+.hero-badge{padding:4px 14px;border-radius:var(--r-full);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.hero-badge.athlete{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.hero-badge.enrolled{background:rgba(77,201,140,.25);color:#4DC98C;border:1px solid rgba(77,201,140,.4)}
+@media(max-width:640px){.profile-hero-card{flex-direction:column;text-align:center}.profile-hero-meta{justify-content:center}.hero-badges{justify-content:center}}
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3)}
+@media(max-width:640px){.stats-bar{grid-template-columns:repeat(2,1fr)}}
+.stat-mini{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-lg);padding:var(--s4);text-align:center;transition:transform var(--duration-fast)}
+.stat-mini:hover{transform:translateY(-2px)}
+.stat-mini__val{font-family:var(--font-display);font-size:var(--t-3xl);font-weight:800;color:var(--p-secondary);line-height:1}
+.stat-mini__label{font-size:var(--t-xs);color:var(--text-muted);margin-top:4px}
+.data-card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-xl);overflow:hidden}
+.data-card__head{display:flex;align-items:center;justify-content:space-between;padding:var(--s4) var(--s5);border-bottom:1px solid var(--border-subtle)}
+.data-card__title{display:flex;align-items:center;gap:var(--s3);font-family:var(--font-display);font-size:var(--t-base);font-weight:700;color:var(--text-main)}
+.data-card__title .material-symbols-outlined{font-size:20px;color:var(--p-secondary)}
+.data-card__body{padding:var(--s5)}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+@media(max-width:640px){.field-grid{grid-template-columns:1fr}}
+.field-grid.three-col{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:768px){.field-grid.three-col{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.field-grid.three-col{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:var(--t-xs);font-weight:700;color:var(--text-muted);letter-spacing:.04em;text-transform:uppercase}
+.field .field-val{padding:10px 14px;border-radius:var(--r-md);font-size:var(--t-sm);font-weight:500;color:var(--text-main);background:var(--bg-page);border:1px solid var(--border-subtle)}
+.field .field-val.locked{color:var(--text-muted);cursor:not-allowed;opacity:.75}
+.field input.field-val,.field select.field-val{cursor:text;transition:border-color var(--duration-fast),box-shadow var(--duration-fast)}
+.field input.field-val:focus,.field select.field-val:focus{outline:none;border-color:var(--p-secondary);box-shadow:0 0 0 3px var(--p-ring)}
+.lock-icon{font-size:13px;color:var(--text-muted)}
+.sport-entry{display:flex;align-items:flex-start;gap:var(--s4);padding:var(--s4);border-radius:var(--r-lg);background:var(--bg-page);border:1px solid var(--border-subtle)}
+.sport-icon-wrap{width:44px;height:44px;border-radius:var(--r-md);background:var(--p-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sport-icon-wrap .material-symbols-outlined{font-size:24px;color:var(--p-secondary)}
+.sport-info{flex:1}.sport-info h4{font-size:var(--t-sm);font-weight:700;color:var(--text-main);margin:0 0 2px}
+.sport-detail{font-size:var(--t-xs);color:var(--text-secondary)}
+.sport-stats{display:flex;gap:var(--s4);margin-top:var(--s3);flex-wrap:wrap}
+.sport-stat{text-align:center}
+.sport-stat__val{font-family:var(--font-display);font-size:var(--t-xl);font-weight:800;color:var(--p-secondary)}
+.sport-stat__label{font-size:10px;color:var(--text-muted)}
+.next-match{padding:var(--s4);border-radius:var(--r-lg);background:var(--bg-page);border:1px solid var(--border-subtle);display:flex;align-items:center;gap:var(--s4);flex-wrap:wrap}
+.next-match-date{font-size:var(--t-xs);font-weight:700;color:var(--p-secondary);text-transform:uppercase;letter-spacing:.05em}
+.next-match-teams{flex:1;display:flex;align-items:center;gap:var(--s3);font-family:var(--font-display);font-weight:700;font-size:var(--t-base);color:var(--text-main)}
+.next-match-vs{font-size:var(--t-xs);color:var(--text-muted);font-weight:500}
+.jics-card{max-width:340px;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#0A5D54 0%,#0A3D35 50%,#061411 100%);box-shadow:0 12px 40px rgba(0,0,0,.45);position:relative}
+.jics-card-header{padding:20px 20px 0;display:flex;align-items:center;gap:12px}
+.jics-card-logo{height:30px;object-fit:contain;filter:brightness(0) invert(1);opacity:.9}
+.jics-card-brand{font-family:var(--font-display);font-size:12px;font-weight:800;color:#fff;letter-spacing:.03em}
+.jics-card-body{padding:20px;display:flex;gap:16px;align-items:flex-start}
+.jics-card-photo{width:72px;height:90px;border-radius:10px;object-fit:cover;border:2px solid rgba(255,255,255,.25);flex-shrink:0}
+.jics-card-info{flex:1}
+.jics-card-name{font-family:var(--font-display);font-size:15px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:6px}
+.jics-card-row{font-size:11px;color:rgba(255,255,255,.7);margin-bottom:3px}
+.jics-card-status{margin-top:8px;display:inline-block;background:rgba(77,201,140,.2);border:1px solid rgba(77,201,140,.4);color:#4DC98C;font-size:10px;font-weight:800;letter-spacing:.07em;padding:3px 10px;border-radius:999px;text-transform:uppercase}
+.jics-card-footer{padding:0 20px 20px;display:flex;align-items:flex-end;justify-content:space-between}
+.jics-card-matric{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:.05em}
+.security-row{display:flex;align-items:center;justify-content:space-between;padding:var(--s4);border-bottom:1px solid var(--border-subtle);gap:var(--s4);flex-wrap:wrap}
+.security-row:last-child{border-bottom:none}
+.security-row__left{display:flex;align-items:center;gap:var(--s3)}
+.security-row__icon{width:36px;height:36px;border-radius:var(--r-md);background:var(--bg-page);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.security-row__icon .material-symbols-outlined{font-size:18px;color:var(--text-secondary)}
+.security-row__title{font-size:var(--t-sm);font-weight:600;color:var(--text-main)}
+.security-row__sub{font-size:var(--t-xs);color:var(--text-muted);margin-top:2px}
+.save-bar{position:sticky;bottom:80px;z-index:20;display:none}
+.save-bar.is-visible{display:block;animation:jicsFadeIn 200ms ease}
+.save-bar-inner{background:var(--bg-surface);border:1px solid var(--p-border);border-radius:var(--r-xl);padding:var(--s4) var(--s5);display:flex;align-items:center;justify-content:space-between;gap:var(--s4);box-shadow:var(--sh-xl);flex-wrap:wrap}
+.pwd-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center}
+.pwd-modal-backdrop.is-open{display:flex}
+.pwd-modal{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:var(--r-2xl);padding:var(--s7) var(--s6);width:90%;max-width:420px;display:flex;flex-direction:column;gap:var(--s5)}
+.pwd-modal h2{font-family:var(--font-display);font-size:var(--t-xl);font-weight:800}
+@media(max-width:640px){.jics-card{max-width:100%}.jics-card-body{flex-direction:column;align-items:center;text-align:center}}
+@media(max-width:1024px){.page{padding-bottom:90px}}</style></head><body class="aluno-app" data-page="perfil">
+<div id="appShell">
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button type="button" class="btn-icon nav-hamburger" onclick="toggleSideNav()" aria-label="Menu"><span class="material-symbols-outlined">menu</span></button>
+      <a href="/aluno/dashboard.html" class="navbar-brand"><img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS IFRO</a>
+    </div>
+    <div class="navbar-center navbar-links">
+      <a href="/aluno/dashboard.html" class="nav-link">Inicio</a>
+      <a href="/aluno/modalidades.html" class="nav-link">Modalidades</a>
+      <a href="/aluno/inscricoes.html" class="nav-link">Inscricoes</a>
+      <a href="/aluno/horarios.html" class="nav-link">Horarios</a>
+      <a href="/aluno/resultados.html" class="nav-link">Resultados</a>
+      <a href="/aluno/perfil.html" class="nav-link active">Meu Perfil</a>
+    </div>
+    <div class="navbar-right">
+      <button type="button" class="btn-icon theme-toggle-btn" onclick="JICS_UI.toggleTheme()" aria-label="Tema"><span class="material-symbols-outlined">light_mode</span></button>
+      <button type="button" class="btn-icon" aria-label="Notificacoes"><span class="material-symbols-outlined">notifications</span></button>
+    </div>
+  </nav>
+  <div class="app-body">
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header"><span class="side-header-title">Menu do Participante</span></div>
+      <a class="side-link" href="/aluno/dashboard.html"><span class="material-symbols-outlined">dashboard</span> Inicio</a>
+      <a class="side-link" href="/aluno/modalidades.html"><span class="material-symbols-outlined">sports_basketball</span> Modalidades</a>
+      <a class="side-link" href="/aluno/inscricoes.html"><span class="material-symbols-outlined">how_to_reg</span> Minhas Inscricoes</a>
+      <a class="side-link" href="/aluno/horarios.html"><span class="material-symbols-outlined">schedule</span> Cronograma</a>
+      <a class="side-link" href="/aluno/resultados.html"><span class="material-symbols-outlined">emoji_events</span> Resultados</a>
+      <a class="side-link active" href="/aluno/perfil.html"><span class="material-symbols-outlined">person</span> Meu Perfil</a>
+    </aside>
+    <main class="page" id="profilePage">
+      <!-- HERO -->
+      <section class="profile-hero-card" aria-label="Visao geral">
+        <div class="profile-avatar-wrap">
+          <img id="avatarHero" src="/assets/avatar-default.png" alt="Foto" class="profile-avatar-xl"/>
+          <button class="avatar-edit-btn" onclick="triggerAvatarUpload()" title="Alterar foto"><span class="material-symbols-outlined">photo_camera</span></button>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="uploadAvatar(this)"/>
+        </div>
+        <div class="profile-hero-info">
+          <div class="profile-hero-name" id="heroName">Carregando...</div>
+          <div id="heroSocialName" style="font-size:var(--t-sm);color:rgba(255,255,255,.65);margin-top:2px;display:none"></div>
+          <div class="profile-hero-meta">
+            <span><span class="material-symbols-outlined" style="font-size:15px">school</span> <span id="heroCourse">-</span></span>
+            <span><span class="material-symbols-outlined" style="font-size:15px">group</span> <span id="heroTurma">-</span></span>
+            <span><span class="material-symbols-outlined" style="font-size:15px">badge</span> Mat: <span id="heroMatric">-</span></span>
+          </div>
+          <div class="hero-badges">
+            <span class="hero-badge athlete">&#x1F3C5; Atleta</span>
+            <span class="hero-badge enrolled" id="heroBadgeModal">2 Modalidades</span>
+          </div>
+        </div>
+      </section>
+      <!-- STATS -->
+      <div class="stats-bar">
+        <div class="stat-mini"><div class="stat-mini__val" id="statJogos">0</div><div class="stat-mini__label">Jogos</div></div>
+        <div class="stat-mini"><div class="stat-mini__val" id="statVitorias" style="color:var(--color-success)">0</div><div class="stat-mini__label">Vitorias</div></div>
+        <div class="stat-mini"><div class="stat-mini__val" id="statPontos" style="color:var(--color-gold)">0</div><div class="stat-mini__label">Pontos</div></div>
+        <div class="stat-mini"><div class="stat-mini__val" id="statCartoes" style="color:var(--color-error)">0</div><div class="stat-mini__label">Cartoes</div></div>
+      </div>
+      <!-- TABS -->
+      <nav class="profile-tabs" role="tablist">
+        <button class="tab-btn active" onclick="switchTab('pessoal',this)" id="btn-pessoal"><span class="material-symbols-outlined">person</span> Dados Pessoais</button>
+        <button class="tab-btn" onclick="switchTab('esportivo',this)" id="btn-esportivo"><span class="material-symbols-outlined">sports</span> Esportivo</button>
+        <button class="tab-btn" onclick="switchTab('jics',this)" id="btn-jics"><span class="material-symbols-outlined">emoji_events</span> Participacao</button>
+        <button class="tab-btn" onclick="switchTab('carteirinha',this)" id="btn-carteirinha"><span class="material-symbols-outlined">id_card</span> Carteirinha</button>
+        <button class="tab-btn" onclick="switchTab('seguranca',this)" id="btn-seguranca"><span class="material-symbols-outlined">shield</span> Seguranca</button>
+      </nav>
+      <!-- ABA PESSOAL -->
+      <section id="tab-pessoal" class="tab-panel active">
+        <div class="data-card">
+          <div class="data-card__head"><div class="data-card__title"><span class="material-symbols-outlined">person_pin</span> Informacoes Pessoais</div></div>
+          <div class="data-card__body">
+            <div class="field-grid">
+              <div class="field"><label>Nome Completo &#x1F512;</label><div class="field-val locked" id="f-nome">-</div></div>
+              <div class="field"><label>Nome Social</label><input type="text" class="field-val" id="f-nomeSocial" placeholder="Como prefere ser chamado(a)" oninput="markDirty()"/></div>
+              <div class="field"><label>Data de Nascimento &#x1F512;</label><div class="field-val locked" id="f-nascimento">-</div></div>
+              <div class="field"><label>Idade</label><div class="field-val locked" id="f-idade" style="color:var(--p-secondary);font-weight:700">-</div></div>
+              <div class="field"><label>Sexo/Categoria &#x1F512;</label><div class="field-val locked" id="f-sexo">-</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-card__head"><div class="data-card__title"><span class="material-symbols-outlined">school</span> Dados Academicos</div></div>
+          <div class="data-card__body">
+            <div class="field-grid three-col">
+              <div class="field"><label>Matricula &#x1F512;</label><div class="field-val locked" id="f-matricula">-</div></div>
+              <div class="field"><label>Curso &#x1F512;</label><div class="field-val locked" id="f-curso">-</div></div>
+              <div class="field"><label>Serie &#x1F512;</label><div class="field-val locked" id="f-serie">-</div></div>
+              <div class="field"><label>Turma &#x1F512;</label><div class="field-val locked" id="f-turma">-</div></div>
+              <div class="field"><label>ID JICS &#x1F512;</label><div class="field-val locked" id="f-id">-</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="data-card">
+          <div class="data-card__head"><div class="data-card__title"><span class="material-symbols-outlined">contact_mail</span> Contato</div></div>
+          <div class="data-card__body">
+            <div class="field-grid">
+              <div class="field"><label>E-mail Institucional &#x1F512;</label><div class="field-val locked" id="f-emailInst">-</div></div>
+              <div class="field"><label>E-mail Pessoal</label><input type="email" class="field-val" id="f-emailPes" placeholder="seu@email.com" oninput="markDirty()"/></div>
+              <div class="field"><label>Telefone</label><input type="tel" class="field-val" id="f-telefone" placeholder="(69) 99999-9999" oninput="markDirty()"/></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- ABA ESPORTIVO -->
+      <section id="tab-esportivo" class="tab-panel">
+        <div class="data-card">
+          <div class="data-card__head">
+            <div class="data-card__title"><span class="material-symbols-outlined">sports</span> Modalidades Inscritas</div>
+            <span id="countModal" class="status-live-pill">0</span>
+          </div>
+          <div class="data-card__body" id="sportsList" style="display:flex;flex-direction:column;gap:var(--s3)">
+            <div style="padding:var(--s6);text-align:center;color:var(--text-muted)"><span class="material-symbols-outlined" style="font-size:40px;display:block;margin-bottom:var(--s3)">sports_score</span>Nenhuma inscricao ativa.</div>
+          </div>
+        </div>
+      </section>
+      <!-- ABA PARTICIPACAO -->
+      <section id="tab-jics" class="tab-panel">
+        <div class="data-card">
+          <div class="data-card__head"><div class="data-card__title"><span class="material-symbols-outlined">event</span> Proximo Jogo</div></div>
+          <div class="data-card__body" id="nextMatchArea"><div style="color:var(--text-muted);font-size:var(--t-sm)">Nenhum jogo agendado.</div></div>
+        </div>
+        <div id="jicsHistList"></div>
+      </section>
+      <!-- ABA CARTEIRINHA -->
+      <section id="tab-carteirinha" class="tab-panel">
+        <div style="display:flex;gap:var(--s6);flex-wrap:wrap;align-items:flex-start">
+          <div class="jics-card" id="jicsCardEl">
+            <div class="jics-card-header">
+              <img src="/assets/ifro.png" alt="IFRO" class="jics-card-logo"/>
+              <div class="jics-card-brand">JICS - Jogos Internos 2026</div>
+            </div>
+            <div class="jics-card-body">
+              <img id="cardPhoto" src="/assets/avatar-default.png" alt="Atleta" class="jics-card-photo"/>
+              <div class="jics-card-info">
+                <div class="jics-card-name" id="cardName">-</div>
+                <div class="jics-card-row">Matr: <span id="cardMatric">-</span></div>
+                <div class="jics-card-row" id="cardCourse">-</div>
+                <div class="jics-card-row" id="cardTurmaC">-</div>
+                <div class="jics-card-status">ATLETA INSCRITO</div>
+              </div>
+            </div>
+            <div class="jics-card-footer">
+              <div class="jics-card-matric" id="cardFooterText">JICS / IFRO 2026</div>
+              <div id="qrcode-canvas"></div>
+            </div>
+          </div>
+          <div style="flex:1;min-width:240px">
+            <div class="data-card">
+              <div class="data-card__head"><div class="data-card__title"><span class="material-symbols-outlined">qr_code_2</span> Como usar</div></div>
+              <div class="data-card__body" style="display:flex;flex-direction:column;gap:var(--s4)">
+                <p class="p-body">Apresente sua <strong>Carteirinha JICS</strong> ao responsavel do evento. O QR Code permite verificacao rapida dos dados do atleta sem expor dados sensiveis.</p>
+                <ul style="display:flex;flex-direction:column;gap:var(--s3);list-style:none;padding:0">
+                  <li style="display:flex;gap:var(--s3);align-items:flex-start"><span class="material-symbols-outlined text-primary" style="flex-shrink:0;font-size:18px;margin-top:2px">check_circle</span><span style="font-size:var(--t-sm);color:var(--text-secondary)">Valida para o JICS 2026 enquanto o atleta estiver inscrito.</span></li>
+                  <li style="display:flex;gap:var(--s3);align-items:flex-start"><span class="material-symbols-outlined text-primary" style="flex-shrink:0;font-size:18px;margin-top:2px">check_circle</span><span style="font-size:var(--t-sm);color:var(--text-secondary)">O QR Code exibe apenas dados de identificacao.</span></li>
+                  <li style="display:flex;gap:var(--s3);align-items:flex-start"><span class="material-symbols-outlined text-primary" style="flex-shrink:0;font-size:18px;margin-top:2px">check_circle</span><span style="font-size:var(--t-sm);color:var(--text-secondary)">Adicione o JICS a tela inicial do celular (PWA) para acesso rapido.</span></li>
+                </ul>
+                <button class="btn btn-outline" onclick="printCard()" style="align-self:flex-start"><span class="material-symbols-outlined">print</span> Imprimir / PDF</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- ABA SEGURANCA -->
+      <section id="tab-seguranca" class="tab-panel">
+        <div class="data-card">
+          <div class="data-card__head"><div class="data-card__title"><span class="material-symbols-outlined">shield</span> Seguranca da Conta</div></div>
+          <div>
+            <div class="security-row">
+              <div class="security-row__left">
+                <div class="security-row__icon"><span class="material-symbols-outlined">email</span></div>
+                <div><div class="security-row__title">E-mail da conta</div><div class="security-row__sub" id="sec-email">-</div></div>
+              </div>
+            </div>
+            <div class="security-row">
+              <div class="security-row__left">
+                <div class="security-row__icon"><span class="material-symbols-outlined">lock</span></div>
+                <div><div class="security-row__title">Senha</div><div class="security-row__sub">Ultima alteracao: nao registrada</div></div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="openPwdModal()"><span class="material-symbols-outlined">edit</span> Alterar Senha</button>
+            </div>
+            <div class="security-row">
+              <div class="security-row__left">
+                <div class="security-row__icon"><span class="material-symbols-outlined">history</span></div>
+                <div><div class="security-row__title">Ultimo acesso</div><div class="security-row__sub" id="sec-last">-</div></div>
+              </div>
+            </div>
+            <div class="security-row">
+              <div class="security-row__left">
+                <div class="security-row__icon"><span class="material-symbols-outlined">devices</span></div>
+                <div><div class="security-row__title">Dispositivos conectados</div><div class="security-row__sub">Este dispositivo (sessao atual)</div></div>
+              </div>
+            </div>
+            <div class="security-row">
+              <div class="security-row__left">
+                <div class="security-row__icon" style="background:rgba(239,68,68,.1)"><span class="material-symbols-outlined" style="color:var(--color-error)">logout</span></div>
+                <div><div class="security-row__title" style="color:var(--color-error)">Sair da conta</div><div class="security-row__sub">Encerrar esta sessao</div></div>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="confirmLogout()"><span class="material-symbols-outlined">logout</span> Sair</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- SAVE BAR -->
+      <div class="save-bar" id="saveBar">
+        <div class="save-bar-inner">
+          <span style="font-size:var(--t-sm);font-weight:600;color:var(--text-main)">&#x270F; Alteracoes nao salvas</span>
+          <div style="display:flex;gap:var(--s3)">
+            <button class="btn btn-outline btn-sm" onclick="discardChanges()">Descartar</button>
+            <button class="btn btn-primary" id="saveBtnMain" onclick="saveProfile()"><span class="material-symbols-outlined">save</span> Salvar</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <nav class="bottom-nav">
+    <a href="/aluno/dashboard.html" class="bottom-nav-link"><span class="material-symbols-outlined">dashboard</span><span>Inicio</span></a>
+    <a href="/aluno/modalidades.html" class="bottom-nav-link"><span class="material-symbols-outlined">sports_basketball</span><span>Modalidades</span></a>
+    <a href="/aluno/horarios.html" class="bottom-nav-link"><span class="material-symbols-outlined">schedule</span><span>Jogos</span></a>
+    <a href="/aluno/resultados.html" class="bottom-nav-link"><span class="material-symbols-outlined">emoji_events</span><span>Ranking</span></a>
+    <a href="/aluno/perfil.html" class="bottom-nav-link active"><span class="material-symbols-outlined">person</span><span>Perfil</span></a>
+  </nav>
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+</div>
+<!-- MODAL SENHA -->
+<div class="pwd-modal-backdrop" id="pwdModalBackdrop" onclick="closePwdModal()">
+  <div class="pwd-modal" onclick="event.stopPropagation()">
+    <h2>Alterar Senha</h2>
+    <div class="field"><label>Senha Atual</label><input type="password" class="field-val" id="pwdOld" placeholder="Senha atual"/></div>
+    <div class="field"><label>Nova Senha</label><input type="password" class="field-val" id="pwdNew" placeholder="Minimo 8 caracteres"/></div>
+    <div class="field"><label>Confirmar Nova Senha</label><input type="password" class="field-val" id="pwdConf" placeholder="Repita a nova senha"/></div>
+    <div style="display:flex;gap:var(--s3);justify-content:flex-end">
+      <button class="btn btn-outline" onclick="closePwdModal()">Cancelar</button>
+      <button class="btn btn-primary" id="pwdSaveBtn" onclick="changePassword()"><span class="material-symbols-outlined">lock</span> Salvar</button>
+    </div>
+  </div>
+</div>
+<script>
+var ATLETA={id:'JICS2026-0042',nome:'Tarso Rondon',nomeSocial:'',nascimento:'2008-04-15',sexo:'Masculino',matricula:'2024101042',curso:'Informatica Integrado',serie:'2o Ano',turma:'2o B',emailInst:'tarso.rondon@estudante.ifro.edu.br',emailPes:'',telefone:'',avatar:'/assets/avatar-default.png',inscricoes:[{modalidade:'Basquete Masculino',icone:'sports_basketball',equipe:'2o B - Informatica',numero:10,posicao:'Ala',chave:'Chave A',jogos:3,vitorias:2,derrotas:1,pontos:24,gols:null,cartoes:0},{modalidade:'Futsal Masculino',icone:'sports_soccer',equipe:'2o B - Informatica',numero:7,posicao:'Ala',chave:'Chave B',jogos:2,vitorias:1,derrotas:1,pontos:null,gols:3,cartoes:1}],proximoJogo:{modalidade:'Basquete Masculino',adversario:'3o B - Eletrotecnica',data:'2026-09-02',hora:'15:20',local:'Quadra A'},ultimoAcesso:'31/08/2026 as 01:10'};
+var totalJogos=ATLETA.inscricoes.reduce(function(a,i){return a+i.jogos;},0);
+var totalVitorias=ATLETA.inscricoes.reduce(function(a,i){return a+i.vitorias;},0);
+var totalPontos=ATLETA.inscricoes.reduce(function(a,i){return a+(i.pontos||0)+(i.gols||0);},0);
+var totalCartoes=ATLETA.inscricoes.reduce(function(a,i){return a+i.cartoes;},0);
+function switchTab(t,b){document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+t).classList.add('active');b.classList.add('active');}
+function calcAge(s){if(!s)return'-';var n=new Date(s),h=new Date(),a=h.getFullYear()-n.getFullYear();if(h.getMonth()<n.getMonth()||(h.getMonth()===n.getMonth()&&h.getDate()<n.getDate()))a--;return a;}
+function fmt(s){if(!s)return'-';var p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function set(id,val){var e=document.getElementById(id);if(e)e.textContent=val;}
+function cu(id,v,d){var e=document.getElementById(id);if(!e)return;var s=0,t=Date.now(),fn=function(){var p=(Date.now()-t)/d;if(p>=1){e.textContent=v;return;}e.textContent=Math.round(v*p);requestAnimationFrame(fn);};requestAnimationFrame(fn);}
+function buildStat(v,l,c){return '<div class="sport-stat"><div class="sport-stat__val"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div><div class="sport-stat__label">'+l+'</div></div>';}
+function populatePage(){
+  var a=ATLETA;
+  set('heroName',a.nome);set('heroCourse',a.curso);set('heroTurma',a.turma);set('heroMatric',a.matricula);
+  document.getElementById('avatarHero').src=a.avatar;
+  set('heroBadgeModal',a.inscricoes.length+' Modalidade'+(a.inscricoes.length!==1?'s':''));
+  if(a.nomeSocial){var el=document.getElementById('heroSocialName');el.textContent='"'+a.nomeSocial+'"';el.style.display='block';}
+  cu('statJogos',totalJogos,600);cu('statVitorias',totalVitorias,600);cu('statPontos',totalPontos,900);cu('statCartoes',totalCartoes,400);
+  set('f-nome',a.nome);document.getElementById('f-nomeSocial').value=a.nomeSocial||'';
+  set('f-nascimento',fmt(a.nascimento));set('f-idade',calcAge(a.nascimento)+' anos');set('f-sexo',a.sexo);
+  set('f-matricula',a.matricula);set('f-curso',a.curso);set('f-serie',a.serie);set('f-turma',a.turma);set('f-id',a.id);
+  set('f-emailInst',a.emailInst);document.getElementById('f-emailPes').value=a.emailPes||'';document.getElementById('f-telefone').value=a.telefone||'';
+  set('sec-email',a.emailInst);set('sec-last',a.ultimoAcesso);
+  var sl=document.getElementById('sportsList');
+  if(a.inscricoes.length>0){
+    sl.innerHTML='';set('countModal',a.inscricoes.length+' ativa'+(a.inscricoes.length>1?'s':''));
+    a.inscricoes.forEach(function(i){
+      var sp='';
+      if(i.pontos!==null)sp+=buildStat(i.pontos,'Pontos','');
+      if(i.gols!==null)sp+=buildStat(i.gols,'Gols','');
+      sp+=buildStat(i.jogos,'Jogos','');sp+=buildStat(i.vitorias,'Vitorias','var(--color-success)');
+      if(i.cartoes>0)sp+=buildStat(i.cartoes,'Cartoes','var(--color-error)');
+      sl.insertAdjacentHTML('beforeend','<div class="sport-entry"><div class="sport-icon-wrap"><span class="material-symbols-outlined">'+i.icone+'</span></div><div class="sport-info"><h4>'+i.modalidade+' <span class="status-live-pill" style="font-size:10px">'+i.chave+'</span></h4><div class="sport-detail">Equipe: '+i.equipe+' &nbsp;&middot;&nbsp; Camisa #'+i.numero+' &nbsp;&middot;&nbsp; '+i.posicao+'</div><div class="sport-stats">'+sp+'</div></div></div>');
+    });
+  }
+  var hist=document.getElementById('jicsHistList');hist.innerHTML='';
+  a.inscricoes.forEach(function(i){
+    var sp2=buildStat(i.jogos,'Jogos','')+buildStat(i.vitorias,'Vitorias','var(--color-success)')+buildStat(i.derrotas,'Derrotas','var(--color-error)');
+    if(i.pontos!==null)sp2=buildStat(i.pontos,'Pontos','')+sp2;
+    if(i.gols!==null)sp2=buildStat(i.gols,'Gols','')+sp2;
+    hist.insertAdjacentHTML('beforeend','<div class="data-card" style="margin-bottom:var(--s4)"><div class="data-card__head"><div class="data-card__title"><span class="material-symbols-outlined">'+i.icone+'</span> '+i.modalidade+'</div></div><div class="data-card__body"><p class="p-body" style="margin-bottom:var(--s3)">'+i.equipe+' &middot; Camisa #'+i.numero+'</p><div class="sport-stats">'+sp2+'</div></div></div>');
+  });
+  var pj=a.proximoJogo;
+  if(pj){document.getElementById('nextMatchArea').innerHTML='<div class="next-match"><div><div class="next-match-date">'+fmt(pj.data)+' &middot; '+pj.hora+'</div><div style="font-size:var(--t-xs);color:var(--text-muted);margin-top:2px">'+pj.modalidade+' &middot; '+pj.local+'</div></div><div class="next-match-teams"><span>'+a.turma+'</span><span class="next-match-vs">x</span><span>'+pj.adversario+'</span></div></div>';}
+  set('cardName',a.nome);set('cardMatric',a.matricula);set('cardCourse',a.curso);set('cardTurmaC',a.serie+' - '+a.turma);set('cardFooterText','Matr. '+a.matricula);
+  document.getElementById('cardPhoto').src=a.avatar;
+  setTimeout(function(){var q=document.getElementById('qrcode-canvas');if(q&&window.QRCode){q.innerHTML='';try{new QRCode(q,{text:window.location.origin+'/atleta?id='+encodeURIComponent(a.id),width:60,height:60,colorDark:'#0A5D54',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});}catch(e){}}},600);
+}
+var _dirty=false;
+function markDirty(){if(!_dirty){_dirty=true;document.getElementById('saveBar').classList.add('is-visible');}}
+function discardChanges(){_dirty=false;document.getElementById('saveBar').classList.remove('is-visible');document.getElementById('f-nomeSocial').value=ATLETA.nomeSocial||'';document.getElementById('f-emailPes').value=ATLETA.emailPes||'';document.getElementById('f-telefone').value=ATLETA.telefone||'';if(window.JICS_UI&&JICS_UI.toast)JICS_UI.toast('Alteracoes descartadas.','info');}
+function saveProfile(){if(window.JICS_UI&&JICS_UI.setButtonLoading)JICS_UI.setButtonLoading('saveBtnMain',true);setTimeout(function(){ATLETA.nomeSocial=document.getElementById('f-nomeSocial').value;ATLETA.emailPes=document.getElementById('f-emailPes').value;ATLETA.telefone=document.getElementById('f-telefone').value;_dirty=false;document.getElementById('saveBar').classList.remove('is-visible');if(window.JICS_UI){if(JICS_UI.setButtonLoading)JICS_UI.setButtonLoading('saveBtnMain',false);if(JICS_UI.toast)JICS_UI.toast('Perfil atualizado!','success');}},1200);}
+function triggerAvatarUpload(){document.getElementById('avatarInput').click();}
+function uploadAvatar(input){if(!input.files||!input.files.length)return;var r=new FileReader();r.onload=function(e){document.getElementById('avatarHero').src=e.target.result;document.getElementById('cardPhoto').src=e.target.result;if(window.JICS_UI&&JICS_UI.toast)JICS_UI.toast('Foto atualizada!','success');};r.readAsDataURL(input.files[0]);}
+function openPwdModal(){document.getElementById('pwdModalBackdrop').classList.add('is-open');}
+function closePwdModal(){document.getElementById('pwdModalBackdrop').classList.remove('is-open');}
+function changePassword(){var o=document.getElementById('pwdOld').value,n=document.getElementById('pwdNew').value,c=document.getElementById('pwdConf').value;if(!o||!n||!c){if(window.JICS_UI&&JICS_UI.toast)JICS_UI.toast('Preencha todos os campos.','error');return;}if(n!==c){if(window.JICS_UI&&JICS_UI.toast)JICS_UI.toast('Senhas nao coincidem.','error');return;}if(n.length<8){if(window.JICS_UI&&JICS_UI.toast)JICS_UI.toast('Minimo 8 caracteres.','error');return;}if(window.JICS_UI&&JICS_UI.setButtonLoading)JICS_UI.setButtonLoading('pwdSaveBtn',true);setTimeout(function(){if(window.JICS_UI){if(JICS_UI.setButtonLoading)JICS_UI.setButtonLoading('pwdSaveBtn',false);}closePwdModal();if(window.JICS_UI&&JICS_UI.toast)JICS_UI.toast('Senha alterada!','success');},1400);}
+function confirmLogout(){if(window.JICS_UI&&JICS_UI.confirm){JICS_UI.confirm({title:'Sair da conta?',message:'Voce sera desconectado.',confirmText:'Sim, sair',cancelText:'Cancelar',onConfirm:function(){window.location.href='/logout';}});}else if(confirm('Sair?')){window.location.href='/logout';}}
+function printCard(){var card=document.getElementById('jicsCardEl');var w=window.open('','_blank','width=420,height=560');w.document.write('<html><head><title>Carteirinha JICS</title><style>body{margin:0;background:#0A5D54;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>'+card.outerHTML+'<script>window.print();window.close();<\/script></body></html>');w.document.close();}
+function toggleSideNav(){document.getElementById('sideNav').classList.toggle('is-open');document.getElementById('sideOverlay').classList.toggle('is-show');}
+function closeSideNav(){document.getElementById('sideNav').classList.remove('is-open');document.getElementById('sideOverlay').classList.remove('is-show');}
+document.addEventListener('DOMContentLoaded',populatePage);
+</script>
+</body>
+</html>

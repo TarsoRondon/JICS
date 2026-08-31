@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Modalidades (Admin) · JICS</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link rel="stylesheet" href="/admin/shell.css"/>
+  <script>(async()=>{ try{ const r=await fetch('/api/user/role',{credentials:'include'}); const d=await r.json(); if(!d.sucesso||!d.role?.includes('ADMIN')){ location.replace('/aluno/dashboard.html'); } }catch{ location.replace('/aluno/dashboard.html'); } })();</script>
+  <script defer src="/js/jsdosistema.js"></script>
+</head>
+<body class="admin-app" data-page="admin-modalidades">
+<div class="ad-shell">
+  <aside class="ad-sidebar" id="sidebar">
+    <a href="/admin/dashboard.html" class="ad-sb-brand"><img src="/assets/ifro.png" alt="IFRO"/><div><strong>JICS Admin</strong><span>Painel administrativo</span></div></a>
+    <nav class="ad-sb-nav">
+      <div class="ad-sb-group">Operações</div>
+      <a href="/admin/dashboard.html"   class="ad-nav"><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5"/></svg><span>Visão geral</span></a>
+      <a href="/admin/inscricoes.html"  class="ad-nav"><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M4 10h8M4 14h6"/><rect x="2" y="2" width="16" height="16" rx="2"/></svg><span>Inscrições</span></a>
+      <a href="/admin/alunos.html"      class="ad-nav "><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="7" r="3"/><path d="M2 17c0-3 2.686-5 6-5s6 2 6 5"/></svg><span>Alunos</span></a>
+      <a href="/admin/sorteio.html"     class="ad-nav "><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 7h.01M13 13h.01M13 7h.01M7 13h.01"/></svg><span>Sorteio</span></a>
+      <div class="ad-sb-group" style="margin-top:var(--s3)">Cadastros</div>
+      <a href="/admin/noticias.html"    class="ad-nav"><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h14a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z"/><path d="M3 9h14"/></svg><span>Notícias</span></a>
+      <a href="/admin/modalidades.html" class="ad-nav is-active"><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="8"/><path d="M10 6v4l2.5 2.5"/></svg><span>Modalidades</span></a>
+      <a href="/admin/eventos.html"     class="ad-nav "><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="1.5"/><path d="M3 8h14M7 2v3M13 2v3"/></svg><span>Eventos</span></a>
+      <div class="ad-sb-group" style="margin-top:var(--s3)">Relatórios</div>
+      <a href="/admin/graficos.html"    class="ad-nav "><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V9M8 16V6M12 16V11M16 16V4"/></svg><span>Gráficos</span></a>
+      <a href="/admin/logs.html"        class="ad-nav "><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M4 10h12M4 14h8"/></svg><span>Logs</span></a>
+    </nav>
+    <div class="ad-sb-footer"><button class="ad-nav ad-nav-logout" onclick="logout()"><svg class="ad-nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3h2a2 2 0 012 2v10a2 2 0 01-2 2h-2"/><path d="M9 14l-4-4 4-4M5 10h8"/></svg><span>Sair</span></button></div>
+  </aside>
+  <div class="ad-main">
+    <header class="ad-topbar">
+      <div class="ad-tb-left">
+        <button class="ad-hamburger" onclick="toggleSidebar()" aria-label="Menu"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg></button>
+        <span class="ad-tb-title">Modalidades</span>
+      </div>
+      <div class="ad-tb-right">
+        <button class="ad-admin-pill" onclick="logout()"><span class="ad-admin-dot"></span><span>Admin</span></button>
+      </div>
+    </header>
+    <main class="ad-page">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--s4)">
+        <div>
+          <h1 style="font-size:var(--text-2xl);font-weight:800;color:var(--text)">Modalidades</h1>
+          <p style="color:var(--muted);font-size:var(--text-sm);margin-top:var(--s2)">JICS 2026 · Painel administrativo</p>
+        </div>
+      </div>
+      <div class="ad-card">
+        <div class="ad-card-hd"><div class="ad-card-title">Modalidades</div></div>
+        <div id="pageContent"></div>
+        <div class="ad-empty" id="emptyState">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="24" cy="24" r="20"/><path d="M24 16v8l5 5"/></svg>
+          <p>Conteúdo carregado pelo jsdosistema.js</p>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div class="ad-overlay" id="overlay" onclick="closeAll()"></div>
+  <div class="ad-toast" id="toast" role="alert" aria-live="polite"></div>
+</div>
+<script>
+  function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('is-open'); document.getElementById('overlay').classList.toggle('is-show'); }
+  function closeAll(){ document.getElementById('sidebar').classList.remove('is-open'); document.getElementById('overlay').classList.remove('is-show'); }
+  function logout(){ if(confirm('Sair?')){ sessionStorage.clear(); location.href='/index.html'; } }
+  document.addEventListener('DOMContentLoaded',()=>{ loadUserFromStorage?.().then(()=>initPage?.()); });
+</script>
+</body>
+</html>

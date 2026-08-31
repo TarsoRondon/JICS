@@ -1,0 +1,370 @@
+/* ══════════════════════════════════════════════════════════════════════
+   JICS ADMIN SHELL — Interface Esportiva SaaS Moderna
+   Desktop Sidebar + Topbar Esportiva + Drawer Mobile + Bottom Nav
+   ══════════════════════════════════════════════════════════════════════ */
+@import url('../css/tokens.css');
+@import url('../css/jics-design-system.css');
+
+/* ─── ESTRUTURA PRINCIPAL DO APP ─── */
+#appShell, .ad-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+}
+
+/* ─── NAVBAR / TOPBAR ─── */
+.navbar, .ad-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--s6);
+  background: var(--bg-nav);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--s4);
+}
+
+.navbar-left, .ad-tb-left {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.navbar-brand, .ad-sb-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  font-family: var(--font-display);
+  font-size: var(--t-base);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.brand-logo {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+}
+
+.navbar-center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 480px;
+  margin: 0 var(--s4);
+}
+@media (max-width: 768px) {
+  .navbar-center { display: none; }
+}
+
+.navbar-search-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--s4);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: var(--t-xs);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+.navbar-search-btn:hover {
+  border-color: var(--p-secondary);
+  color: var(--text-main);
+  background: var(--bg-surface);
+}
+
+.navbar-right, .ad-tb-right {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.status-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  background: var(--p-soft);
+  color: var(--p-secondary);
+  border: 1px solid rgba(0, 168, 119, 0.2);
+}
+.status-live-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--p-secondary);
+}
+
+/* ─── SIDEBAR FIXA (DESKTOP) & DRAWER (MOBILE) ─── */
+.side-drawer, .ad-sidebar {
+  width: 250px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: transform var(--duration-normal) var(--ease-smooth), width var(--duration-normal) var(--ease-smooth);
+  z-index: var(--z-drawer);
+}
+
+.side-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--s5);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.side-header-title {
+  font-family: var(--font-display);
+  font-size: var(--t-sm);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #FFFFFF;
+  text-transform: uppercase;
+}
+
+.side-sections, .ad-sb-nav {
+  padding: var(--s4) var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.side-group-title, .ad-sb-group {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  padding: var(--s3) var(--s3) var(--s1);
+  margin-top: var(--s2);
+}
+
+.side-link, .ad-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 10px var(--s3);
+  border-radius: var(--r-md);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  transition: all var(--duration-fast) var(--ease-smooth);
+  position: relative;
+}
+
+.side-link:hover, .ad-nav:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(3px);
+}
+
+.side-link.active, .ad-nav.is-active {
+  color: #FFFFFF;
+  background: linear-gradient(90deg, rgba(0, 168, 119, 0.28) 0%, rgba(0, 168, 119, 0.08) 100%);
+  font-weight: 700;
+}
+.side-link.active::before, .ad-nav.is-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3.5px;
+  border-radius: var(--r-full);
+  background: var(--color-brand-light);
+  box-shadow: 0 0 10px var(--color-brand-light);
+}
+
+.side-link-icon, .ad-nav-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.6);
+}
+.side-link.active .side-link-icon, .ad-nav.is-active .ad-nav-icon {
+  color: var(--color-brand-light);
+}
+
+.side-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: var(--s3) var(--s2);
+}
+
+/* ─── PÁGINA / CONTEÚDO PRINCIPAL ─── */
+.page, .ad-main, .admin-panel {
+  flex: 1;
+  padding: var(--s6);
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+  animation: jicsFadeIn var(--duration-page) var(--ease-smooth);
+}
+@media (max-width: 768px) {
+  .page, .ad-main, .admin-panel {
+    padding: var(--s4);
+    padding-bottom: 80px; /* espaço para o bottom-nav */
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s4);
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: var(--t-2xl);
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: var(--t-sm);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ─── USER AVATAR & DROPDOWN ─── */
+.user-menu {
+  position: relative;
+}
+
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--r-full);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+.user-trigger:hover {
+  border-color: var(--p-secondary);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--p-soft);
+}
+
+.user-name {
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--text-main);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 200px;
+  padding: var(--s2);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--sh-lg);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 8px var(--s3);
+  border-radius: var(--r-md);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  color: var(--text-main);
+  transition: background var(--duration-fast);
+}
+.dropdown-item:hover {
+  background: var(--bg-surface-2);
+  color: var(--p-secondary);
+}
+
+/* ─── RESPONSIVIDADE MOBILE DA SIDEBAR ─── */
+@media (max-width: 1024px) {
+  .side-drawer, .ad-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--sh-xl);
+  }
+  .side-drawer.is-open, .ad-sidebar.is-open {
+    transform: translateX(0);
+  }
+}
+
+.nav-hamburger, .ad-hamburger {
+  display: none;
+}
+@media (max-width: 1024px) {
+  .nav-hamburger, .ad-hamburger {
+    display: inline-grid;
+  }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 20, 17, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: calc(var(--z-drawer) - 1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-normal) var(--ease-smooth);
+}
+.overlay.is-show, .overlay:not(.hidden) {
+  opacity: 1;
+  pointer-events: auto;
+}
+.hidden {
+  display: none !important;
+}

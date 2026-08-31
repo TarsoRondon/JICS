@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Equipes · JICS Admin</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="/admin/shell.css"/>
+  <style>
+    .eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--s5)}
+    .eq-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;transition:box-shadow var(--base),transform var(--base),border-color var(--base)}
+    .eq-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px);border-color:var(--p)}
+    .eq-card-head{padding:var(--s4) var(--s5);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:var(--s3)}
+    .eq-avatar{width:42px;height:42px;border-radius:var(--r-md);background:var(--p-soft);display:grid;place-items:center;color:var(--p);flex-shrink:0}
+    .eq-name{font-size:var(--t-sm);font-weight:700;color:var(--text)}
+    .eq-sub{font-size:var(--t-xs);color:var(--muted)}
+    .eq-card-body{padding:var(--s4) var(--s5)}
+    .eq-info{display:flex;flex-direction:column;gap:var(--s2);margin-bottom:var(--s4)}
+    .eq-info-row{display:flex;align-items:center;gap:var(--s2);font-size:var(--t-xs);color:var(--text2)}
+    .eq-info-row .material-symbols-outlined{font-size:15px;color:var(--muted)}
+    .eq-atletas{display:flex;flex-direction:column;gap:var(--s1);max-height:120px;overflow-y:auto}
+    .eq-atleta{display:flex;align-items:center;gap:var(--s2);padding:5px var(--s2);border-radius:var(--r-sm);background:var(--card2);font-size:var(--t-xs);color:var(--text2)}
+    .eq-atleta-num{width:22px;height:22px;border-radius:50%;background:var(--p-soft);color:var(--p);font-size:10px;font-weight:700;display:grid;place-items:center;flex-shrink:0}
+    .eq-card-foot{padding:var(--s3) var(--s5);border-top:1px solid var(--border);display:flex;gap:var(--s2);justify-content:flex-end}
+
+    /* Turmas picker */
+    .turmas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:var(--s2)}
+    .turma-btn{padding:8px var(--s3);border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--card2);color:var(--text2);font-size:var(--t-xs);font-weight:600;cursor:pointer;transition:all var(--fast);text-align:center}
+    .turma-btn:hover{border-color:var(--p);background:var(--p-soft);color:var(--p-dark)}
+    .turma-btn.selected{border-color:var(--p);background:var(--p-soft);color:var(--p-dark)}
+    .curso-label{font-size:var(--t-xs);font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:var(--s2) 0 var(--s1)}
+
+    .modal-card.lg{max-width:720px}
+  </style>
+</head>
+<body class="admin-app admin-ui" data-page="equipes" data-theme="dark">
+<div id="appShell">
+
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button class="icon-btn nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
+      <button class="navbar-brand" onclick="location.href='/admin/dashboard.html'">
+        <img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS ADMIN
+      </button>
+    </div>
+    <div class="navbar-right">
+      <button class="icon-btn" onclick="toggleAdminMenu(event)"><span class="material-symbols-outlined">settings</span></button>
+      <div class="user-menu">
+        <button class="user-trigger" onclick="toggleUserDrawer()">
+          <img id="userAvatar" class="user-avatar" src="/assets/avatar-default.png" alt="" onerror="this.src='/assets/avatar-default.png'"/>
+          <span id="userNameNavbar" class="user-name"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div id="sessionBanner" class="session-banner hidden">
+    <span id="sessionBannerText">Sessão expirada.</span>
+    <button class="btn-outline btn-sm" onclick="location.href='/index.html'">Fazer login</button>
+  </div>
+
+  <div id="adminMenuOverlay" class="overlay hidden" onclick="closeAdminMenu()"></div>
+  <div id="adminMenuDropdown" class="card admin-menu-dropdown hidden">
+    <button class="btn-ghost" onclick="logout()">Sair</button>
+  </div>
+
+  <div class="app-body">
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header">
+        <span class="side-header-title">JICS Admin</span>
+        <button id="sideCollapseBtn" class="side-collapse-btn icon-btn" onclick="toggleSidebarCollapse()"><span class="material-symbols-outlined">chevron_left</span></button>
+      </div>
+      <div class="side-sections">
+        <div class="side-divider"></div>
+        <a class="side-link" href="/admin/dashboard.html"><span class="material-symbols-outlined side-link-icon">dashboard</span><span class="side-link-text">Visão geral</span></a>
+        <a class="side-link" href="/admin/admin.html"><span class="material-symbols-outlined side-link-icon">admin_panel_settings</span><span class="side-link-text">Painel completo</span></a>
+        <div class="side-divider"></div>
+        <a class="side-link" href="/admin/boletim_oficial.html"><span class="material-symbols-outlined side-link-icon">campaign</span><span class="side-link-text">Boletim Oficial</span></a>
+        <a class="side-link active" href="/admin/equipes.html"><span class="material-symbols-outlined side-link-icon">groups</span><span class="side-link-text">Equipes</span></a>
+        <a class="side-link" href="/admin/chaveamento.html"><span class="material-symbols-outlined side-link-icon">account_tree</span><span class="side-link-text">Chaveamento</span></a>
+        <a class="side-link" href="/admin/jogos.html"><span class="material-symbols-outlined side-link-icon">sports</span><span class="side-link-text">Jogos</span></a>
+        <a class="side-link" href="/admin/sumulas.html"><span class="material-symbols-outlined side-link-icon">assignment</span><span class="side-link-text">Súmulas</span></a>
+        <div class="side-divider"></div>
+        <a class="side-link" href="/admin/modalidades.html"><span class="material-symbols-outlined side-link-icon">sports_basketball</span><span class="side-link-text">Modalidades</span></a>
+        <a class="side-link" href="/admin/inscricoes.html"><span class="material-symbols-outlined side-link-icon">how_to_reg</span><span class="side-link-text">Inscrições</span></a>
+        <a class="side-link" href="/admin/alunos.html"><span class="material-symbols-outlined side-link-icon">school</span><span class="side-link-text">Alunos</span></a>
+        <div class="side-divider"></div>
+        <a class="side-link" href="/admin/noticias.html"><span class="material-symbols-outlined side-link-icon">newspaper</span><span class="side-link-text">Notícias</span></a>
+        <a class="side-link" href="/admin/graficos.html"><span class="material-symbols-outlined side-link-icon">bar_chart</span><span class="side-link-text">Gráficos</span></a>
+        <a class="side-link" href="/admin/logs.html"><span class="material-symbols-outlined side-link-icon">history</span><span class="side-link-text">Logs</span></a>
+      </div>
+    </aside>
+
+    <main class="page admin-panel">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Equipes</div>
+          <div class="page-subtitle">Geradas automaticamente a partir das inscrições por turma</div>
+        </div>
+        <div style="display:flex;gap:var(--s3)">
+          <select id="filtroEvento" onchange="carregarEquipes()" style="height:38px;padding:0 var(--s3);border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--card2);color:var(--text);font-family:var(--font-body)">
+            <option value="">Todos eventos</option>
+          </select>
+          <select id="filtroModalidade" onchange="carregarEquipes()" style="height:38px;padding:0 var(--s3);border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--card2);color:var(--text);font-family:var(--font-body)">
+            <option value="">Todas modalidades</option>
+          </select>
+          <select id="filtroCategoria" onchange="carregarEquipes()" style="height:38px;padding:0 var(--s3);border-radius:var(--r-md);border:1.5px solid var(--border);background:var(--card2);color:var(--text);font-family:var(--font-body)">
+            <option value="">Ambas categorias</option>
+            <option value="MASCULINO">Masculino</option>
+            <option value="FEMININO">Feminino</option>
+          </select>
+          <button class="btn-primary" onclick="abrirModalEquipe()">
+            <span class="material-symbols-outlined">add</span> Nova Equipe
+          </button>
+        </div>
+      </div>
+
+      <!-- Turmas fixas info -->
+      <div class="card" style="overflow:visible">
+        <div class="card-head">
+          <h3>24 Turmas Oficiais</h3>
+          <span class="muted">Estrutura fixa do JICS</span>
+        </div>
+        <div style="padding:var(--s5)" id="turmasFixasGrid">
+          <div style="color:var(--muted);font-size:var(--t-sm)">Carregando…</div>
+        </div>
+      </div>
+
+      <!-- Grid de equipes -->
+      <div class="eq-grid" id="equipesGrid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <span class="material-symbols-outlined">groups</span>
+          <h3>Nenhuma equipe cadastrada</h3>
+          <p>As equipes são criadas automaticamente quando os líderes fazem inscrições, ou manualmente pelo admin.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal nova equipe -->
+  <div class="modal hidden" id="modalEquipe">
+    <div class="modal-card lg">
+      <div class="modal-header">
+        <h3>Criar Equipe Manualmente</h3>
+        <button class="close-btn" onclick="document.getElementById('modalEquipe').classList.add('hidden')"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Selecione a turma</label>
+          <div id="turmasPicker"></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="eqModalidade">Modalidade *</label>
+            <select id="eqModalidade"><option value="">Selecione…</option></select>
+          </div>
+          <div class="form-group">
+            <label for="eqCategoria">Categoria *</label>
+            <select id="eqCategoria">
+              <option value="MASCULINO">Masculino</option>
+              <option value="FEMININO">Feminino</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="eqEvento">Evento</label>
+          <select id="eqEvento"><option value="">Selecione…</option></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" onclick="document.getElementById('modalEquipe').classList.add('hidden')">Cancelar</button>
+        <button class="btn-primary" onclick="salvarEquipe()"><span class="material-symbols-outlined">save</span> Criar Equipe</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+  <div id="drawerOverlay" class="overlay" onclick="closeUserDrawer()"></div>
+  <div id="userDrawer" class="user-drawer"></div>
+  <div id="globalModals"></div>
+  <div id="helpPanel" class="hidden"></div>
+</div>
+
+<script src="/js/jsdosistema.js"></script>
+<script>
+let turmasFixas = [];
+let modalidades = [];
+let eventos = [];
+let turmaSelecionada = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await Promise.all([carregarTurmas(), carregarModalidades(), carregarEventos()]);
+  carregarEquipes();
+});
+
+async function carregarTurmas() {
+  try {
+    const res = await fetch('/jics/turmas');
+    const data = await res.json();
+    turmasFixas = data.turmas || [];
+    renderTurmasFixas();
+  } catch { }
+}
+
+function renderTurmasFixas() {
+  const cursos = [...new Set(turmasFixas.map(t => t.curso))];
+  const grid = document.getElementById('turmasFixasGrid');
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(4,1fr)';
+  grid.style.gap = 'var(--s5)';
+
+  grid.innerHTML = cursos.map(curso => `
+    <div>
+      <div style="font-size:var(--t-xs);font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--p);margin-bottom:var(--s2)">${curso}</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${turmasFixas.filter(t => t.curso === curso).map(t => `
+          <div style="padding:4px 10px;border-radius:var(--r-sm);background:var(--card2);font-size:var(--t-xs);color:var(--text2);border:1px solid var(--border)">${t.serie} ${t.letra}</div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  // Picker no modal
+  const picker = document.getElementById('turmasPicker');
+  picker.innerHTML = cursos.map(curso => `
+    <div class="curso-label">${curso}</div>
+    <div class="turmas-grid">
+      ${turmasFixas.filter(t => t.curso === curso).map(t => `
+        <button type="button" class="turma-btn" data-id="${t.id}" onclick="selecionarTurma(this, ${t.id})">${t.serie} ${t.letra}</button>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function selecionarTurma(btn, id) {
+  document.querySelectorAll('.turma-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  turmaSelecionada = id;
+}
+
+async function carregarModalidades() {
+  try {
+    const res = await fetch('/modalidades');
+    modalidades = await res.json();
+    const sel = document.getElementById('eqModalidade');
+    modalidades.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id; opt.textContent = m.nome;
+      sel.appendChild(opt);
+    });
+  } catch { }
+}
+
+async function carregarEventos() {
+  try {
+    const res = await fetch('/eventos');
+    const data = await res.json();
+    eventos = data.eventos || data || [];
+    ['filtroEvento', 'eqEvento'].forEach(selId => {
+      const sel = document.getElementById(selId);
+      if (!sel) return;
+      eventos.forEach(ev => {
+        const opt = document.createElement('option');
+        opt.value = ev.id; opt.textContent = ev.nome;
+        sel.appendChild(opt);
+      });
+    });
+  } catch { }
+}
+
+async function carregarEquipes() {
+  const eventoId = document.getElementById('filtroEvento').value;
+  const modalidadeId = document.getElementById('filtroModalidade').value;
+  const categoria = document.getElementById('filtroCategoria').value;
+  const params = new URLSearchParams();
+  if (eventoId) params.set('eventoId', eventoId);
+  if (modalidadeId) params.set('modalidadeId', modalidadeId);
+  if (categoria) params.set('categoria', categoria);
+
+  const grid = document.getElementById('equipesGrid');
+  grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="material-symbols-outlined" style="animation:spin 1s linear infinite">progress_activity</span></div>';
+
+  try {
+    const res = await fetch(`/jics/equipes?${params}`);
+    const data = await res.json();
+    const equipes = data.equipes || [];
+    if (!equipes.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="material-symbols-outlined">groups</span><h3>Nenhuma equipe encontrada</h3><p>Ajuste os filtros ou crie uma equipe manualmente.</p></div>`;
+      return;
+    }
+    grid.innerHTML = equipes.map(eq => `
+      <div class="eq-card">
+        <div class="eq-card-head">
+          <div class="eq-avatar"><span class="material-symbols-outlined">groups</span></div>
+          <div>
+            <div class="eq-name">${escH(eq.nome)}</div>
+            <div class="eq-sub">${escH(eq.modalidade_nome || '')} · ${escH(eq.categoria || '')}</div>
+          </div>
+        </div>
+        <div class="eq-card-body">
+          <div class="eq-info">
+            <div class="eq-info-row"><span class="material-symbols-outlined">school</span>${escH(eq.turma_nome || `Turma ${eq.turma_id}`)}</div>
+          </div>
+          <div style="font-size:var(--t-xs);font-weight:700;color:var(--muted);margin-bottom:var(--s2);text-transform:uppercase;letter-spacing:.06em">Atletas</div>
+          <div class="eq-atletas" id="atletas-${eq.id}">
+            <div style="font-size:var(--t-xs);color:var(--muted)">Carregando…</div>
+          </div>
+        </div>
+        <div class="eq-card-foot">
+          <button class="btn-ghost btn-sm" onclick="verAtletas(${eq.id})">
+            <span class="material-symbols-outlined" style="font-size:15px">person</span> Atletas
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    // Carrega atletas de cada equipe
+    equipes.forEach(eq => carregarAtletas(eq.id));
+  } catch (err) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="material-symbols-outlined">error</span><h3>Erro ao carregar</h3></div>`;
+  }
+}
+
+async function carregarAtletas(equipeId) {
+  try {
+    const res = await fetch(`/jics/equipes/${equipeId}/atletas`);
+    const data = await res.json();
+    const cont = document.getElementById(`atletas-${equipeId}`);
+    if (!cont) return;
+    const atletas = data.atletas || [];
+    if (!atletas.length) {
+      cont.innerHTML = '<div style="font-size:var(--t-xs);color:var(--muted)">Sem atletas inscritos</div>';
+      return;
+    }
+    cont.innerHTML = atletas.map(a => `
+      <div class="eq-atleta">
+        <div class="eq-atleta-num">${a.numero_camisa || '—'}</div>
+        <span>${escH(a.nome)}</span>
+      </div>`).join('');
+  } catch { }
+}
+
+function abrirModalEquipe() { document.getElementById('modalEquipe').classList.remove('hidden'); }
+
+async function salvarEquipe() {
+  const turmaId = turmaSelecionada;
+  const modalidadeId = document.getElementById('eqModalidade').value;
+  const categoria = document.getElementById('eqCategoria').value;
+  const eventoId = document.getElementById('eqEvento').value || null;
+  if (!turmaId || !modalidadeId || !categoria) { alert('Selecione turma, modalidade e categoria.'); return; }
+  try {
+    const res = await fetch('/jics/equipes', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ turmaId, modalidadeId, categoria, eventoId }) });
+    const data = await res.json();
+    if (data.sucesso) { document.getElementById('modalEquipe').classList.add('hidden'); carregarEquipes(); }
+    else alert(data.erro || 'Erro ao criar equipe.');
+  } catch { alert('Erro de conexão.'); }
+}
+
+function verAtletas(equipeId) {
+  const el = document.getElementById(`atletas-${equipeId}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function escH(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

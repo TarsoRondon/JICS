@@ -1,0 +1,226 @@
+/* ══════════════════════════════════════════════════════════════════════
+   JICS ALUNO SHELL — Portal do Participante / Atleta
+   Interface Esportiva SaaS Moderna, Responsiva e Acessível
+   ══════════════════════════════════════════════════════════════════════ */
+@import url('../css/tokens.css');
+@import url('../css/jics-design-system.css');
+
+/* ─── ESTRUTURA PRINCIPAL ─── */
+#appShell, body.aluno-app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+}
+
+/* ─── NAVBAR / TOPBAR DO ALUNO ─── */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--s6);
+  background: var(--bg-nav);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border-subtle);
+  gap: var(--s4);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  font-family: var(--font-display);
+  font-size: var(--t-base);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.brand-logo {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+}
+
+.navbar-center.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+}
+@media (max-width: 992px) {
+  .navbar-center.navbar-links { display: none; }
+}
+
+.nav-link {
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: var(--r-md);
+  transition: all var(--duration-fast) var(--ease-smooth);
+}
+.nav-link:hover {
+  color: var(--text-main);
+  background: var(--bg-surface-2);
+}
+.nav-link.active {
+  color: var(--p-secondary);
+  background: var(--p-soft);
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+/* ─── SIDEBAR / MENU DO ALUNO ─── */
+.side-drawer {
+  width: 240px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: transform var(--duration-normal) var(--ease-smooth);
+  z-index: var(--z-drawer);
+  padding: var(--s4) var(--s3);
+  gap: 4px;
+}
+
+.side-header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s3);
+  margin-bottom: var(--s2);
+}
+.side-header-title {
+  font-family: var(--font-display);
+  font-size: var(--t-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+}
+
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: 10px var(--s3);
+  border-radius: var(--r-md);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  transition: all var(--duration-fast) var(--ease-smooth);
+  position: relative;
+}
+.side-link:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.08);
+}
+.side-link.active {
+  color: #FFFFFF;
+  background: linear-gradient(90deg, rgba(0, 168, 119, 0.28) 0%, rgba(0, 168, 119, 0.08) 100%);
+  font-weight: 700;
+}
+.side-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3.5px;
+  border-radius: var(--r-full);
+  background: var(--color-brand-light);
+}
+
+@media (max-width: 1024px) {
+  .side-drawer {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--sh-xl);
+  }
+  .side-drawer.is-open {
+    transform: translateX(0);
+  }
+}
+
+/* ─── PÁGINAS DO ALUNO ─── */
+.page {
+  flex: 1;
+  padding: var(--s6);
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s6);
+  animation: jicsFadeIn var(--duration-page) var(--ease-smooth);
+}
+@media (max-width: 768px) {
+  .page {
+    padding: var(--s4);
+    padding-bottom: 80px;
+  }
+}
+
+/* ─── HERO SECTION DO ALUNO ─── */
+.hero-section {
+  width: 100%;
+}
+.hero-card {
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-surface-2) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2xl);
+  padding: var(--s7) var(--s6);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--sh-md);
+}
+[data-theme="dark"] .hero-card {
+  background: linear-gradient(135deg, #0A221C 0%, #0E3027 100%);
+  border-color: #16483C;
+}
+
+.page-hero__badge {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: var(--r-full);
+  font-size: var(--t-xs);
+  font-weight: 700;
+  background: var(--p-soft);
+  color: var(--p-secondary);
+  margin-bottom: var(--s3);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin-top: var(--s5);
+}

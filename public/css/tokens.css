@@ -1,0 +1,226 @@
+/* ══════════════════════════════════════════════════════════════════════
+   JICS — Jogos Internos IFRO · Design Tokens & System Variables
+   Identidade Visual Oficial: ESPORTE + TECNOLOGIA + IFRO + COMPETIÇÃO
+   ══════════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+:root {
+  /* ─── TIPOGRAFIA ─── */
+  --font-body: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* ─── ESCALA TIPOGRÁFICA ─── */
+  --t-2xs: 0.6875rem; /* 11px */
+  --t-xs:  0.75rem;   /* 12px */
+  --t-sm:  0.875rem;  /* 14px */
+  --t-base: 1rem;     /* 16px */
+  --t-lg:   1.125rem; /* 18px */
+  --t-xl:   1.25rem;  /* 20px */
+  --t-2xl:  1.5rem;   /* 24px */
+  --t-3xl:  1.875rem; /* 30px */
+  --t-4xl:  2.25rem;  /* 36px */
+  --t-5xl:  3rem;     /* 48px */
+  --t-score: clamp(3.5rem, 8vw, 6.5rem);
+
+  /* ─── ESPAÇAMENTOS ─── */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s7: 32px;
+  --s8: 40px;
+  --s9: 48px;
+  --s10: 64px;
+
+  /* ─── BORDAS E RAIOS ─── */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-2xl: 32px;
+  --r-full: 9999px;
+
+  /* ─── PALETA INSTITUCIONAL IFRO / JICS ─── */
+  --color-brand-primary:   #0A5D54; /* Verde principal */
+  --color-brand-secondary: #00A877; /* Verde secundário */
+  --color-brand-light:     #4DC98C; /* Verde claro */
+  --color-brand-soft:      #86DDB0; /* Verde suave */
+  --color-brand-dark:      #063B35; /* Verde profundo */
+
+  --brand-rgb: 10, 93, 84;
+  --brand-sec-rgb: 0, 168, 119;
+  --brand-light-rgb: 77, 201, 140;
+
+  /* ─── CORES DE STATUS & COMPETIÇÃO ─── */
+  --color-gold:        #F59E0B; /* Ouro / 1º lugar */
+  --color-silver:      #94A3B8; /* Prata / 2º lugar */
+  --color-bronze:      #D97706; /* Bronze / 3º lugar */
+  --color-live:        #EF4444; /* Ao Vivo / Vermelho vibrante */
+  --color-live-pulse:  rgba(239, 68, 68, 0.4);
+  --color-foul:        #3B82F6; /* Falta / Azul */
+  --color-yellow-card: #EAB308; /* Cartão Amarelo */
+  --color-red-card:    #DC2626; /* Cartão Vermelho */
+  --color-success:     #10B981; /* Vitória / Sucesso */
+  --color-warning:     #F59E0B;
+  --color-error:       #EF4444;
+  --color-info:        #0EA5E9;
+
+  /* ─── ANIMAÇÕES & TRANSIÇÕES RÁPIDAS (200ms - 350ms) ─── */
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+  --duration-page:   300ms;
+  --duration-slow:   450ms;
+
+  /* ─── ELEVAÇÕES & SOMBRAS ─── */
+  --z-base: 1;
+  --z-sticky: 20;
+  --z-bottom-nav: 30;
+  --z-overlay: 50;
+  --z-drawer: 60;
+  --z-modal: 70;
+  --z-toast: 90;
+  --z-tooltip: 100;
+
+  /* ════════════════════════════════════════════
+     TEMA CLARO (PADRÃO OU [data-theme="light"])
+     ════════════════════════════════════════════ */
+  --bg-page:        #F6F8FA;
+  --bg-surface:     #FFFFFF;
+  --bg-surface-2:   #F0F4F2;
+  --bg-card:        #FFFFFF;
+  --bg-card-hover:  #F8FAF9;
+  --bg-elevated:    #FFFFFF;
+  --bg-sidebar:     #0A342F; /* Sidebar escura institucional no desktop */
+  --bg-sidebar-nav: rgba(255, 255, 255, 0.08);
+  --bg-nav:         rgba(255, 255, 255, 0.88);
+
+  --border-subtle:  #E2E8F0;
+  --border-strong:  #CBD5E1;
+  --border-focus:   var(--color-brand-secondary);
+
+  --text-main:      #172126;
+  --text-secondary: #667085;
+  --text-muted:     #8C99A8;
+  --text-inverse:   #FFFFFF;
+
+  --p-primary:      var(--color-brand-primary);
+  --p-secondary:    var(--color-brand-secondary);
+  --p-light:        var(--color-brand-light);
+  --p-soft:         rgba(0, 168, 119, 0.12);
+  --p-glow:         rgba(0, 168, 119, 0.25);
+
+  --sh-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --sh-md: 0 4px 16px -2px rgba(10, 93, 84, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --sh-lg: 0 12px 32px -4px rgba(10, 93, 84, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06);
+  --sh-xl: 0 20px 48px -8px rgba(10, 93, 84, 0.18);
+  --sh-glow: 0 0 24px rgba(0, 168, 119, 0.35);
+}
+
+/* ════════════════════════════════════════════
+   TEMA ESCURO (DARK MODE ESPORTIVO SaaS)
+   ════════════════════════════════════════════ */
+[data-theme="dark"],
+body.dark,
+body[data-theme="dark"] {
+  --bg-page:        #061411; /* Fundo escuro esportivo profundo */
+  --bg-surface:     #0A1D19;
+  --bg-surface-2:   #0E2822;
+  --bg-card:        #0B211C;
+  --bg-card-hover:  #102E27;
+  --bg-elevated:    #12352D;
+  --bg-sidebar:     #071613;
+  --bg-sidebar-nav: rgba(0, 168, 119, 0.12);
+  --bg-nav:         rgba(10, 29, 25, 0.88);
+
+  --border-subtle:  #153A31;
+  --border-strong:  #1E4D42;
+  --border-focus:   var(--color-brand-light);
+
+  --text-main:      #F1F7F4;
+  --text-secondary: #A3C5BA;
+  --text-muted:     #638D80;
+  --text-inverse:   #061411;
+
+  --p-primary:      var(--color-brand-secondary);
+  --p-secondary:    var(--color-brand-light);
+  --p-light:        #7BE3B1;
+  --p-soft:         rgba(0, 168, 119, 0.18);
+  --p-glow:         rgba(77, 201, 140, 0.32);
+
+  --sh-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
+  --sh-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --sh-lg: 0 14px 38px rgba(0, 0, 0, 0.55);
+  --sh-xl: 0 24px 60px rgba(0, 0, 0, 0.70);
+  --sh-glow: 0 0 30px rgba(77, 201, 140, 0.40);
+}
+
+/* ─── RESET & REGRAS FUNDAMENTAIS ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--t-base);
+  color: var(--text-main);
+  background-color: var(--bg-page);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-color var(--duration-normal) var(--ease-smooth), color var(--duration-normal) var(--ease-smooth);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-smooth);
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+img, svg {
+  max-width: 100%;
+  display: block;
+}
+
+/* ─── FOCO ACESSÍVEL ─── */
+:focus-visible {
+  outline: 2px solid var(--p-secondary);
+  outline-offset: 3px;
+}
+
+/* ─── PREFERS-REDUCED-MOTION ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

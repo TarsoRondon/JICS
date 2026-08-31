@@ -1,187 +1,262 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JICS - Ative sua conta</title>
-  <link rel="icon" type="image/png" href="/assets/ifro.png" />
-  <link rel="stylesheet" href="css/auth.css" />
-  <link rel="stylesheet" href="/assets/success-feedback.css" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ative sua conta · JICS</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link rel="stylesheet" href="/css/auth.css"/>
+  <link rel="stylesheet" href="/assets/success-feedback.css"/>
   <script defer src="/assets/success-feedback.js"></script>
-  <link rel="stylesheet" href="/css/dark-theme.css" />
 </head>
-<body class="auth-page" data-page="primeiro-acesso" data-theme="dark">
-  <main class="pa-shell">
-    <section class="pa-left">
-      <header class="pa-header">
-        <div class="pa-logo">J</div>
-        <div class="pa-brand">
-          <strong>JICS</strong>
-          <span>IFRO Esportes</span>
-        </div>
-      </header>
 
-      <h1 class="pa-title">Ative sua conta</h1>
-      <p class="pa-subtitle">Crie sua senha e libere o acesso ao portal com segurança.</p>
+<body class="auth-flow" data-page="primeiro-acesso">
 
-      <div class="pa-steps">
-        <article class="pa-step-card">
-          <div class="pa-step-index">1</div>
-          <div>
-            <h3>Informe seus dados</h3>
-            <p>Matrícula e email pessoal cadastrado.</p>
-          </div>
-        </article>
-        <article class="pa-step-card">
-          <div class="pa-step-index">2</div>
-          <div>
-            <h3>Digite o código</h3>
-            <p>Receba um código de 6 dígitos por email.</p>
-          </div>
-        </article>
-        <article class="pa-step-card">
-          <div class="pa-step-index">3</div>
-          <div>
-            <h3>Crie uma nova senha</h3>
-            <p>Reforce a segurança com uma senha forte.</p>
-          </div>
-        </article>
+  <!-- ── HEADER ── -->
+  <header class="af-header">
+    <a href="/index.html" class="af-brand">
+      <img src="/assets/ifro.png" alt="IFRO"/>
+      <div>
+        <strong>IFRO Esportes</strong>
+        <span>JICS 2026</span>
+      </div>
+    </a>
+    <a href="/index.html" class="af-back">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 3L5 8l5 5"/>
+      </svg>
+      Voltar ao login
+    </a>
+  </header>
+
+  <!-- ── SHELL ── -->
+  <div class="af-shell">
+
+    <!-- ══ LADO ESQUERDO ══ -->
+    <section class="af-left" aria-label="Informações sobre ativação de conta">
+
+      <div class="af-left-kicker">
+        <span></span>
+        Primeiro acesso
       </div>
 
-      <div class="pa-tip">
-        <div class="pa-tip-icon" aria-hidden="true">
+      <h1 class="af-left-title">
+        Ative sua<br/>
+        <em>conta</em> em<br/>
+        3 passos simples.
+      </h1>
+
+      <p class="af-left-sub">
+        Crie sua senha e libere o acesso ao portal do JICS com segurança.
+        Basta informar sua matrícula e email para começar.
+      </p>
+
+      <div class="af-steps" aria-label="Etapas do processo">
+        <div class="af-step">
+          <div class="af-step-num">1</div>
+          <div class="af-step-body">
+            <h3>Informe seus dados</h3>
+            <p>Matrícula e email pessoal cadastrado no sistema.</p>
+          </div>
+        </div>
+        <div class="af-step">
+          <div class="af-step-num">2</div>
+          <div class="af-step-body">
+            <h3>Digite o código</h3>
+            <p>Receba um código de 6 dígitos por email e confirme.</p>
+          </div>
+        </div>
+        <div class="af-step">
+          <div class="af-step-num">3</div>
+          <div class="af-step-body">
+            <h3>Crie sua senha</h3>
+            <p>Defina uma senha forte e acesse o painel.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="af-tip" role="note" aria-label="Dicas importantes">
+        <div class="af-tip-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3a7 7 0 0 0-4 12.74V19a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3.26A7 7 0 0 0 12 3z" />
-            <path d="M9.5 23h5" />
+            <path d="M12 3a7 7 0 0 0-4 12.74V19a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3.26A7 7 0 0 0 12 3z"/>
+            <path d="M9.5 23h5"/>
           </svg>
         </div>
         <div>
           <strong>Dicas rápidas</strong>
           <ul>
-            <li>Confira a caixa de spam antes de solicitar novamente.</li>
+            <li>Confira a caixa de spam antes de solicitar um novo código.</li>
             <li>O código expira em 10 minutos.</li>
             <li>Precisa de ajuda? Procure a equipe do seu campus.</li>
           </ul>
         </div>
       </div>
+
     </section>
-    <section class="pa-card" aria-label="Formulário de ativação">
-      <div class="pa-card-head">
-        <span class="pa-kicker">RECUPERAÇÃO / ATIVAÇÃO</span>
-        <h2 class="pa-card-title">Ative sua conta em 3 etapas</h2>
-        <p class="pa-card-subtitle">Siga o passo a passo e conclua sua ativação.</p>
-      </div>
 
-      <div class="stepper" role="list">
-        <div class="stepper-bar"><span id="stepperProgress" class="stepper-progress"></span></div>
-        <div class="stepper-item is-active" data-step="1" role="listitem">
-          <div class="stepper-dot"></div>
-          <div>Dados</div>
-        </div>
-        <div class="stepper-item" data-step="2" role="listitem">
-          <div class="stepper-dot"></div>
-          <div>Código</div>
-        </div>
-        <div class="stepper-item" data-step="3" role="listitem">
-          <div class="stepper-dot"></div>
-          <div>Nova senha</div>
-        </div>
-      </div>
+    <!-- ══ LADO DIREITO (formulário) ══ -->
+    <section class="af-right" aria-label="Formulário de ativação">
 
-      <form id="activationForm" novalidate>
-        <div class="step-content is-active" data-step="1">
-          <div class="field" id="fieldMatricula">
-            <label for="paMatricula">Matrícula</label>
-            <input id="paMatricula" name="matricula" inputmode="numeric" autocomplete="username" maxlength="13" placeholder="Digite sua matrícula" />
-            <small class="field-hint" data-hint-for="paMatricula"></small>
-          </div>
-          <div class="field" id="fieldEmail">
-            <label for="paEmail">Email pessoal</label>
-            <input id="paEmail" name="email" type="email" autocomplete="email" placeholder="seu@email.com" />
-            <small class="field-hint" data-hint-for="paEmail"></small>
-          </div>
-          <button id="btnEnviarOtp" class="btn btn-primary" type="submit">
-            <span class="btn-label">Enviar código</span>
-            <span class="btn-spinner" aria-hidden="true"></span>
-          </button>
+      <div class="af-card">
+
+        <!-- Cabeçalho do card -->
+        <div class="af-card-head">
+          <span class="af-card-kicker">Recuperação · Ativação</span>
+          <h2 class="af-card-title">Ative sua conta</h2>
+          <p class="af-card-sub">Siga as etapas e conclua sua ativação em instantes.</p>
         </div>
-        <div class="step-content" data-step="2">
-          <div class="field" id="fieldOtp">
-            <label for="otp-0">Código de 6 dígitos</label>
-            <div class="otp-grid" id="otpInputs">
-              <input class="otp-input" id="otp-0" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
-              <input class="otp-input" id="otp-1" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
-              <input class="otp-input" id="otp-2" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
-              <input class="otp-input" id="otp-3" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
-              <input class="otp-input" id="otp-4" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
-              <input class="otp-input" id="otp-5" inputmode="numeric" maxlength="1" autocomplete="one-time-code" />
+
+        <!-- Stepper -->
+        <div class="stepper" role="list" aria-label="Progresso das etapas">
+          <div class="stepper-bar">
+            <span id="stepperProgress" class="stepper-progress"></span>
+          </div>
+          <div class="stepper-item is-active" data-step="1" role="listitem">
+            <div class="stepper-dot"></div>
+            <div>Dados</div>
+          </div>
+          <div class="stepper-item" data-step="2" role="listitem">
+            <div class="stepper-dot"></div>
+            <div>Código</div>
+          </div>
+          <div class="stepper-item" data-step="3" role="listitem">
+            <div class="stepper-dot"></div>
+            <div>Senha</div>
+          </div>
+        </div>
+
+        <!-- Formulário -->
+        <form id="activationForm" novalidate class="af-form-body">
+
+          <!-- STEP 1: Dados -->
+          <div class="step-content is-active" data-step="1">
+
+            <div class="field" id="fieldMatricula">
+              <label for="paMatricula">Matrícula</label>
+              <input
+                id="paMatricula"
+                name="matricula"
+                inputmode="numeric"
+                autocomplete="username"
+                maxlength="13"
+                placeholder="Digite sua matrícula"
+              />
+              <small class="field-hint" data-hint-for="paMatricula"></small>
             </div>
-            <small class="field-hint" data-hint-for="otp"></small>
-          </div>
-          <div class="otp-meta">
-            <span id="otpExpire">Expira em 10:00</span>
-            <button id="btnResendOtp" type="button" class="link-button">
-              Reenviar código
-              <span id="resendTimer">60s</span>
+
+            <div class="field" id="fieldEmail">
+              <label for="paEmail">Email pessoal</label>
+              <input
+                id="paEmail"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="seu@email.com"
+              />
+              <small class="field-hint" data-hint-for="paEmail"></small>
+            </div>
+
+            <button id="btnEnviarOtp" class="btn btn-primary" type="submit">
+              <span class="btn-label">Enviar código</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
             </button>
+
           </div>
-          <button id="btnValidarOtp" class="btn btn-primary" type="submit">
-            <span class="btn-label">Verificar código</span>
-            <span class="btn-spinner" aria-hidden="true"></span>
-          </button>
+
+          <!-- STEP 2: OTP -->
+          <div class="step-content" data-step="2">
+
+            <div class="field" id="fieldOtp">
+              <label for="otp-0">Código de 6 dígitos</label>
+              <div class="otp-grid" id="otpInputs">
+                <input class="otp-input" id="otp-0" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 1"/>
+                <input class="otp-input" id="otp-1" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 2"/>
+                <input class="otp-input" id="otp-2" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 3"/>
+                <input class="otp-input" id="otp-3" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 4"/>
+                <input class="otp-input" id="otp-4" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 5"/>
+                <input class="otp-input" id="otp-5" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 6"/>
+              </div>
+              <small class="field-hint" data-hint-for="otp"></small>
+            </div>
+
+            <div class="otp-meta">
+              <span id="otpExpire">Expira em 10:00</span>
+              <button id="btnResendOtp" type="button" class="link-button">
+                Reenviar código
+                <span id="resendTimer">60s</span>
+              </button>
+            </div>
+
+            <button id="btnValidarOtp" class="btn btn-primary" type="submit">
+              <span class="btn-label">Verificar código</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
+
+          </div>
+
+          <!-- STEP 3: Nova senha -->
+          <div class="step-content" data-step="3">
+
+            <div class="field" id="fieldSenha">
+              <label for="newSenha">Nova senha</label>
+              <input id="newSenha" type="password" autocomplete="new-password" placeholder="Crie uma senha forte"/>
+              <small class="field-hint" data-hint-for="newSenha"></small>
+            </div>
+
+            <div class="field" id="fieldConfirm">
+              <label for="confirmSenha">Confirmar senha</label>
+              <input id="confirmSenha" type="password" autocomplete="new-password" placeholder="Repita a senha"/>
+              <small class="field-hint" data-hint-for="confirmSenha"></small>
+            </div>
+
+            <div class="strength">
+              <div class="strength-bar">
+                <span id="strengthFill" class="strength-fill"></span>
+              </div>
+              <div id="strengthText" class="strength-text">Força: fraca</div>
+            </div>
+
+            <ul class="rules" id="passwordRules" aria-label="Requisitos de senha">
+              <li data-rule="length">mínimo 8 caracteres</li>
+              <li data-rule="upper">1 letra maiúscula</li>
+              <li data-rule="number">1 número</li>
+              <li data-rule="symbol">1 símbolo</li>
+              <li data-rule="match">senhas conferem</li>
+            </ul>
+
+            <div class="security-hint" role="note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 3l7 4v5c0 5-3 8-7 9-4-1-7-4-7-9V7l7-4z"/>
+                <path d="M9.5 12.5l1.8 1.8 3.2-3.2"/>
+              </svg>
+              <span>Seus dados são protegidos e criptografados.</span>
+            </div>
+
+            <button id="btnSalvar" class="btn btn-primary" type="submit" disabled>
+              <span class="btn-label">Salvar senha e entrar</span>
+              <span class="btn-spinner" aria-hidden="true"></span>
+            </button>
+
+          </div>
+
+        </form>
+
+        <!-- Rodapé do card -->
+        <div class="af-card-footer">
+          <a href="index.html" class="link-button">← Voltar ao login</a>
+          <span>Suporte IFRO · 2026</span>
         </div>
-        <div class="step-content" data-step="3">
-          <div class="field" id="fieldSenha">
-            <label for="newSenha">Nova senha</label>
-            <input id="newSenha" type="password" autocomplete="new-password" placeholder="Crie uma senha forte" />
-            <small class="field-hint" data-hint-for="newSenha"></small>
-          </div>
-          <div class="field" id="fieldConfirm">
-            <label for="confirmSenha">Confirmar senha</label>
-            <input id="confirmSenha" type="password" autocomplete="new-password" placeholder="Repita a senha" />
-            <small class="field-hint" data-hint-for="confirmSenha"></small>
-          </div>
 
-          <div class="strength">
-            <div class="strength-bar"><span id="strengthFill" class="strength-fill"></span></div>
-            <div id="strengthText" class="strength-text">Força: fraca</div>
-          </div>
+      </div><!-- /.af-card -->
 
-          <ul class="rules" id="passwordRules">
-            <li data-rule="length">mínimo 8 caracteres</li>
-            <li data-rule="upper">pelo menos 1 letra maiúscula</li>
-            <li data-rule="number">pelo menos 1 número</li>
-            <li data-rule="symbol">pelo menos 1 símbolo</li>
-            <li data-rule="match">senhas conferem</li>
-          </ul>
-
-          <div class="security-hint">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 3l7 4v5c0 5-3 8-7 9-4-1-7-4-7-9V7l7-4z" />
-              <path d="M9.5 12.5l1.8 1.8 3.2-3.2" />
-            </svg>
-            <span>Seus dados são protegidos e criptografados.</span>
-          </div>
-
-          <button id="btnSalvar" class="btn btn-primary" type="submit" disabled>
-            <span class="btn-label">Salvar senha e entrar</span>
-            <span class="btn-spinner" aria-hidden="true"></span>
-          </button>
-        </div>
-      </form>
-
-      <div class="pa-card-footer">
-        <a class="link-button" href="index.html">Voltar ao login</a>
-        <span>Suporte IFRO - 2026</span>
-      </div>
     </section>
-  </main>
 
+  </div><!-- /.af-shell -->
+
+  <!-- Toast container -->
   <div id="toastRoot" class="toast-root" aria-live="polite" aria-atomic="true"></div>
 
+  <!-- ══ JAVASCRIPT — ORIGINAL PRESERVADO INTEGRALMENTE ══ -->
   <script>
     const form = document.getElementById('activationForm');
     const steps = Array.from(document.querySelectorAll('.step-content'));
@@ -266,17 +341,16 @@
         const isActive = Number(section.dataset.step) === step;
         section.classList.toggle('is-active', isActive);
       });
-
       stepperItems.forEach(item => {
         const itemStep = Number(item.dataset.step);
         item.classList.toggle('is-active', itemStep === step);
         item.classList.toggle('is-done', itemStep < step);
       });
-
       const totalSteps = stepperItems.length;
       const progress = ((step - 1) / (totalSteps - 1)) * 100;
       progressBar.style.width = `${progress}%`;
     }
+
     async function apiRequest(url, options, button, loadingLabel) {
       setButtonLoading(button, true, loadingLabel);
       try {
@@ -296,7 +370,6 @@
       resendBtn.setAttribute('aria-disabled', 'true');
       resendBtn.disabled = true;
       resendTimer.textContent = `${remaining}s`;
-
       resendInterval = setInterval(() => {
         remaining -= 1;
         resendTimer.textContent = `${remaining}s`;
@@ -343,47 +416,41 @@
             otpInputs[index + 1].focus();
           }
         });
-
         input.addEventListener('keydown', (e) => {
           if (e.key === 'Backspace' && !input.value && otpInputs[index - 1]) {
             otpInputs[index - 1].focus();
           }
         });
-
         input.addEventListener('paste', (e) => {
           e.preventDefault();
           const paste = (e.clipboardData || window.clipboardData).getData('text');
           const digits = paste.replace(/\D/g, '').slice(0, otpInputs.length).split('');
-          digits.forEach((digit, idx) => {
-            otpInputs[idx].value = digit;
-          });
+          digits.forEach((digit, idx) => { otpInputs[idx].value = digit; });
           const nextIndex = Math.min(digits.length, otpInputs.length - 1);
           otpInputs[nextIndex].focus();
         });
       });
     }
+
     function updatePasswordState() {
       const senha = String(senhaInput.value || '');
       const confirm = String(confirmInput.value || '');
       const rules = {
         length: senha.length >= 8,
-        upper: /[A-Z]/.test(senha),
+        upper:  /[A-Z]/.test(senha),
         number: /[0-9]/.test(senha),
         symbol: /[^A-Za-z0-9]/.test(senha),
-        match: senha.length > 0 && confirm.length > 0 && senha === confirm
+        match:  senha.length > 0 && confirm.length > 0 && senha === confirm
       };
-
       Array.from(passwordRules.querySelectorAll('li')).forEach((item) => {
         const key = item.dataset.rule;
         item.classList.toggle('is-ok', Boolean(rules[key]));
       });
-
       const score = [rules.length, rules.upper, rules.number, rules.symbol].filter(Boolean).length;
       const percent = Math.round((score / 4) * 100);
       strengthFill.style.width = `${percent}%`;
       strengthFill.style.background = score >= 3 ? '#16a34a' : score >= 2 ? '#f59e0b' : '#ef4444';
       strengthText.textContent = `Força: ${score >= 3 ? 'forte' : score >= 2 ? 'ok' : 'fraca'}`;
-
       const isValid = score === 4 && rules.match;
       document.getElementById('btnSalvar').disabled = !isValid;
       return isValid;
@@ -392,20 +459,19 @@
     function isPasswordValid() {
       return updatePasswordState();
     }
+
     async function handleSendOtp() {
       const matricula = matriculaInput.value.trim();
       const email = emailInput.value.trim();
       setFieldError(matriculaInput, matricula ? '' : 'Matrícula obrigatória.');
       setFieldError(emailInput, EMAIL_REGEX.test(email) ? '' : 'Email inválido.');
       if (!matricula || !EMAIL_REGEX.test(email)) return;
-
       try {
         await apiRequest('/auth/aluno/otp/enviar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ matricula, email_pessoal: email })
         }, document.getElementById('btnEnviarOtp'), 'Enviando...');
-
         localStorage.setItem('pa_matricula', matricula);
         localStorage.setItem('pa_email', email);
         showToast({ type: 'success', title: 'Código enviado', message: 'Verifique seu email.' });
@@ -422,7 +488,6 @@
       const otp = getOtpValue();
       setOtpError(otp.length === 6 ? '' : 'Informe o código completo.');
       if (otp.length !== 6) return;
-
       try {
         const matricula = localStorage.getItem('pa_matricula');
         const data = await apiRequest('/auth/aluno/otp/validar', {
@@ -430,7 +495,6 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ matricula, otp })
         }, document.getElementById('btnValidarOtp'), 'Verificando...');
-
         localStorage.setItem('pa_reset_token', data.reset_token || data.resetToken || '');
         showToast({ type: 'success', title: 'Código validado', message: 'Crie sua nova senha.' });
         setStep(3);
@@ -446,30 +510,27 @@
         showToast({ type: 'info', title: 'Senha incompleta', message: 'Ajuste as regras para continuar.' });
         return;
       }
-
       const matricula = localStorage.getItem('pa_matricula');
       const resetToken = localStorage.getItem('pa_reset_token');
       const senha = senhaInput.value;
-
       if (!matricula || !resetToken) {
         showToast({ type: 'error', title: 'Sessão expirada', message: 'Reinicie o processo.' });
         setStep(1);
         return;
       }
-
       try {
         await apiRequest('/auth/aluno/definir-senha', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ matricula, reset_token: resetToken, nova_senha: senha })
         }, document.getElementById('btnSalvar'), 'Salvando...');
-
         showToast({ type: 'success', title: 'Senha atualizada', message: 'Senha atualizada com sucesso.' });
         setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
       } catch (err) {
         showToast({ type: 'error', title: 'Erro', message: err.message || 'Falha ao salvar senha.' });
       }
     }
+
     form.addEventListener('submit', (event) => {
       event.preventDefault();
       if (currentStep === 1) handleSendOtp();
@@ -497,17 +558,11 @@
     updatePasswordState();
 
     const storedMatricula = localStorage.getItem('pa_matricula');
-    const storedEmail = localStorage.getItem('pa_email');
+    const storedEmail     = localStorage.getItem('pa_email');
     if (storedMatricula) matriculaInput.value = storedMatricula;
-    if (storedEmail) emailInput.value = storedEmail;
+    if (storedEmail)     emailInput.value     = storedEmail;
   </script>
+
   <script defer src="/js/global-footer.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-

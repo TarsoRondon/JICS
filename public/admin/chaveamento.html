@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chaveamento Oficial · JICS IFRO</title>
+  <link rel="icon" type="image/png" href="/assets/ifro.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="stylesheet" href="/admin/shell.css"/>
+  <script src="/js/jics-ui.js" defer></script>
+  <script src="/js/jsdosistema.js" defer></script>
+  <style>
+    .chv-tabs {
+      display: flex;
+      gap: var(--s2);
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: var(--s5);
+    }
+    .chv-tab-btn {
+      padding: 10px 18px;
+      font-size: var(--t-sm);
+      font-weight: 700;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      transition: all var(--duration-fast);
+    }
+    .chv-tab-btn.active {
+      color: var(--p-secondary);
+      border-bottom-color: var(--p-secondary);
+    }
+    .grupos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--s5);
+    }
+    .bracket-container {
+      overflow-x: auto;
+      padding: var(--s4) 0;
+    }
+  </style>
+</head>
+<body class="admin-app" data-page="chaveamento">
+<div id="appShell">
+
+  <!-- ═══ NAVBAR ═══ -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <button type="button" class="btn-icon nav-hamburger" onclick="toggleSideNav()"><span class="material-symbols-outlined">menu</span></button>
+      <a href="/admin/dashboard.html" class="navbar-brand">
+        <img src="/assets/ifro.png" alt="IFRO" class="brand-logo"/> JICS ADMIN
+      </a>
+    </div>
+    <div class="navbar-center">
+      <button type="button" class="navbar-search-btn btn-global-search">
+        <span class="material-symbols-outlined" style="font-size:18px;">search</span>
+        <span>Buscar chaveamento e confrontos...</span>
+      </button>
+    </div>
+    <div class="navbar-right">
+      <button type="button" class="btn-icon theme-toggle-btn" onclick="JICS_UI.toggleTheme()"><span class="material-symbols-outlined">light_mode</span></button>
+      <button type="button" class="btn-icon btn-notif-trigger"><span class="material-symbols-outlined">notifications</span></button>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside id="sideNav" class="side-drawer">
+      <div class="side-header">
+        <span class="side-header-title">Painel Esportivo</span>
+      </div>
+      <div class="side-sections">
+        <a class="side-link" href="/admin/dashboard.html"><span class="material-symbols-outlined side-link-icon">dashboard</span><span>Dashboard</span></a>
+        <a class="side-link" href="/admin/jogos.html"><span class="material-symbols-outlined side-link-icon">sports</span><span>Jogos & Tabela</span></a>
+        <a class="side-link active" href="/admin/chaveamento.html"><span class="material-symbols-outlined side-link-icon">account_tree</span><span>Chaveamento</span></a>
+        <a class="side-link" href="/admin/modalidades.html"><span class="material-symbols-outlined side-link-icon">sports_basketball</span><span>Modalidades</span></a>
+        <a class="side-link" href="/admin/equipes.html"><span class="material-symbols-outlined side-link-icon">groups</span><span>Equipes</span></a>
+        <a class="side-link" href="/admin/alunos.html"><span class="material-symbols-outlined side-link-icon">school</span><span>Atletas & Alunos</span></a>
+        <a class="side-link" href="/admin/sumulas.html"><span class="material-symbols-outlined side-link-icon">assignment</span><span>Súmulas</span></a>
+        <div class="side-group-title">Operações</div>
+        <a class="side-link" href="/admin/sorteio.html"><span class="material-symbols-outlined side-link-icon">casino</span><span>Sorteio de Chaves</span></a>
+        <a class="side-link" href="/admin/boletim_oficial.html"><span class="material-symbols-outlined side-link-icon">campaign</span><span>Boletim Oficial</span></a>
+      </div>
+    </aside>
+
+    <!-- ═══ CONTEÚDO PRINCIPAL ═══ -->
+    <main class="page">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Chaveamento & Fases</h1>
+          <p class="page-subtitle">Estrutura de grupos e mata-mata eliminatório</p>
+        </div>
+        <div style="display:flex;gap:var(--s3);flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline" onclick="abrirModalGerarGrupos()">
+            <span class="material-symbols-outlined">casino</span> Gerar Fase de Grupos
+          </button>
+          <button type="button" class="btn btn-primary" onclick="abrirModalGerarMataMata()">
+            <span class="material-symbols-outlined">military_tech</span> Gerar Mata-Mata
+          </button>
+        </div>
+      </div>
+
+      <!-- SELETOR DE MODALIDADE E CATEGORIA -->
+      <div class="card" style="padding:var(--s4);">
+        <div style="display:flex;gap:var(--s4);flex-wrap:wrap;align-items:center;">
+          <div style="flex:1;min-width:200px;">
+            <label class="form-label">Modalidade</label>
+            <select id="selModalidade" class="form-select" onchange="carregarChaveamento()">
+              <option value="">Selecione uma modalidade</option>
+            </select>
+          </div>
+          <div style="width:160px;">
+            <label class="form-label">Categoria</label>
+            <select id="selCategoria" class="form-select" onchange="carregarChaveamento()">
+              <option value="MASCULINO">Masculino</option>
+              <option value="FEMININO">Feminino</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABS: GRUPOS VS MATA-MATA -->
+      <div class="chv-tabs">
+        <button type="button" class="chv-tab-btn active" id="tabBtnGrupos" onclick="mudarTab('grupos')">Fase de Grupos (Chaves)</button>
+        <button type="button" class="chv-tab-btn" id="tabBtnMataMata" onclick="mudarTab('matamata')">Mata-Mata (Bracket)</button>
+      </div>
+
+      <!-- CONTEÚDO 1: FASE DE GRUPOS -->
+      <div id="viewGrupos" class="grupos-grid">
+        <!-- Chave A -->
+        <article class="card" style="padding:0;overflow:hidden;">
+          <div style="padding:var(--s4);background:var(--bg-surface-2);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:var(--s3);">
+            <div style="width:36px;height:36px;border-radius:var(--r-md);background:var(--p-soft);color:var(--p-secondary);font-family:var(--font-display);font-weight:900;display:grid;place-items:center;">A</div>
+            <div>
+              <strong style="font-size:var(--t-base);">CHAVE A</strong>
+              <div style="font-size:var(--t-2xs);color:var(--text-muted);">3 Equipes inscritas</div>
+            </div>
+          </div>
+          <div style="padding:var(--s3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px var(--s3);border-radius:var(--r-md);background:var(--p-soft);margin-bottom:4px;">
+              <span style="font-weight:700;font-size:var(--t-sm);color:var(--p-secondary);">1º 3º B Eletrotécnica</span>
+              <strong style="font-size:var(--t-sm);">6 pts</strong>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px var(--s3);border-radius:var(--r-md);margin-bottom:4px;">
+              <span style="font-weight:600;font-size:var(--t-sm);">2º 2º A Química</span>
+              <strong style="font-size:var(--t-sm);">3 pts</strong>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px var(--s3);border-radius:var(--r-md);">
+              <span style="font-size:var(--t-sm);color:var(--text-muted);">3º 1º B Edificações</span>
+              <strong style="font-size:var(--t-sm);color:var(--text-muted);">0 pts</strong>
+            </div>
+          </div>
+        </article>
+
+        <!-- Chave B -->
+        <article class="card" style="padding:0;overflow:hidden;">
+          <div style="padding:var(--s4);background:var(--bg-surface-2);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:var(--s3);">
+            <div style="width:36px;height:36px;border-radius:var(--r-md);background:var(--p-soft);color:var(--p-secondary);font-family:var(--font-display);font-weight:900;display:grid;place-items:center;">B</div>
+            <div>
+              <strong style="font-size:var(--t-base);">CHAVE B</strong>
+              <div style="font-size:var(--t-2xs);color:var(--text-muted);">3 Equipes inscritas</div>
+            </div>
+          </div>
+          <div style="padding:var(--s3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px var(--s3);border-radius:var(--r-md);background:var(--p-soft);margin-bottom:4px;">
+              <span style="font-weight:700;font-size:var(--t-sm);color:var(--p-secondary);">1º 3º A Informática</span>
+              <strong style="font-size:var(--t-sm);">6 pts</strong>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px var(--s3);border-radius:var(--r-md);margin-bottom:4px;">
+              <span style="font-weight:600;font-size:var(--t-sm);">2º 2º B Agropecuária</span>
+              <strong style="font-size:var(--t-sm);">3 pts</strong>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px var(--s3);border-radius:var(--r-md);">
+              <span style="font-size:var(--t-sm);color:var(--text-muted);">3º 1º A Meio Ambiente</span>
+              <strong style="font-size:var(--t-sm);color:var(--text-muted);">0 pts</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- CONTEÚDO 2: MATA-MATA (BRACKET VISUAL) -->
+      <div id="viewMataMata" class="bracket-wrapper hidden">
+        <div class="bracket-tree">
+          <!-- QUARTAS -->
+          <div class="bracket-round">
+            <div class="bracket-round-title">Quartas de Final</div>
+            <div class="bracket-match-node">
+              <div class="bracket-team-row winner">
+                <span>3º B Eletrotécnica</span>
+                <span class="bracket-node-score">32</span>
+              </div>
+              <div class="bracket-team-row">
+                <span>2º B Agropecuária</span>
+                <span class="bracket-node-score">28</span>
+              </div>
+            </div>
+
+            <div class="bracket-match-node">
+              <div class="bracket-team-row winner">
+                <span>3º A Informática</span>
+                <span class="bracket-node-score">45</span>
+              </div>
+              <div class="bracket-team-row">
+                <span>2º A Química</span>
+                <span class="bracket-node-score">39</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SEMIFINAL -->
+          <div class="bracket-round">
+            <div class="bracket-round-title">Semifinal</div>
+            <div class="bracket-match-node">
+              <div class="bracket-team-row winner">
+                <span>3º B Eletrotécnica</span>
+                <span class="bracket-node-score">50</span>
+              </div>
+              <div class="bracket-team-row">
+                <span>3º A Informática</span>
+                <span class="bracket-node-score">48</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- GRANDE FINAL -->
+          <div class="bracket-round">
+            <div class="bracket-round-title">Grande Final 🏆</div>
+            <div class="bracket-match-node" style="border-color:var(--color-gold);box-shadow:0 0 16px rgba(245,158,11,0.25);">
+              <div class="bracket-team-row winner">
+                <span style="color:var(--color-gold);">⭐ 3º B Eletrotécnica</span>
+                <span class="bracket-node-score" style="color:var(--color-gold);">58</span>
+              </div>
+              <div class="bracket-team-row">
+                <span>2º B Química</span>
+                <span class="bracket-node-score">52</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="sideOverlay" class="overlay" onclick="closeSideNav()"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch('/modalidades');
+    const mods = await res.json();
+    const sel = document.getElementById('selModalidade');
+    if (Array.isArray(mods)) {
+      mods.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.nome || m.titulo;
+        sel.appendChild(opt);
+      });
+      if (mods.length > 0) sel.value = mods[0].id;
+    }
+  } catch {}
+});
+
+function mudarTab(tab) {
+  const isGrupos = tab === 'grupos';
+  document.getElementById('viewGrupos').classList.toggle('hidden', !isGrupos);
+  document.getElementById('viewMataMata').classList.toggle('hidden', isGrupos);
+  document.getElementById('tabBtnGrupos').classList.toggle('active', isGrupos);
+  document.getElementById('tabBtnMataMata').classList.toggle('active', !isGrupos);
+}
+
+function abrirModalGerarGrupos() {
+  JICS_UI.confirm({
+    title: 'Gerar Chaveamento da Fase de Grupos',
+    message: 'Deseja sortear as equipes nas Chaves A, B, C e D e programar as partidas?',
+    confirmText: 'Gerar Grupos',
+    onConfirm: async () => {
+      JICS_UI.toast({ type: 'success', title: 'Chaveamento Gerado', message: 'Fase de grupos criada com sucesso!' });
+    }
+  });
+}
+
+function abrirModalGerarMataMata() {
+  JICS_UI.confirm({
+    title: 'Gerar Chaveamento Mata-Mata',
+    message: 'Deseja classificar os 1º e 2º colocados de cada chave para as fases eliminatórias?',
+    confirmText: 'Criar Mata-Mata',
+    onConfirm: async () => {
+      JICS_UI.toast({ type: 'success', title: 'Mata-Mata Criado', message: 'Bracket eliminatório gerado com sucesso!' });
+      mudarTab('matamata');
+    }
+  });
+}
+
+function toggleSideNav() {
+  document.getElementById('sideNav').classList.toggle('is-open');
+  document.getElementById('sideOverlay').classList.toggle('is-show');
+}
+function closeSideNav() {
+  document.getElementById('sideNav').classList.remove('is-open');
+  document.getElementById('sideOverlay').classList.remove('is-show');
+}
+</script>
+</body>
+</html>
